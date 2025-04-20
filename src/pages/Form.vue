@@ -60,35 +60,71 @@
             <h3 class="text-lg font-bold mt-4">🛒 Ürünler</h3>
           </v-col>
 
-          <template v-for="(row, index) in form.urunler" :key="index">
-            <v-col cols="12" md="2">
-              <v-select v-model="row.ambalaj" :items="dropdowns.ambalajlar" label="Ambalaj"
-                @change="handleAmbalajChange(row)" />
-            </v-col>
-            <v-col cols="12" md="2" v-if="row.ambalaj === 'Tepsi'">
-              <v-text-field v-model="row.tepsi" label="Tepsi" />
-            </v-col>
-            <v-col cols="12" md="2" v-if="row.ambalaj === 'Kutu'">
-              <v-select v-model="row.kutu" :items="dropdowns.kutular" label="Kutu" />
-            </v-col>
+          <!-- Order Input Section -->
+          <v-row class="mb-4" dense>
             <v-col cols="12" md="3">
-              <v-select v-model="row.urun" :items="dropdowns.urunler" label="Ürün"
-                :rules="[v => !!v || 'Ürün gerekli']" />
+              <v-select v-model="newOrderItem.urun" :items="orderInputs.urunler" label="Ürün" />
             </v-col>
             <v-col cols="12" md="2">
-              <v-text-field v-model="row.gramaj" label="Gramaj" :rules="[v => /^\d+$/.test(v) || 'Sadece sayı']" />
+              <v-text-field v-model.number="newOrderItem.miktar" label="Miktar (kg)" type="number" />
             </v-col>
-            <v-col cols="12" md="1" class="d-flex align-center">
-              <v-btn icon @click="removeRow(index)" color="error">
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
+            <v-col cols="12" md="2">
+              <v-text-field v-model.number="newOrderItem.kiloFiyat" label="Kilo Fiyatı (₺)" type="number" />
             </v-col>
-          </template>
+            <v-col cols="6" md="2">
+              <v-select v-model="newOrderItem.discountType" :items="['%', '₺']" label="İndirim Türü" />
+            </v-col>
+            <v-col cols="6" md="2">
+              <v-text-field v-model.number="newOrderItem.discountValue" label="İndirim" type="number" />
+            </v-col>
+            <v-col cols="12" md="1" class="d-flex align-end">
+              <v-btn color="primary" @click="addOrderItem">Ekle</v-btn>
+            </v-col>
+          </v-row>
 
-          <v-col cols="12">
-            <v-btn color="primary" @click="addRow">+ Ürün Satırı Ekle</v-btn>
-          </v-col>
+          <!-- Orders Table -->
+          <v-table dense>
+            <thead>
+              <tr>
+                <th>Ürün Adı</th>
+                <th>Miktar (kg)</th>
+                <th>Kilo Fiyatı</th>
+                <th>Toplam</th>
+                <th>İndirimli Fiyat</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, i) in orderItems" :key="i">
+                <td>{{ item.urun }}</td>
+                <td>{{ item.miktar }}</td>
+                <td>{{ item.kiloFiyat.toFixed(2) }} ₺</td>
+                <td>{{ (item.miktar * item.kiloFiyat).toFixed(2) }} ₺</td>
+                <td>{{ discountedRowPrice(item).toFixed(2) }} ₺</td>
+                <td>
+                  <v-btn icon color="error" @click="removeOrderItem(i)">
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
 
+          <!-- Order Summary + Total Discount -->
+          <v-row class="mt-4" dense>
+            <v-col cols="12" md="4">
+              <v-select v-model="globalDiscountType" :items="['%', '₺']" label="Toplam İndirim Türü" />
+            </v-col>
+            <v-col cols="12" md="4">
+              <v-text-field v-model.number="globalDiscountValue" label="Toplam İndirim" type="number" />
+            </v-col>
+            <v-col cols="12" md="4" class="text-right">
+              <div class="text-h6">Ara Toplam: {{ subtotal.toFixed(2) }} ₺</div>
+              <div class="text-h6">Toplam İndirimli: {{ totalAfterGlobalDiscount.toFixed(2) }} ₺</div>
+            </v-col>
+          </v-row>
+
+          <!-- Submit -->
           <v-col cols="12" class="text-end mt-6">
             <v-btn color="success" @click="submitForm">Kaydet</v-btn>
           </v-col>
@@ -117,9 +153,7 @@ const form = reactive({
   aliciTel: '',
   adres: '',
   aciklama: '',
-  urunler: [
-    { ambalaj: '', tepsi: '', kutu: '', urun: '', gramaj: '' }
-  ]
+  urunler: []
 })
 
 const dropdowns = reactive({
@@ -131,9 +165,65 @@ const dropdowns = reactive({
   urunler: []
 })
 
-onMounted(async () => {
-  const res = await axios.get('/api/dropdown') // NOT the full http://localhost:3000 version
+const orderInputs = {
+  urunler: ['Baklava', 'Künefe', 'Lokum']
+}
 
+const orderItems = ref([])
+
+const newOrderItem = ref({
+  urun: '',
+  miktar: 0,
+  kiloFiyat: 0,
+  discountType: '%',
+  discountValue: 0
+})
+
+function addOrderItem() {
+  if (newOrderItem.value.urun && newOrderItem.value.miktar && newOrderItem.value.kiloFiyat) {
+    orderItems.value.push({ ...newOrderItem.value })
+    newOrderItem.value = {
+      urun: '',
+      miktar: 0,
+      kiloFiyat: 0,
+      discountType: '%',
+      discountValue: 0
+    }
+  }
+}
+
+function removeOrderItem(index) {
+  orderItems.value.splice(index, 1)
+}
+
+function discountedRowPrice(item) {
+  const total = item.miktar * item.kiloFiyat
+  if (item.discountType === '%') {
+    return total - (total * item.discountValue) / 100
+  } else {
+    return total - item.discountValue
+  }
+}
+
+const subtotal = computed(() =>
+  orderItems.value.reduce((acc, item) => acc + (item.miktar * item.kiloFiyat), 0)
+)
+
+const globalDiscountType = ref('%')
+const globalDiscountValue = ref(0)
+
+const totalAfterGlobalDiscount = computed(() => {
+  let total = orderItems.value.reduce((acc, item) => acc + discountedRowPrice(item), 0)
+  if (globalDiscountType.value === '%') {
+    total -= (total * globalDiscountValue.value) / 100
+  } else {
+    total -= globalDiscountValue.value
+  }
+  return total
+})
+
+onMounted(async () => {
+  const res = await axios.get('/api/dropdown')
   Object.assign(dropdowns, res.data)
 })
 
@@ -162,27 +252,24 @@ function handleGonderenChange() {
   form.aliciTel = ''
 }
 
-function handleAmbalajChange(row) {
-  row.tepsi = ''
-  row.kutu = ''
-}
-
-function addRow() {
-  form.urunler.push({ ambalaj: '', tepsi: '', kutu: '', urun: '', gramaj: '' })
-}
-
-function removeRow(index) {
-  if (form.urunler.length > 1) {
-    form.urunler.splice(index, 1)
-  }
-}
-
 function submitForm() {
   formRef.value.validate().then(success => {
-    if (!success || form.urunler.length === 0) {
-      alert('Form hatalı veya ürün satırı eksik.')
+    if (!success || orderItems.value.length === 0) {
+      alert('Form hatalı veya ürün eklenmedi.')
       return
     }
+
+    // Merge orderItems into form.urunler for submission
+    form.urunler = orderItems.value.map(item => ({
+      urun: item.urun,
+      miktar: item.miktar,
+      kiloFiyat: item.kiloFiyat,
+      toplam: item.miktar * item.kiloFiyat,
+      indirimTipi: item.discountType,
+      indirimDegeri: item.discountValue,
+      indirimliFiyat: discountedRowPrice(item)
+    }))
+
     console.log('Form verisi:', form)
     alert('Form başarıyla kaydedildi!')
   })
