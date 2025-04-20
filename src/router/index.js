@@ -6,6 +6,8 @@ import Form from '../pages/Form.vue'
 import Orders from '../pages/Orders.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
+
+
 const routes = [
   {
     pPath: '/',

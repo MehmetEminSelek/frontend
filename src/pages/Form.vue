@@ -132,7 +132,8 @@ const dropdowns = reactive({
 })
 
 onMounted(async () => {
-  const res = await axios.get('http://localhost:3001/api/dropdowns')
+  const res = await axios.get('/api/dropdown') // NOT the full http://localhost:3000 version
+
   Object.assign(dropdowns, res.data)
 })
 

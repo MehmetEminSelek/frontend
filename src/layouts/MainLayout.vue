@@ -2,16 +2,10 @@
   <v-app>
     <v-layout>
       <!-- Sidebar -->
-      <v-navigation-drawer
-        v-model="drawer"
-        app
-        :permanent="!isMobile"
-        :temporary="isMobile"
-        class="bg-grey-darken-4 text-white"
-        width="220"
-      >
+      <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile"
+        class="bg-grey-darken-4 text-white" width="220">
         <v-list nav dense>
-          <v-list-item title="OGS Panel" class="text-h6 font-weight-bold" />
+          <v-list-item title="OGS Panel" class="text-h10 font-weight-bold" />
           <v-list-item to="/main/form" title="📋 Sipariş Formu" link />
           <v-list-item to="/main/orders" title="📦 Siparişler" link />
         </v-list>
@@ -20,12 +14,7 @@
       <!-- Main Content -->
       <v-main>
         <v-container fluid class="py-4 px-4">
-          <v-btn
-            icon
-            class="d-md-none mb-4"
-            @click="drawer = !drawer"
-            v-if="isMobile"
-          >
+          <v-btn icon class="d-md-none mb-4" @click="drawer = !drawer" v-if="isMobile">
             <v-icon>mdi-menu</v-icon>
           </v-btn>
           <router-view />
