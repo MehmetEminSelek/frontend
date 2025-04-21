@@ -135,8 +135,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted,watch } from 'vue'
 import axios from 'axios'
+
 
 const valid = ref(true)
 const formRef = ref(null)
@@ -274,4 +275,20 @@ function submitForm() {
     alert('Form başarıyla kaydedildi!')
   })
 }
+watch([() => newOrderItem.value.urun, () => form.tarih], async () => {
+  const urun = newOrderItem.value.urun
+  const tarih = form.tarih
+
+  if (!urun || !tarih) return
+
+  try {
+    const { data } = await axios.get('/api/prices', {
+      params: { product: urun, date: tarih }
+    })
+    newOrderItem.value.kiloFiyat = data.price
+  } catch (err) {
+    console.error('Fiyat alınamadı:', err)
+    newOrderItem.value.kiloFiyat = 0
+  }
+})
 </script>
