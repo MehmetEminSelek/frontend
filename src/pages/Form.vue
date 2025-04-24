@@ -253,12 +253,53 @@ function handleGonderenChange() {
   form.aliciTel = ''
 }
 
-function submitForm() {
-  formRef.value.validate().then(success => {
-    if (!success || orderItems.value.length === 0) {
-      alert('Form hatalı veya ürün eklenmedi.')
-      return
+
+async function submitForm() {
+  const isValid = await formRef.value.validate()
+  if (!isValid || form.urunler.length === 0) {
+    alert('Form hatalı veya ürün girilmedi.')
+    return
+  }
+
+  const serializedUrunler = form.urunler.map(row => {
+    if (row.icerik && row.icerik.urunler) {
+      return {
+        ambalaj: row.ambalaj,
+        icerik: {
+          tepsiId: row.icerik.tepsiId,
+          urunler: row.icerik.urunler.map(u => ({ urunId: u.id, kilo: u.kilo }))
+        }
+      }
+    } else {
+      return {
+        ambalaj: row.ambalaj,
+        urunId: row.urunId,
+        kilo: row.kilo
+      }
     }
+  })
+
+  try {
+    const payload = {
+      tarih: form.tarih,
+      gonderenAdi: form.gonderenAdi,
+      gonderenTel: form.gonderenTel,
+      aliciAdi: form.aliciAdi,
+      aliciTel: form.aliciTel,
+      adres: form.adres,
+      aciklama: form.aciklama,
+      urunler: serializedUrunler
+    }
+
+    const { data } = await axios.post('/api/siparis', payload)
+    console.log('✅ Sipariş kaydedildi:', data)
+    alert('Sipariş başarıyla kaydedildi!')
+  } catch (err) {
+    console.error('❌ Sipariş gönderilemedi:', err)
+    alert('Sipariş gönderilirken hata oluştu.')
+  }
+}
+
 
     // Merge orderItems into form.urunler for submission
     form.urunler = orderItems.value.map(item => ({
