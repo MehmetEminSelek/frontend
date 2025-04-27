@@ -63,7 +63,7 @@
           <!-- Order Input Section -->
           <v-row class="mb-4" dense>
             <v-col cols="12" md="3">
-              <v-select v-model="newOrderItem.urun" :items="orderInputs.urunler" label="Ürün" />
+              <v-select v-model="newOrderItem.urun" :items="dropdowns.urunler" label="Ürün" />
             </v-col>
             <v-col cols="12" md="2">
               <v-text-field v-model.number="newOrderItem.miktar" label="Miktar (kg)" type="number" />
@@ -224,8 +224,18 @@ const totalAfterGlobalDiscount = computed(() => {
 })
 
 onMounted(async () => {
-  const res = await axios.get('/api/dropdown')
-  Object.assign(dropdowns, res.data)
+  try {
+    const { data } = await axios.get('http://localhost:3000/api/dropdown')
+    console.log('response:', data)
+    console.log('data field:', data.data)
+    if (data && typeof data === 'object') {
+      Object.assign(dropdowns, data)
+    } else {
+      console.warn('Dropdown API boş döndü:', data)
+    }
+  } catch (err) {
+    console.error('❌ Dropdown API hatası:', err)
+  }
 })
 
 const showSube = computed(() => form.teslimatTuru === 'Şubeden Teslim')
@@ -256,10 +266,21 @@ function handleGonderenChange() {
 
 async function submitForm() {
   const isValid = await formRef.value.validate()
-  if (!isValid || form.urunler.length === 0) {
+  if (!isValid || orderItems.value.length === 0) {
     alert('Form hatalı veya ürün girilmedi.')
     return
   }
+
+  // Order item'ları form.urunler'e yaz
+  form.urunler = orderItems.value.map(item => ({
+    urun: item.urun,
+    miktar: item.miktar,
+    kiloFiyat: item.kiloFiyat,
+    toplam: item.miktar * item.kiloFiyat,
+    indirimTipi: item.discountType,
+    indirimDegeri: item.discountValue,
+    indirimliFiyat: discountedRowPrice(item)
+  }))
 
   const serializedUrunler = form.urunler.map(row => {
     if (row.icerik && row.icerik.urunler) {
@@ -298,7 +319,7 @@ async function submitForm() {
     console.error('❌ Sipariş gönderilemedi:', err)
     alert('Sipariş gönderilirken hata oluştu.')
   }
-}
+
 
 
     // Merge orderItems into form.urunler for submission
@@ -314,8 +335,7 @@ async function submitForm() {
 
     console.log('Form verisi:', form)
     alert('Form başarıyla kaydedildi!')
-  })
-}
+  }
 watch([() => newOrderItem.value.urun, () => form.tarih], async () => {
   const urun = newOrderItem.value.urun
   const tarih = form.tarih
