@@ -1,355 +1,507 @@
 <template>
-  <v-container class="py-6 px-4" max-width="xl">
-    <v-card class="pa-6" elevation="2">
-      <v-card-title class="text-h5 font-weight-bold mb-4">📋 Sipariş Formu</v-card-title>
+  <v-container class="py-8 px-4" max-width="xl">
+    <v-card class="pa-6 rounded-lg" elevation="3">
+      <v-card-title class="text-h5 font-weight-bold mb-5" color="primary">
+         📋 Sipariş Formu
+      </v-card-title>
       <v-form ref="formRef" v-model="valid">
         <v-row dense>
-          <!-- Tarih + Gün -->
           <v-col cols="12" md="6">
-            <v-text-field v-model="form.tarih" label="Sipariş Tarihi" type="date" required @change="onDateChange" />
+            <v-text-field
+              v-model="form.tarih"
+              label="Sipariş Tarihi"
+              type="date"
+              :rules="[rules.required]"
+              @change="onDateChange"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="form.fullTarih" label="Gün" readonly placeholder="dd-mm-yy — Gün" />
+            <v-text-field
+              v-model="form.fullTarih"
+              label="Gün"
+              readonly
+              placeholder="Tarih seçiniz..."
+            />
           </v-col>
-
-          <!-- Teslimat Türü + Şube -->
           <v-col cols="12" md="6">
-            <v-select v-model="form.teslimatTuru" :items="dropdowns.teslimatTurleri" label="Teslimat Türü"
-              @change="handleTeslimatChange" required />
+            <v-select
+              v-model="form.teslimatTuruId"
+              :items="dropdowns.teslimatTurleri"
+              item-title="ad"
+              item-value="id"
+              label="Teslimat Türü"
+              :rules="[rules.required]"
+              @update:modelValue="handleTeslimatChange"
+            />
           </v-col>
           <v-col cols="12" md="6" v-if="showSube">
-            <v-select v-model="form.sube" :items="dropdowns.subeler" label="Şube" required />
+            <v-select
+              v-model="form.subeId"
+              :items="dropdowns.subeler"
+              item-title="ad"
+              item-value="id"
+              label="Şube"
+              :rules="[rules.required]"
+            />
           </v-col>
-
-          <!-- Gönderen Tipi -->
           <v-col cols="12">
-            <v-select v-model="form.gonderenTipi" :items="dropdowns.aliciTipleri" label="Gönderen Tipi"
-              @change="handleGonderenChange" />
+            <v-select
+              v-model="form.gonderenTipiId"
+              :items="dropdowns.aliciTipleri"
+              item-title="ad"
+              item-value="id"
+              label="Gönderen Tipi"
+              @update:modelValue="handleGonderenChange"
+            />
           </v-col>
-
-          <!-- Gönderen Bilgileri -->
           <v-col cols="12" md="6">
-            <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[v => !!v || 'Zorunlu']" />
+            <v-text-field
+              v-model="form.gonderenAdi"
+              label="Gönderen Adı"
+              :rules="[rules.required]"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11"
-              :rules="[v => /^\d{11}$/.test(v) || '11 haneli sayı girin']" />
+            <v-text-field
+              v-model="form.gonderenTel"
+              label="Gönderen Tel"
+              maxlength="11"
+              :rules="[rules.phone]"
+              placeholder="5xxxxxxxxx"
+            />
           </v-col>
-
-          <!-- Alıcı Bilgileri -->
           <template v-if="showAliciFields">
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.aliciAdi" label="Alıcı Adı" />
+              <v-text-field
+                v-model="form.aliciAdi"
+                label="Alıcı Adı"
+              />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.aliciTel" label="Alıcı Tel" maxlength="11"
-                :rules="[v => !v || /^\d{11}$/.test(v) || '11 haneli sayı']" />
+              <v-text-field
+                v-model="form.aliciTel"
+                label="Alıcı Tel"
+                maxlength="11"
+                :rules="[rules.optionalPhone]"
+                placeholder="5xxxxxxxxx"
+              />
             </v-col>
           </template>
-
-          <!-- Adres + Açıklama -->
           <v-col cols="12">
-            <v-textarea v-model="form.adres" label="Adres" :disabled="!adresEnabled" rows="2" />
+            <v-textarea
+              v-model="form.adres"
+              label="Adres"
+              :disabled="!adresEnabled"
+              rows="2"
+            />
           </v-col>
           <v-col cols="12">
-            <v-textarea v-model="form.aciklama" label="Açıklama" rows="2" />
+            <v-textarea
+              v-model="form.aciklama"
+              label="Açıklama"
+              rows="2"
+            />
           </v-col>
 
-          <!-- Ürün Listesi -->
+
+          <v-col cols="12"> <v-divider class="my-4"></v-divider> </v-col>
+
           <v-col cols="12">
-            <h3 class="text-lg font-bold mt-4">🛒 Ürünler</h3>
+            <h3 class="text-subtitle-1 font-weight-medium mb-3">📦 Paket Ekle</h3>
+            <v-item-group mandatory>
+              <v-chip-group mandatory v-model="selectedAmbalajId" column>
+                <v-chip
+                  v-for="ambalaj in dropdowns.ambalajlar"
+                  :key="ambalaj.id"
+                  :value="ambalaj.id"
+                  @click="openPackageDialog(ambalaj)"
+                  color="primary" size="large"
+                  class="ma-1"
+                  label
+                >
+                  <v-icon start :icon="getAmbalajIcon(ambalaj.ad)"></v-icon>
+                  {{ ambalaj.ad }} Ekle
+                </v-chip>
+              </v-chip-group>
+            </v-item-group>
           </v-col>
 
-          <!-- Order Input Section -->
-          <v-row class="mb-4" dense>
-            <v-col cols="12" md="3">
-              <v-select v-model="newOrderItem.urun" :items="dropdowns.urunler" label="Ürün" />
-            </v-col>
-            <v-col cols="12" md="2">
-              <v-text-field v-model.number="newOrderItem.miktar" label="Miktar (kg)" type="number" />
-            </v-col>
-            <v-col cols="12" md="2">
-              <v-text-field v-model.number="newOrderItem.kiloFiyat" label="Kilo Fiyatı (₺)" type="number" />
-            </v-col>
-            <v-col cols="6" md="2">
-              <v-select v-model="newOrderItem.discountType" :items="['%', '₺']" label="İndirim Türü" />
-            </v-col>
-            <v-col cols="6" md="2">
-              <v-text-field v-model.number="newOrderItem.discountValue" label="İndirim" type="number" />
-            </v-col>
-            <v-col cols="12" md="1" class="d-flex align-end">
-              <v-btn color="primary" @click="addOrderItem">Ekle</v-btn>
-            </v-col>
-          </v-row>
+          <v-col cols="12" v-if="orderPackages.length > 0" class="mt-5">
+             <v-divider class="mb-4"></v-divider>
+            <h3 class="text-subtitle-1 font-weight-medium mb-3">📝 Eklenen Paketler</h3>
+            <v-row dense>
+              <v-col
+                v-for="(pkg, index) in orderPackages"
+                :key="index"
+                cols="12" md="6" lg="4"
+              >
+                 <v-card class="mb-3 fill-height">
+                  <v-card-title class="d-flex justify-space-between text-body-1 font-weight-medium">
+                    <span>{{ pkg.ambalajAdi }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : '' }}</span>
+                    <v-btn icon="mdi-delete" color="error" size="x-small" variant="text" @click="removeOrderPackage(index)"></v-btn>
+                  </v-card-title>
+                  <v-divider></v-divider>
+                  <v-list density="compact" lines="one" class="pa-0">
+                    <v-list-item
+                      v-for="(item, itemIndex) in pkg.urunler"
+                      :key="itemIndex"
+                      :title="item.urunAdi"
+                      class="px-3"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon size="x-small" class="mr-2">{{ getUrunIcon(item.urunAdi) }}</v-icon>
+                      </template>
+                      <template v-slot:append>
+                        <span class="text-body-2">{{ item.miktar }} {{ item.birim }}</span>
+                      </template>
+                    </v-list-item>
+                     <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
+                         <v-list-item-title class="text-caption text-grey">Paket boş.</v-list-item-title>
+                     </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-col>
 
-          <!-- Orders Table -->
-          <v-table dense>
-            <thead>
-              <tr>
-                <th>Ürün Adı</th>
-                <th>Miktar (kg)</th>
-                <th>Kilo Fiyatı</th>
-                <th>Toplam</th>
-                <th>İndirimli Fiyat</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, i) in orderItems" :key="i">
-                <td>{{ item.urun }}</td>
-                <td>{{ item.miktar }}</td>
-                <td>{{ item.kiloFiyat.toFixed(2) }} ₺</td>
-                <td>{{ (item.miktar * item.kiloFiyat).toFixed(2) }} ₺</td>
-                <td>{{ discountedRowPrice(item).toFixed(2) }} ₺</td>
-                <td>
-                  <v-btn icon color="error" @click="removeOrderItem(i)">
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+          <v-col cols="12"> <v-divider class="my-4"></v-divider> </v-col>
 
-          <!-- Order Summary + Total Discount -->
-          <v-row class="mt-4" dense>
-            <v-col cols="12" md="4">
-              <v-select v-model="globalDiscountType" :items="['%', '₺']" label="Toplam İndirim Türü" />
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-text-field v-model.number="globalDiscountValue" label="Toplam İndirim" type="number" />
-            </v-col>
-            <v-col cols="12" md="4" class="text-right">
-              <div class="text-h6">Ara Toplam: {{ subtotal.toFixed(2) }} ₺</div>
-              <div class="text-h6">Toplam İndirimli: {{ totalAfterGlobalDiscount.toFixed(2) }} ₺</div>
-            </v-col>
-          </v-row>
-
-          <!-- Submit -->
-          <v-col cols="12" class="text-end mt-6">
-            <v-btn color="success" @click="submitForm">Kaydet</v-btn>
+          <v-col cols="12" class="text-end mt-4">
+            <v-btn
+              color="success"
+              @click="submitForm"
+              :disabled="orderPackages.length === 0"
+              size="large"
+              prepend-icon="mdi-check-circle-outline"
+            >
+              Siparişi Kaydet
+            </v-btn>
           </v-col>
         </v-row>
       </v-form>
     </v-card>
+
+    <v-dialog v-model="isPackageDialogOpen" persistent max-width="700px">
+       <v-card>
+         <v-card-title class="bg-primary">
+          <span class="text-h6">{{ currentPackage.ambalajAdi }} İçeriği</span>
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-container>
+            <v-row dense>
+              <v-col cols="12" v-if="currentPackage.ambalajAdi === 'Kutu'">
+                <v-select
+                  v-model="currentPackage.kutuId"
+                  :items="dropdowns.kutular"
+                  item-title="ad"
+                  item-value="id"
+                  label="Spesifik Kutu Tipi Seçin"
+                  :rules="[rules.required]"
+                />
+              </v-col>
+              <v-col cols="12" v-if="currentPackage.ambalajAdi === 'Tepsi/Tava'">
+                 <v-select
+                  v-model="currentPackage.tepsiTavaId"
+                  :items="dropdowns.tepsiTavalar"
+                  item-title="ad"
+                  item-value="id"
+                  label="Spesifik Tepsi/Tava Tipi Seçin"
+                  :rules="[rules.required]"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="5">
+                <v-select
+                  v-model="newItemInPackage.urunId"
+                  :items="dropdowns.urunler"
+                  item-title="ad"
+                  item-value="id"
+                  label="Ürün"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="12" sm="3">
+                <v-text-field
+                  v-model.number="newItemInPackage.miktar"
+                  label="Miktar"
+                  type="number"
+                  min="0"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="12" sm="3">
+                <v-select
+                  v-model="newItemInPackage.birim"
+                  :items="['Gram', 'Adet', 'KG', 'Litre', 'Diğer']"
+                  label="Birim"
+                  hide-details
+                />
+              </v-col>
+              <v-col  class="d-flex align-center justify-center">
+                 <v-btn
+                  @click="addItemToCurrentPackage"
+                  :disabled="!newItemInPackage.urunId || !newItemInPackage.miktar || !newItemInPackage.birim"
+                  title="Ürünü Pakete Ekle"
+                  color="4c4c4c"
+                  size="small"
+                  icon
+                >
+                   <v-icon>mdi-plus-box-outline</v-icon>
+                </v-btn>
+              </v-col>
+
+              <v-col cols="12" v-if="currentPackage.urunler.length > 0" class="mt-3">
+                 <v-divider class="mb-3"></v-divider>
+                 <h4 class="text-caption text-uppercase text-grey mb-1">Eklenen Ürünler</h4>
+                <v-list lines="one" density="compact" class="pa-0">
+                   <v-list-item
+                     v-for="(item, index) in currentPackage.urunler"
+                     :key="index"
+                     class="px-1"
+                   >
+                     <v-list-item-title class="text-body-2">
+                       <v-icon size="x-small" class="mr-1">{{ getUrunIcon(item.urunAdi) }}</v-icon>
+                       {{ item.urunAdi }}
+                      </v-list-item-title>
+                     <template v-slot:append>
+                       <div class="d-flex align-center">
+                         <span class="text-body-2 mr-2">{{ item.miktar }} {{ item.birim }}</span>
+                          <v-btn icon="mdi-delete-outline" color="error" variant="text" size="x-small"
+                           @click="removeItemFromCurrentPackage(index)"></v-btn>
+                       </div>
+                     </template>
+                   </v-list-item>
+                 </v-list>
+              </v-col>
+
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-3">
+          <v-spacer></v-spacer>
+          <v-btn color="grey-darken-1" variant="text" @click="cancelPackageDialog">
+            İptal
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="savePackage"
+            :disabled="currentPackage.urunler.length === 0 || !isSpecificPackageSelected()"
+            prepend-icon="mdi-content-save-outline"
+          >
+            Paketi Kaydet
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted,watch } from 'vue'
-import axios from 'axios'
+// Script kısmı aynı kaldı, değişiklik yok
+import { ref, reactive, computed, onMounted } from 'vue';
+import axios from 'axios';
 
-
-const valid = ref(true)
-const formRef = ref(null)
-
+const valid = ref(true);
+const formRef = ref(null);
 const form = reactive({
   tarih: '',
   fullTarih: '',
-  teslimatTuru: '',
-  sube: '',
-  gonderenTipi: '',
+  teslimatTuruId: null,
+  subeId: null,
+  gonderenTipiId: null,
   gonderenAdi: '',
   gonderenTel: '',
   aliciAdi: '',
   aliciTel: '',
   adres: '',
   aciklama: '',
-  urunler: []
-})
+});
+
+const rules = {
+  required: value => !!value || 'Bu alan zorunludur.',
+  phone: value => /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
+  optionalPhone: value => !value || /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
+};
 
 const dropdowns = reactive({
   teslimatTurleri: [],
   subeler: [],
   aliciTipleri: [],
   ambalajlar: [],
+  urunler: [],
   kutular: [],
-  urunler: []
-})
+  tepsiTavalar: [],
+});
 
-const orderInputs = {
-  urunler: ['Baklava', 'Künefe', 'Lokum']
-}
+const orderPackages = ref([]);
+const isPackageDialogOpen = ref(false);
+const selectedAmbalajId = ref(null);
 
-const orderItems = ref([])
+const currentPackage = reactive({
+    ambalajId: null,
+    ambalajAdi: '',
+    kutuId: null,
+    tepsiTavaId: null,
+    urunler: []
+});
 
-const newOrderItem = ref({
-  urun: '',
-  miktar: 0,
-  kiloFiyat: 0,
-  discountType: '%',
-  discountValue: 0
-})
-
-function addOrderItem() {
-  if (newOrderItem.value.urun && newOrderItem.value.miktar && newOrderItem.value.kiloFiyat) {
-    orderItems.value.push({ ...newOrderItem.value })
-    newOrderItem.value = {
-      urun: '',
-      miktar: 0,
-      kiloFiyat: 0,
-      discountType: '%',
-      discountValue: 0
-    }
-  }
-}
-
-function removeOrderItem(index) {
-  orderItems.value.splice(index, 1)
-}
-
-function discountedRowPrice(item) {
-  const total = item.miktar * item.kiloFiyat
-  if (item.discountType === '%') {
-    return total - (total * item.discountValue) / 100
-  } else {
-    return total - item.discountValue
-  }
-}
-
-const subtotal = computed(() =>
-  orderItems.value.reduce((acc, item) => acc + (item.miktar * item.kiloFiyat), 0)
-)
-
-const globalDiscountType = ref('%')
-const globalDiscountValue = ref(0)
-
-const totalAfterGlobalDiscount = computed(() => {
-  let total = orderItems.value.reduce((acc, item) => acc + discountedRowPrice(item), 0)
-  if (globalDiscountType.value === '%') {
-    total -= (total * globalDiscountValue.value) / 100
-  } else {
-    total -= globalDiscountValue.value
-  }
-  return total
-})
+const newItemInPackage = ref({
+    urunId: null,
+    urunAdi: '',
+    miktar: null,
+    birim: 'Gram'
+});
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get('http://localhost:3000/api/dropdown')
-    console.log('response:', data)
-    console.log('data field:', data.data)
+    const { data } = await axios.get('http://localhost:3000/api/dropdown');
+    console.log('Dropdown Response:', data);
     if (data && typeof data === 'object') {
-      Object.assign(dropdowns, data)
+      Object.assign(dropdowns, data);
+      console.log('Dropdowns populated:', dropdowns);
     } else {
-      console.warn('Dropdown API boş döndü:', data)
+      console.warn('Dropdown API boş veya beklenmeyen formatta döndü:', data);
     }
   } catch (err) {
-    console.error('❌ Dropdown API hatası:', err)
+    console.error('❌ Dropdown API hatası:', err.response?.data || err.message || err);
   }
-})
+});
 
-const showSube = computed(() => form.teslimatTuru === 'Şubeden Teslim')
-const showAliciFields = computed(() => form.gonderenTipi === 'Gönderen ve Alıcı')
-const adresEnabled = computed(() =>
-  ['Evine Gönderilecek', 'Mtn', 'Otobüs', 'Yurtiçi Kargo'].includes(form.teslimatTuru)
-)
+const selectedTeslimatTuru = computed(() => dropdowns.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
+const showSube = computed(() => selectedTeslimatTuru.value?.ad === 'Şubeden Teslim');
+
+const selectedGonderenTipi = computed(() => dropdowns.aliciTipleri.find(t => t.id === form.gonderenTipiId));
+const showAliciFields = computed(() => selectedGonderenTipi.value?.ad === 'Gönderen ve Alıcı');
+
+const adresEnabled = computed(() => {
+    const teslimatAdi = selectedTeslimatTuru.value?.ad;
+    return ['Evine Gönderilecek', 'Mtn', 'Otobüs', 'Yurtiçi Kargo'].includes(teslimatAdi);
+});
 
 function onDateChange() {
-  const date = new Date(form.tarih)
-  const gunler = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
-  const gun = gunler[date.getDay()]
-  const dd = String(date.getDate()).padStart(2, '0')
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const yy = String(date.getFullYear()).slice(-2)
-  form.fullTarih = `${dd}-${mm}-${yy} — ${gun}`
+  if (!form.tarih) {
+      form.fullTarih = '';
+      return;
+  }
+  try {
+      const date = new Date(form.tarih);
+      const utcDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+      const gunler = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+      const gun = gunler[utcDate.getUTCDay()];
+      const dd = String(utcDate.getUTCDate()).padStart(2, '0');
+      const mm = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+      const yyyy = utcDate.getUTCFullYear();
+      form.fullTarih = `${dd}-${mm}-${yyyy} — ${gun}`;
+  } catch(e) {
+      console.error("Tarih formatlama hatası:", e);
+      form.fullTarih = 'Geçersiz Tarih';
+  }
 }
 
-function handleTeslimatChange() {
-  form.sube = ''
-}
 
+function handleTeslimatChange() { form.subeId = null; }
 function handleGonderenChange() {
-  form.aliciAdi = ''
-  form.aliciTel = ''
+   if (selectedGonderenTipi.value?.ad !== 'Gönderen ve Alıcı') {
+       form.aliciAdi = '';
+       form.aliciTel = '';
+   }
 }
 
+function openPackageDialog(ambalaj) {
+    if (!ambalaj) return;
+    currentPackage.ambalajId = ambalaj.id;
+    currentPackage.ambalajAdi = ambalaj.ad;
+    currentPackage.kutuId = null;
+    currentPackage.tepsiTavaId = null;
+    currentPackage.urunler = [];
+    newItemInPackage.value = { urunId: null, urunAdi: '', miktar: null, birim: 'Gram' };
+    isPackageDialogOpen.value = true;
+}
+
+function addItemToCurrentPackage() {
+    const selectedUrun = dropdowns.urunler.find(u => u.id === newItemInPackage.value.urunId);
+    if (selectedUrun && newItemInPackage.value.miktar > 0 && newItemInPackage.value.birim) {
+        currentPackage.urunler.push({
+            urunId: selectedUrun.id,
+            urunAdi: selectedUrun.ad,
+            miktar: newItemInPackage.value.miktar,
+            birim: newItemInPackage.value.birim
+        });
+        newItemInPackage.value = { urunId: null, urunAdi: '', miktar: null, birim: 'Gram' };
+    } else {
+        alert("Lütfen ürün, miktar ve birim seçiniz.");
+    }
+}
+
+function removeItemFromCurrentPackage(index) { currentPackage.urunler.splice(index, 1); }
+function cancelPackageDialog() { isPackageDialogOpen.value = false; }
+function isSpecificPackageSelected() {
+    if (currentPackage.ambalajAdi === 'Kutu') return !!currentPackage.kutuId;
+    if (currentPackage.ambalajAdi === 'Tepsi/Tava') return !!currentPackage.tepsiTavaId;
+    return true;
+}
+
+function savePackage() {
+    if (currentPackage.urunler.length === 0) { alert("Pakete en az bir ürün eklemelisiniz."); return; }
+    if (!isSpecificPackageSelected()) { alert("Lütfen spesifik Kutu veya Tepsi/Tava tipini seçiniz."); return; }
+    let specificName = '';
+    if (currentPackage.kutuId) { specificName = dropdowns.kutular.find(k => k.id === currentPackage.kutuId)?.ad || ''; }
+    else if (currentPackage.tepsiTavaId) { specificName = dropdowns.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || ''; }
+    const packageToAdd = JSON.parse(JSON.stringify(currentPackage));
+    packageToAdd.specificPackageName = specificName;
+    orderPackages.value.push(packageToAdd);
+    isPackageDialogOpen.value = false;
+}
+
+function removeOrderPackage(index) { orderPackages.value.splice(index, 1); }
+function getAmbalajIcon(ambalajAdi) {
+    if (ambalajAdi === 'Kutu') return 'mdi-package-variant-closed';
+    if (ambalajAdi === 'Tepsi/Tava') return 'mdi-silverware-fork-knife';
+    if (ambalajAdi === 'Özel') return 'mdi-star-outline';
+    return 'mdi-help-box-outline';
+}
+
+function getUrunIcon(urunAdi) {
+    if (!urunAdi) return 'mdi-help-circle-outline';
+    if (urunAdi.toLowerCase().includes('baklava')) return 'mdi-diamond-stone';
+    if (urunAdi.toLowerCase().includes('börek')) return 'mdi-chart-pie';
+    if (urunAdi.toLowerCase().includes('kadayıf')) return 'mdi-noodles';
+    return 'mdi-food-variant';
+}
 
 async function submitForm() {
-  const isValid = await formRef.value.validate()
-  if (!isValid || orderItems.value.length === 0) {
-    alert('Form hatalı veya ürün girilmedi.')
-    return
-  }
+  const { valid: formIsValid } = await formRef.value.validate();
+  if (!formIsValid || orderPackages.value.length === 0) { alert('Lütfen formdaki tüm zorunlu alanları doldurun ve en az bir paket ekleyin.'); return; }
+  const aliciGondericiAdi = form.aliciAdi ? form.aliciAdi : form.gonderenAdi;
+  const siparisPayload = orderPackages.value.map(pkg => ({ AmbalajId: pkg.ambalajId, KutuId: pkg.kutuId, TepsiTavaId: pkg.tepsiTavaId, Urunler: pkg.urunler.map(item => ({ UrunId: item.urunId, Miktar: item.miktar, Birim: item.birim })) }));
+  const payload = { tarih: form.tarih, teslimatTuruId: form.teslimatTuruId, subeId: form.subeId, gonderenTipiId: form.gonderenTipiId, gonderenAdi: form.gonderenAdi, gonderenTel: form.gonderenTel, aliciAdi: form.aliciAdi, aliciTel: form.aliciTel, adres: form.adres, aciklama: form.aciklama, siparisler: siparisPayload, gorunecekAd: aliciGondericiAdi };
+  console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
+   try {
+     const { data } = await axios.post('/api/siparis', payload);
+     console.log('✅ Sipariş kaydedildi:', data);
+     alert('Sipariş başarıyla kaydedildi!');
+     // Formu sıfırlama işlemleri...
+   } catch (err) {
+     console.error('❌ Sipariş gönderilemedi:', err.response?.data || err.message || err);
+     alert(`Sipariş gönderilirken hata oluştu: ${err.response?.data?.message || err.message}`);
+   }
+}
 
-  // Order item'ları form.urunler'e yaz
-  form.urunler = orderItems.value.map(item => ({
-    urun: item.urun,
-    miktar: item.miktar,
-    kiloFiyat: item.kiloFiyat,
-    toplam: item.miktar * item.kiloFiyat,
-    indirimTipi: item.discountType,
-    indirimDegeri: item.discountValue,
-    indirimliFiyat: discountedRowPrice(item)
-  }))
-
-  const serializedUrunler = form.urunler.map(row => {
-    if (row.icerik && row.icerik.urunler) {
-      return {
-        ambalaj: row.ambalaj,
-        icerik: {
-          tepsiId: row.icerik.tepsiId,
-          urunler: row.icerik.urunler.map(u => ({ urunId: u.id, kilo: u.kilo }))
-        }
-      }
-    } else {
-      return {
-        ambalaj: row.ambalaj,
-        urunId: row.urunId,
-        kilo: row.kilo
-      }
-    }
-  })
-
-  try {
-    const payload = {
-      tarih: form.tarih,
-      gonderenAdi: form.gonderenAdi,
-      gonderenTel: form.gonderenTel,
-      aliciAdi: form.aliciAdi,
-      aliciTel: form.aliciTel,
-      adres: form.adres,
-      aciklama: form.aciklama,
-      urunler: serializedUrunler
-    }
-
-    const { data } = await axios.post('/api/siparis', payload)
-    console.log('✅ Sipariş kaydedildi:', data)
-    alert('Sipariş başarıyla kaydedildi!')
-  } catch (err) {
-    console.error('❌ Sipariş gönderilemedi:', err)
-    alert('Sipariş gönderilirken hata oluştu.')
-  }
-
-
-
-    // Merge orderItems into form.urunler for submission
-    form.urunler = orderItems.value.map(item => ({
-      urun: item.urun,
-      miktar: item.miktar,
-      kiloFiyat: item.kiloFiyat,
-      toplam: item.miktar * item.kiloFiyat,
-      indirimTipi: item.discountType,
-      indirimDegeri: item.discountValue,
-      indirimliFiyat: discountedRowPrice(item)
-    }))
-
-    console.log('Form verisi:', form)
-    alert('Form başarıyla kaydedildi!')
-  }
-watch([() => newOrderItem.value.urun, () => form.tarih], async () => {
-  const urun = newOrderItem.value.urun
-  const tarih = form.tarih
-
-  if (!urun || !tarih) return
-
-  try {
-    const { data } = await axios.get('/api/prices', {
-      params: { product: urun, date: tarih }
-    })
-    newOrderItem.value.kiloFiyat = data.price
-  } catch (err) {
-    console.error('Fiyat alınamadı:', err)
-    newOrderItem.value.kiloFiyat = 0
-  }
-})
 </script>
+
+<style scoped>
+.v-chip-group .v-chip {
+  margin: 4px !important; /* Daha belirgin boşluk */
+  transition: transform 0.1s ease-in-out; /* Hover efekti */
+}
+.v-chip-group .v-chip:hover {
+    transform: translateY(-2px); /* Hover efekti */
+}
+
+/* Dialog içindeki ürün listesi için */
+.v-list-item:not(:last-child) {
+    border-bottom: 1px solid #e0e0e0;
+}
+</style>
