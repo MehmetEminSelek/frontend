@@ -180,8 +180,7 @@
         </v-row>
       </v-form>
     </v-card>
-
-    <v-dialog v-model="isPackageDialogOpen" persistent max-width="700px">
+    <v-dialog v-model="isPackageDialogOpen" persistent max-width="700px" transition="dialog-bottom-transition">
        <v-card>
          <v-card-title class="bg-primary">
           <span class="text-h6">{{ currentPackage.ambalajAdi }} İçeriği</span>
@@ -237,12 +236,12 @@
                   hide-details
                 />
               </v-col>
-              <v-col  class="d-flex align-center justify-center">
+              <v-col cols="12" sm="1" class="d-flex align-center justify-center">
                  <v-btn
+                  color="primary"
                   @click="addItemToCurrentPackage"
                   :disabled="!newItemInPackage.urunId || !newItemInPackage.miktar || !newItemInPackage.birim"
                   title="Ürünü Pakete Ekle"
-                  color="4c4c4c"
                   size="small"
                   icon
                 >
@@ -299,9 +298,11 @@
 </template>
 
 <script setup>
-// Script kısmı aynı kaldı, değişiklik yok
 import { ref, reactive, computed, onMounted } from 'vue';
 import axios from 'axios';
+
+// isMounted ref'i kaldırıldı
+// const isMounted = ref(false);
 
 const valid = ref(true);
 const formRef = ref(null);
@@ -367,6 +368,7 @@ onMounted(async () => {
   } catch (err) {
     console.error('❌ Dropdown API hatası:', err.response?.data || err.message || err);
   }
+  // finally bloğu ve isMounted ataması kaldırıldı
 });
 
 const selectedTeslimatTuru = computed(() => dropdowns.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
@@ -392,14 +394,13 @@ function onDateChange() {
       const gun = gunler[utcDate.getUTCDay()];
       const dd = String(utcDate.getUTCDate()).padStart(2, '0');
       const mm = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
-      const yyyy = utcDate.getUTCFullYear();
+      const Pierce = utcDate.getUTCFullYear();
       form.fullTarih = `${dd}-${mm}-${yyyy} — ${gun}`;
   } catch(e) {
       console.error("Tarih formatlama hatası:", e);
       form.fullTarih = 'Geçersiz Tarih';
   }
 }
-
 
 function handleTeslimatChange() { form.subeId = null; }
 function handleGonderenChange() {
