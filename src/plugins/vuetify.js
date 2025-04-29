@@ -3,103 +3,71 @@
 import { createVuetify } from 'vuetify';
 
 // --- Gerekli Stiller ve İkonlar ---
-// Vuetify'ın temel stillerini import et
 import 'vuetify/styles';
-// Material Design Icons (MDI) ikon setini import et (veya başka bir set kullanıyorsan onu import et)
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
-import '@mdi/font/css/materialdesignicons.css'; // MDI fontunu import et
+import '@mdi/font/css/materialdesignicons.css';
+
+// --- Bileşenleri ve Direktifleri Import Et ---
+// Bu satırlar TÜM ana Vuetify bileşenlerini ve direktiflerini import eder
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+// Eğer v-data-table-server gibi labs bileşenleri de kullanacaksan bu da gerekli:
+// import * as labsComponents from 'vuetify/labs/components';
 
 // --- Tema Tanımlaması ---
-// Kendi açık temanızı tanımlayın (renkleri buradan değiştirebilirsin)
 const myCustomLightTheme = {
-    dark: false, // Bu temanın açık tema olduğunu belirtir
+    dark: false,
     colors: {
-        // Ana Renkler
-        primary: '#0D47A1', // <<< DEĞİŞTİRMEK İSTEDİĞİN ANA RENK (Örnek: Koyu Mavi)
-        'primary-darken-1': '#0B3A80', // Primary'nin biraz koyusu (isteğe bağlı)
-        secondary: '#424242', // İkincil Renk (Örnek: Koyu Gri)
-        'secondary-darken-1': '#212121',
-
-        accent: '#82B1FF', // Vurgu Rengi (isteğe bağlı)
-
-        // Durum Renkleri
-        error: '#B00020',
-        info: '#2196F3',
-        success: '#4CAF50',
-        warning: '#FB8C00',
-
-        // Arka Plan ve Yüzey Renkleri
-        background: '#F5F5F5', // Genel sayfa arka planı
-        surface: '#FFFFFF',    // Kartlar, dialoglar vb. yüzeyler
-
-        // Kendi özel renklerini de ekleyebilirsin:
-        // 'on-primary': '#FFFFFF', // Primary rengin üzerindeki metin rengi (genellikle beyaz)
-        // 'my-custom-color': '#FFC107',
+        primary: '#FF9800', // Örnek Turuncu
+        'primary-darken-1': '#F57C00',
+        secondary: '#607D8B', // Örnek Mavi Gri
+        'secondary-darken-1': '#455A64',
+        accent: '#FFC107',
+        error: '#D32F2F',
+        info: '#1976D2',
+        success: '#388E3C',
+        warning: '#FFA000',
+        background: '#ECEFF1',
+        surface: '#FFFFFF',
     },
-    // Değişkenler (CSS değişkenleri olarak kullanılabilir)
-    // variables: {
-    //   'border-color': '#000000',
-    // }
 };
 
 // --- Vuetify Örneğini Oluşturma ---
 const vuetify = createVuetify({
     // 1. TEMA AYARLARI
     theme: {
-        defaultTheme: 'myCustomLightTheme', // Uygulamanın varsayılan temasını ayarla
+        defaultTheme: 'myCustomLightTheme',
         themes: {
-            myCustomLightTheme, // Tanımladığın temayı Vuetify'a tanıt
-            // İstersen koyu tema da ekleyebilirsin:
-            // myCustomDarkTheme: { dark: true, colors: { primary: '#...', ... } }
+            myCustomLightTheme,
         },
     },
 
-    // 2. VARSAYILAN BİLEŞEN PROPLARI (Defaults)
-    // Tüm uygulamadaki bileşenler için varsayılan ayarlar
+    // 2. BİLEŞENLER VE DİREKTİFLER
+    // Vuetify'a hangi bileşenleri ve direktifleri kullanacağını söyle
+    components: {
+        ...components,
+        // ...labsComponents, // Eğer labs bileşenleri import ettiysen
+    },
+    directives,
+
+    // 3. VARSAYILAN BİLEŞEN PROPLARI (Defaults)
     defaults: {
-        global: {
-            // Genel varsayılanlar
-            // ripple: false, // Tüm bileşenlerde dalga efektini kapat
-        },
-        // Belirli bileşenler için varsayılanlar
-        VCard: {
-            elevation: 2,      // Tüm kartların varsayılan gölgesi
-            rounded: 'lg',     // Tüm kartların varsayılan köşe yuvarlatması
-        },
-        VTextField: {
-            variant: 'filled', // Tüm text field'lar varsayılan olarak 'filled' stilinde olsun
-            density: 'comfortable',
-        },
-        VTextarea: {
-            variant: 'filled',
-            density: 'comfortable',
-
-        },
-        VSelect: {
-            variant: 'filled',
-            density: 'comfortable',
-        },
-        VBtn: {
-            variant: 'flat', // Tüm butonlar varsayılan olarak 'flat' olsun
-            color: 'primary', // Tüm butonlar varsayılan olarak primary renkte olsun
-            rounded: 'pill', // Tüm butonlar hap şeklinde olsun
-        }
-        // Diğer bileşenler için de varsayılanlar ekleyebilirsin...
-        // VChip: { ... },
-        // VDialog: { ... },
+        VCard: { elevation: 2, rounded: 'lg' },
+        VTextField: { variant: 'filled', density: 'comfortable' },
+        VTextarea: { variant: 'filled', density: 'comfortable' },
+        VSelect: { variant: 'filled', density: 'comfortable' },
+        VBtn: { variant: 'flat', color: 'secondary' }, // Varsayılan buton stili
+        // VDataTable: { density: 'compact' } // v-data-table için varsayılanlar (isteğe bağlı)
     },
 
-    // 3. İKON AYARLARI
+    // 4. İKON AYARLARI
     icons: {
-        defaultSet: 'mdi', // Varsayılan ikon setini MDI olarak ayarla
+        defaultSet: 'mdi',
         aliases,
         sets: {
-            mdi, // MDI ikon setini tanıt
+            mdi,
         },
     },
-
-    // Diğer Vuetify ayarları (SSR, locale vb.) buraya eklenebilir
 });
 
-// Oluşturulan Vuetify örneğini dışa aktar
 export default vuetify;
