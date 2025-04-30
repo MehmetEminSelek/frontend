@@ -49,7 +49,7 @@
                     <v-icon>{{ getAmbalajIcon(item.ambalaj?.ad) }}</v-icon>
                   </template>
                   <v-list-item-title class="font-weight-medium">{{ item.urun?.ad || 'Bilinmeyen Ürün'
-                    }}</v-list-item-title>
+                  }}</v-list-item-title>
                   <v-list-item-subtitle>
                     {{ item.miktar }} {{ item.birim }}
                     <span v-if="item.ambalaj?.ad !== 'Özel'">
