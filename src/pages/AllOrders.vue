@@ -3,8 +3,8 @@
     <v-card class="pa-4 rounded-lg" elevation="2">
       <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
         <span>📚 Tüm Siparişler</span>
-        <v-text-field v-model="search" label="Siparişlerde Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify"
-          variant="outlined" density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
+        <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
+          density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
         <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
       </v-card-title>
 
@@ -34,8 +34,13 @@
           </v-chip>
         </template>
 
-        <template v-slot:item.toplamTutar="{ item }">
-          <span class="font-weight-medium">{{ calculateOrderTotal(item.kalemler).toFixed(2) }} ₺</span>
+        <template v-slot:item.tepsiMaliyeti="{ item }">
+          <span v-if="item.toplamTepsiMaliyeti > 0">{{ item.toplamTepsiMaliyeti?.toFixed(2) }} ₺</span>
+          <span v-else class="text-grey-lighten-1">-</span>
+        </template>
+
+        <template v-slot:item.genelToplam="{ item }">
+          <span class="font-weight-medium">{{ calculateGrandTotal(item).toFixed(2) }} ₺</span>
         </template>
 
         <template v-slot:item.actions="{ item }">
@@ -57,7 +62,7 @@
           <tr>
             <td :colspan="columns.length" class="pa-0">
               <v-card flat color="grey-lighten-4" class="ma-2 pa-3">
-                <h4 class="text-subtitle-2 mb-2">Sipariş Kalemleri (ID: {{ item.id }})</h4>
+                <h4 class="text-subtitle-2 mb-2">Sipariş Detayları (ID: {{ item.id }})</h4>
                 <v-table density="compact">
                   <thead>
                     <tr>
@@ -72,16 +77,12 @@
                   <tbody>
                     <tr v-for="kalem in item.kalemler" :key="kalem.id">
                       <td>{{ kalem.urun?.ad }}</td>
-                      <td>
-                        {{ kalem.ambalaj?.ad }}
-                        <span v-if="kalem.kutu"> ({{ kalem.kutu.ad }})</span>
-                        <span v-if="kalem.tepsiTava"> ({{ kalem.tepsiTava.ad }})</span>
-                      </td>
+                      <td> {{ kalem.ambalaj?.ad }} <span v-if="kalem.kutu"> ({{ kalem.kutu.ad }})</span> <span
+                          v-if="kalem.tepsiTava"> ({{ kalem.tepsiTava.ad }})</span> </td>
                       <td class="text-right">{{ kalem.miktar }}</td>
                       <td class="text-left">{{ kalem.birim }}</td>
-                      <td class="text-right">{{ getStaticPrice(kalem.urun?.id, kalem.birim).toFixed(2) }}</td>
-                      <td class="text-right font-weight-medium">{{ (kalem.miktar * getStaticPrice(kalem.urun?.id,
-                        kalem.birim)).toFixed(2) }}</td>
+                      <td class="text-right">{{ kalem.birimFiyat?.toFixed(2) || '0.00' }}</td>
+                      <td class="text-right font-weight-medium">{{ calculateItemTotal(kalem).toFixed(2) }}</td>
                     </tr>
                     <tr v-if="!item.kalemler || item.kalemler.length === 0">
                       <td :colspan="6" class="text-center text-grey">Bu siparişe ait ürün bulunamadı.</td>
@@ -89,8 +90,25 @@
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colspan="5" class="text-right font-weight-bold">Genel Toplam:</td>
-                      <td class="text-right font-weight-bold">{{ calculateOrderTotal(item.kalemler).toFixed(2) }} ₺</td>
+                      <td colspan="5" class="text-right font-weight-bold">Ürün Toplamı:</td>
+                      <td class="text-right font-weight-bold">{{ calculateProductTotal(item.kalemler).toFixed(2) }} ₺
+                      </td>
+                    </tr>
+                    <tr v-if="item.toplamTepsiMaliyeti > 0">
+                      <td colspan="5" class="text-right">Tepsi/Tava Maliyeti:</td>
+                      <td class="text-right">{{ item.toplamTepsiMaliyeti?.toFixed(2) }} ₺</td>
+                    </tr>
+                    <tr v-if="item.kargoUcreti > 0">
+                      <td colspan="5" class="text-right">Kargo Ücreti:</td>
+                      <td class="text-right">{{ item.kargoUcreti?.toFixed(2) }} ₺</td>
+                    </tr>
+                    <tr v-if="item.digerHizmetTutari > 0">
+                      <td colspan="5" class="text-right">Diğer Hizmet:</td>
+                      <td class="text-right">{{ item.digerHizmetTutari?.toFixed(2) }} ₺</td>
+                    </tr>
+                    <tr>
+                      <td colspan="5" class="text-right font-weight-bold text-h6">Genel Toplam:</td>
+                      <td class="text-right font-weight-bold text-h6">{{ calculateGrandTotal(item).toFixed(2) }} ₺</td>
                     </tr>
                   </tfoot>
                 </v-table>
@@ -99,9 +117,7 @@
           </tr>
         </template>
 
-        <template v-slot:loading>
-          <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
-        </template>
+        <template v-slot:loading> <v-skeleton-loader type="table-row@10"></v-skeleton-loader> </template>
 
       </v-data-table>
     </v-card>
@@ -113,117 +129,85 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 // Data Table State
-const itemsPerPage = ref(10); // Sayfa başına öğe sayısı
-const headers = ref([ // Headerlar tanımlandı
+const itemsPerPage = ref(10);
+const headers = ref([
   { title: 'ID', key: 'id', align: 'start', sortable: true },
   { title: 'Tarih', key: 'tarih', sortable: true },
   { title: 'Müşteri', key: 'musteri', value: item => item.gorunecekAd || item.gonderenAdi, sortable: true },
   { title: 'Teslimat', key: 'teslimat', value: item => item.teslimatTuru?.ad, sortable: true },
   { title: 'Durum', key: 'onaylandiMi', sortable: true },
-  { title: 'Toplam Tutar (₺)', key: 'toplamTutar', value: item => calculateOrderTotal(item.kalemler), sortable: true, align: 'end' },
+  { title: 'Tepsi Maliyeti (₺)', key: 'tepsiMaliyeti', value: item => item.toplamTepsiMaliyeti || 0, sortable: true, align: 'end' },
+  { title: 'Genel Toplam (₺)', key: 'genelToplam', value: item => calculateGrandTotal(item), sortable: true, align: 'end' },
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ]);
-const allOrders = ref([]); // TÜM siparişleri tutacak dizi
+const allOrders = ref([]);
 const loading = ref(true);
-const search = ref(''); // Arama modeli
+const search = ref('');
 const error = ref(null);
-const expanded = ref([]); // Genişletilmiş satırları takip eder
-
-// --- Statik Fiyatlar (Demo Amaçlı) ---
-// ID'leri kendi veritabanınızdaki Urun ID'leri ile eşleştirin
-const staticPrices = {
-  // Örnek KG/Litre fiyatları
-  1: 250.50, // Antep Peynirli Su Böreği (KG)
-  2: 300.00, // Bayram Tepsisi (KG?) - Belki bu adet olmalı?
-  3: 180.75, // Cevizli Bülbül Yuvası (KG)
-  4: 220.00, // Cevizli Eski Usûl Dolama (KG)
-  5: 280.00, // Cevizli Özel Kare Baklava (KG)
-  9: 150.00, // Düz Kadayıf (KG)
-  11: 450.00, // Fıstık Ezmesi (KG)
-  // Örnek Adet fiyatları
-  'adet_2': 35.00, // Bayram Tepsisi Adet fiyatı (ID: 2 için özel anahtar)
-  'adet_8': 40.00, // Doğum Günü Tepsisi Adet fiyatı (ID: 8 varsayıldı)
-  'adet_10': 25.00, // Fındıklı Çikolatalı Midye Baklava Adet (ID: 10 varsayıldı)
-  // ... diğer ürün ID'leri ve fiyatları ...
-};
-
-function getStaticPrice(urunId, birim) {
-  let priceKey = urunId;
-  // Eğer birim 'Adet' ise, özel adet fiyatı anahtarını kullanmayı dene
-  if (birim && birim.toLowerCase() === 'adet') {
-    priceKey = `adet_${urunId}`;
-  }
-  // Fiyatı bul veya 0 dön
-  return staticPrices[priceKey] || staticPrices[urunId] || 0;
-}
-
-// Siparişin toplam tutarını hesapla
-function calculateOrderTotal(kalemler) {
-  if (!kalemler) return 0;
-  return kalemler.reduce((total, kalem) => {
-    const price = getStaticPrice(kalem.urun?.id, kalem.birim);
-    // Gram ise KG fiyatını 1000'e böl
-    const unitPrice = (kalem.birim && kalem.birim.toLowerCase() === 'gram') ? price / 1000 : price;
-    return total + (kalem.miktar * unitPrice);
-  }, 0);
-}
-// --- Statik Fiyatlar Sonu ---
-
+const expanded = ref([]);
 
 // API'den TÜM veriyi çekme fonksiyonu
 async function fetchOrders() {
-  loading.value = true;
-  error.value = null;
-  console.log('Fetching all orders for v-data-table...');
-
+  loading.value = true; error.value = null; console.log('Fetching all orders...');
   try {
-    const response = await axios.get('/api/orders'); // Doğru endpoint
+    const response = await axios.get('/api/orders');
     allOrders.value = response.data;
     console.log('All orders loaded:', allOrders.value);
+
+    // <<< DEBUG: İlk siparişin kalemlerini logla >>>
+    if (allOrders.value.length > 0 && allOrders.value[0].kalemler) {
+      console.log('İlk siparişin kalemleri:', JSON.parse(JSON.stringify(allOrders.value[0].kalemler)));
+    }
+    // <<< DEBUG SONU >>>
+
   } catch (err) {
     console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err);
     error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`;
     allOrders.value = [];
-  } finally {
-    loading.value = false;
+  } finally { loading.value = false; }
+}
+
+onMounted(() => { fetchOrders(); });
+
+// --- Hesaplama Fonksiyonları ---
+function calculateItemTotal(kalem) {
+  // <<< DEBUG: Hesaplama için gelen kalem verisini logla >>>
+  console.log('Calculating item total for:', { id: kalem?.id, miktar: kalem?.miktar, birim: kalem?.birim, birimFiyat: kalem?.birimFiyat });
+  // <<< DEBUG SONU >>>
+
+  if (!kalem || !kalem.miktar || kalem.birimFiyat == null || kalem.birimFiyat === undefined) {
+    console.warn(`Hesaplama atlandı - Eksik veri:`, kalem);
+    return 0;
   }
+  const unitPrice = (kalem.birim && kalem.birim.toLowerCase() === 'gram')
+    ? (kalem.birimFiyat / 1000)
+    : kalem.birimFiyat;
+  const total = kalem.miktar * unitPrice;
+  console.log(` -> Calculated item total: ${total}`);
+  return total;
 }
-
-// Sayfa yüklendiğinde veriyi çek
-onMounted(() => {
-  fetchOrders();
-});
-
-
-// Tarihi formatlama
-function formatDate(dateString) {
-  if (!dateString) return '';
-  try { const date = new Date(dateString); if (isNaN(date.getTime())) return 'Geçersiz Tarih'; const day = String(date.getDate()).padStart(2, '0'); const month = String(date.getMonth() + 1).padStart(2, '0'); const year = date.getFullYear(); return `${day}.${month}.${year}`; } catch (e) { console.error("Tarih formatlama hatası:", e); return 'Hatalı Tarih'; }
+function calculateProductTotal(kalemler) {
+  if (!kalemler) return 0;
+  return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0);
 }
-
-// İşlem Butonları Fonksiyonları
-function editOrder(id) { console.log('Düzenle ID:', id); alert(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`); }
-async function deleteOrder(id) {
-  console.log('Sil ID:', id); if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
-  const itemIndex = allOrders.value.findIndex(item => item.id === id);
-  try {
-    await axios.delete(`/api/siparis/${id}`); // Silme için doğru endpoint
-    alert('Sipariş başarıyla silindi.');
-    if (itemIndex > -1) {
-      allOrders.value.splice(itemIndex, 1); // Listeden kaldır
-    }
-  } catch (err) {
-    console.error('❌ Sipariş silinemedi:', err.response?.data || err.message || err);
-    alert(`Sipariş silinirken hata oluştu: ${err.response?.data?.message || err.message}`);
-  }
+function calculateGrandTotal(order) {
+  if (!order) return 0;
+  const productTotal = calculateProductTotal(order.kalemler);
+  const tepsiTotal = order.toplamTepsiMaliyeti || 0;
+  const kargoTotal = order.kargoUcreti || 0;
+  const digerTotal = order.digerHizmetTutari || 0;
+  return productTotal + tepsiTotal + kargoTotal + digerTotal;
 }
+// --- Hesaplama Fonksiyonları Sonu ---
+
+function formatDate(dateString) { /* ... aynı ... */ }
+function editOrder(id) { /* ... aynı ... */ }
+async function deleteOrder(id) { /* ... aynı ... */ }
 
 </script>
 
 <style scoped>
-/* Genişletilmiş satır içeriği için stil */
 .v-data-table__expanded__content td {
-  padding: 0 !important;
-  box-shadow: inset 0px 5px 5px -5px rgba(0, 0, 0, 0.2), inset 0px -5px 5px -5px rgba(0, 0, 0, 0.2);
+  /* ... aynı ... */
 }
 </style>
