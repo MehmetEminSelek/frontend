@@ -1,5 +1,5 @@
 <template>
-  <v-container class="py-6 px-4" max-width="xl">
+  <v-container class="py-6 px-4" fluid>
     <v-card class="pa-4 rounded-lg" elevation="2">
       <v-card-title class="text-h5 font-weight-bold mb-4">⏳ Onay Bekleyen Siparişler</v-card-title>
 

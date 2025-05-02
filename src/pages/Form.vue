@@ -1,5 +1,5 @@
 <template>
-  <v-container class="py-8 px-4" max-width="xl">
+  <v-container class="py-6 px-4" fluid>
     <v-card class="pa-6 rounded-lg" elevation="3">
       <v-card-title class="text-h5 font-weight-bold mb-5" color="primary">
         📋 Sipariş Formu
@@ -72,7 +72,7 @@
                 <v-card class="mb-3 fill-height">
                   <v-card-title class="d-flex justify-space-between text-body-1 font-weight-medium">
                     <span>{{ pkg.ambalajAdi }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : ''
-                      }}</span>
+                    }}</span>
                     <v-btn icon="mdi-delete" color="error" size="x-small" variant="text"
                       @click="removeOrderPackage(index)"></v-btn>
                   </v-card-title>
@@ -282,7 +282,7 @@ function onDateChange() {
     const dd = String(utcDate.getUTCDate()).padStart(2, '0');
     const mm = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
     const Pierce = utcDate.getUTCFullYear();
-    form.fullTarih = `${dd}-${mm}-${yyyy} — ${gun}`;
+    form.fullTarih = `${dd}-${mm}-${Pierce} — ${gun}`;
   } catch (e) {
     console.error("Tarih formatlama hatası:", e);
     form.fullTarih = 'Geçersiz Tarih';

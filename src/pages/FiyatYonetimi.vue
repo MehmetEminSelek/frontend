@@ -1,18 +1,12 @@
 <template>
-  <v-container>
+  <v-container class="py-6 px-4" fluid>
     <v-card elevation="2" class="pa-6">
       <v-card-title class="text-h5 font-weight-bold">💰 Fiyat Yönetimi</v-card-title>
       <v-card-text>
         <v-row dense>
           <v-col cols="12" md="4">
-            <v-select
-              v-model="selectedUrun"
-              :items="urunler"
-              item-title="name"
-              item-value="id"
-              label="Ürün Seç"
-              dense
-            />
+            <v-select v-model="selectedUrun" :items="urunler" item-title="name" item-value="id" label="Ürün Seç"
+              dense />
           </v-col>
           <v-col cols="6" md="2">
             <v-text-field v-model="newFiyat" type="number" label="Fiyat (₺)" dense />
@@ -30,14 +24,8 @@
 
         <v-divider class="my-4" />
 
-        <v-data-table
-          :headers="headers"
-          :items="fiyatlar"
-          item-value="id"
-          class="elevation-1"
-          :loading="loading"
-          no-data-text="Fiyat verisi bulunamadı"
-        />
+        <v-data-table :headers="headers" :items="fiyatlar" item-value="id" class="elevation-1" :loading="loading"
+          no-data-text="Fiyat verisi bulunamadı" />
       </v-card-text>
     </v-card>
   </v-container>
