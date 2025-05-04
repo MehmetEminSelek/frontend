@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 // PAGE COMPONENTS
 import Login from '../pages/Login.vue'
 import Form from '../pages/Form.vue' // Sipariş Ekleme Formu
-import Orders from '../pages/Orders.vue' // Onay Bekleyenler Sayfası
+import Orders from '../pages/OnayBekleyen.vue' // Onay Bekleyenler Sayfası
 import AllOrders from '../pages/AllOrders.vue' // Tüm Siparişler Sayfası
 import Hazirlanacaklar from '../pages/Hazırlanacak.vue' // <<< YENİ: Hazırlanacaklar sayfası component importu
 import MainLayout from '../layouts/MainLayout.vue'
