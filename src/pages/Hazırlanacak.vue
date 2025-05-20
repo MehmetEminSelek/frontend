@@ -20,7 +20,7 @@
                             <v-col cols="12" sm="3"> <strong>ID:</strong> {{ order.id }} </v-col>
                             <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih) }} </v-col>
                             <v-col cols="12" sm="5"> <strong>Müşteri:</strong> {{ order.gorunecekAd || order.gonderenAdi
-                            }} </v-col>
+                                }} </v-col>
                         </v-row>
                     </v-expansion-panel-title>
 
@@ -39,10 +39,10 @@
                                             </span>
                                         </div>
                                     </v-col>
-                                    <v-col cols="auto" justfy="center" md="4" class="d-flex align-center pa-4">  <v-text-field v-model.number="item.miktar"
-                                            label="Gerçekleşen" type="number" density="compact" min="0"
-                                            variant="outlined" hide-details :suffix="item.birim"
-                                            style="width: 140px;" />
+                                    <v-col cols="auto" justfy="center" md="4" class="d-flex align-center pa-4">
+                                        <v-text-field v-model.number="item.miktar" label="Gerçekleşen" type="number"
+                                            density="compact" min="0" variant="outlined" hide-details
+                                            :suffix="item.birim" style="width: 140px;" />
                                     </v-col>
                                 </v-row>
                             </v-list-item>
@@ -97,7 +97,7 @@ async function fetchOrdersToPrepare() {
     loading.value = true; error.value = null; orders.value = [];
     console.log('Fetching orders to prepare...');
     try {
-        const response = await axios.get('/api/hazirlanacak');
+        const response = await axios.get('http://localhost:3000/api/hazirlanacak');
         // Gelen veriyi doğrudan kullanıyoruz, miktar alanları düzenlenebilir olacak
         orders.value = response.data;
         console.log('Fetched orders for preparation:', orders.value);
@@ -136,7 +136,7 @@ async function saveAndMarkAsPrepared(order, index) {
 
     try {
         // PUT isteği ile hem kalem miktarlarını hem de durumu güncelle
-        await axios.put(`/api/siparis/${orderId}`, payload);
+        await axios.put(`http://localhost:3000/api/siparis/${orderId}`, payload);
 
         showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
 

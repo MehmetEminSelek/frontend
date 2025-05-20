@@ -84,9 +84,13 @@
                               <template v-slot:append>
                                 <div class="d-flex flex-column align-end">
                                   <span class="text-body-2">{{ kalem.miktar }} {{ kalem.birim }}</span>
-                                  <span class="text-caption text-grey"> @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{
-                                    kalem.birim === 'Gram' ? 'KG' : kalem.birim }} = {{
-                                      calculateItemTotal(kalem).toFixed(2) }} ₺ </span>
+                                  <span class="text-caption text-grey">
+                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' :
+                                      kalem.birim }}
+                                    <span v-if="getActivePrice(kalem) !== null"> | Güncel: {{ getActivePrice(kalem) }}
+                                      ₺</span>
+                                    = {{ calculateItemTotal(kalem).toFixed(2) }} ₺
+                                  </span>
                                 </div>
                               </template>
                             </v-list-item>
@@ -217,7 +221,7 @@ const headers = ref([
   { title: 'Ödeme Durumu', key: 'odemeDurumu', sortable: false, align: 'center' },
   { title: 'Tepsi Maliyeti (₺)', key: 'tepsiMaliyeti', value: item => item.toplamTepsiMaliyeti || 0, sortable: true, align: 'end' },
   { title: 'Genel Toplam (₺)', key: 'genelToplam', value: item => calculateGrandTotal(item), sortable: true, align: 'end' },
-  { title: 'Kalan Tutar (₺)', key: 'kalanTutar', value: item => calculateGrandTotal(item) - calculateTotalPaid(item.odemeler), sortable: true, align: 'end' }, // <<< YENİ
+  { title: 'Kalan Tutar (₺)', key: 'kalanTutar', value: item => calculateGrandTotal(item) - calculateTotalPaid(item.odemeler), sortable: true, align: 'end' },
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ]);
 const allOrders = ref([]);
@@ -240,24 +244,45 @@ function showSnackbar(text, color = 'info', timeout = 4000) { snackbarText.value
 // Validasyon Kuralları
 const rules = { required: value => !!value || 'Bu alan zorunludur.', positiveNumber: value => (typeof value === 'number' && value > 0) || 'Tutar 0 dan büyük bir sayı olmalıdır.' };
 
+// Active Prices Map
+const activePricesMap = ref({});
+
+// Fetch active prices (latest for each product/unit)
+async function fetchActivePrices() {
+  try {
+    const response = await axios.get('http://localhost:3000/api/fiyatlar');
+    const allPrices = response.data;
+    const latestMap = {};
+    allPrices.forEach(price => {
+      const key = `${price.urunId}-${price.birim}`;
+      if (!latestMap[key] || new Date(price.gecerliTarih) > new Date(latestMap[key].gecerliTarih)) {
+        latestMap[key] = price;
+      }
+    });
+    activePricesMap.value = latestMap;
+  } catch (err) {
+    console.error('❌ Aktif fiyatlar çekilemedi:', err);
+    activePricesMap.value = {};
+  }
+}
+
 // API'den TÜM veriyi çekme fonksiyonu
 async function fetchOrders() {
   loading.value = true; error.value = null; console.log('Fetching all orders...');
   try {
-    const response = await axios.get('/api/orders'); // Ödemeleri de içermeli
+    const response = await axios.get('http://localhost:3000/api/orders'); // Ödemeleri de içermeli
     allOrders.value = response.data;
     console.log('All orders loaded:', JSON.parse(JSON.stringify(allOrders.value)));
   } catch (err) { console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err); error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`; allOrders.value = []; }
   finally { loading.value = false; }
 }
 
-onMounted(() => { fetchOrders(); });
+onMounted(() => { fetchOrders(); fetchActivePrices(); });
 
 // --- Hesaplama Fonksiyonları ---
 function calculateItemTotal(kalem) { if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0; let unitPrice = kalem.birimFiyat; if (kalem.birim.toLowerCase() === 'gram' && unitPrice > 0) { unitPrice = unitPrice / 1000; } return kalem.miktar * unitPrice; }
 function calculatePackageProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
 function calculateProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
-function calculateGrandTotal(order) { if (!order) return 0; const productTotal = calculateProductTotal(order.kalemler); const tepsiTotal = order.toplamTepsiMaliyeti || 0; const kargoTotal = order.kargoUcreti || 0; const digerTotal = order.digerHizmetTutari || 0; return productTotal + tepsiTotal + kargoTotal + digerTotal; }
 function calculateTotalPaid(odemeler) { if (!odemeler || !Array.isArray(odemeler)) return 0; return odemeler.reduce((total, odeme) => total + (odeme.tutar || 0), 0); }
 // --- Hesaplama Fonksiyonları Sonu ---
 
@@ -302,7 +327,7 @@ async function savePayment() {
   console.log(`POST /api/siparis/${orderId}/odemeler gönderiliyor:`, payload);
 
   try {
-    const response = await axios.post(`/api/siparis/${orderId}/odemeler`, payload);
+    const response = await axios.post(`http://localhost:3000/api/siparis/${orderId}/odemeler`, payload);
     const yeniOdeme = response.data;
     const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
     if (orderIndex > -1) {
@@ -340,7 +365,7 @@ async function deleteOrder(id) {
   console.log('Sil ID:', id); if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
-    await axios.delete(`/api/siparis/${id}`);
+    await axios.delete(`http://localhost:3000/api/siparis/${id}`);
     showSnackbar('Sipariş başarıyla silindi.', 'success'); // Snackbar kullanıldı
     if (itemIndex > -1) { allOrders.value.splice(itemIndex, 1); }
   } catch (err) {
@@ -361,50 +386,61 @@ function getUrunIcon(urunAdi) {
   if (urunAdi.toLowerCase().includes('kadayıf')) return 'mdi-noodles';
   return 'mdi-food-variant';
 }
-// --- Gruplama Fonksiyonu (GÜNCELLENDİ) ---
+// --- Gruplama Fonksiyonu (DÜZELTİLDİ) ---
 function groupItemsByPackage(kalemler) {
   if (!kalemler || !Array.isArray(kalemler)) return [];
-
-  const groupedPackages = [];
-  let currentPackage = null;
-
-  // Backend'den gelen kalemlerin sıralı olduğunu varsayıyoruz (aynı pakete aitler art arda gelir)
-  kalemler.forEach((kalem, index) => {
-    const ambalajAdi = kalem.ambalaj?.ad || 'Bilinmiyor';
-    const specificPackageName = kalem.kutu?.ad || kalem.tepsiTava?.ad || '';
-    const tepsiTavaFiyat = kalem.tepsiTavaId ? (kalem.tepsiTava?.fiyat || 0) : 0;
-    const kutuId = kalem.kutuId;
-    const tepsiTavaId = kalem.tepsiTavaId;
-
-    // Bir önceki kalemle aynı pakete mi ait? (Ambalaj, Kutu ID, Tepsi ID kontrolü)
-    const previousKalem = index > 0 ? kalemler[index - 1] : null;
-    const isSamePackage = previousKalem &&
-      kalem.ambalajId === previousKalem.ambalajId &&
-      kalem.kutuId === previousKalem.kutuId &&
-      kalem.tepsiTavaId === previousKalem.tepsiTavaId;
-
-    if (!isSamePackage || !currentPackage) {
-      // Yeni bir paket grubu başlat
-      currentPackage = {
-        // Benzersiz bir anahtar oluşturmak için index'i de kullanabiliriz
-        // (aynı türde birden fazla paket varsa diye)
-        key: `${ambalajAdi}-${kutuId || 'none'}-${tepsiTavaId || 'none'}-${index}`,
-        ambalajAdi: ambalajAdi,
-        specificPackageName: specificPackageName,
-        tepsiTavaFiyat: tepsiTavaFiyat,
+  // Aynı ambalajId, kutuId, tepsiTavaId olan kalemleri grupla
+  const grouped = {};
+  kalemler.forEach((kalem) => {
+    const key = `${kalem.ambalajId || 'none'}-${kalem.kutuId || 'none'}-${kalem.tepsiTavaId || 'none'}`;
+    if (!grouped[key]) {
+      grouped[key] = {
+        key,
+        ambalajAdi: kalem.ambalaj?.ad || 'Bilinmiyor',
+        specificPackageName: kalem.kutu?.ad || kalem.tepsiTava?.ad || '',
+        tepsiTavaFiyat: kalem.tepsiTavaId ? (kalem.tepsiTava?.fiyat || 0) : 0,
         urunler: []
       };
-      groupedPackages.push(currentPackage);
     }
-
-    // Kalemi mevcut pakete ekle
-    currentPackage.urunler.push(kalem);
+    grouped[key].urunler.push(kalem);
   });
-
-  return groupedPackages;
+  return Object.values(grouped);
 }
-// 
-// <<< YARDIMCI FONKSİYONLAR SONU >>>
+// --- KDV Hesaplama Fonksiyonu ---
+function getKdvOrani(order) {
+  // Oturma alanı var mı bilgisi yoksa varsayılan %10, yoksa %1
+  // TODO: order.oturmaAlaniVar gibi bir alan varsa ona göre ayarla
+  // Şimdilik sabit %10 (gerekirse %1 yap)
+  return 0.10;
+}
+function calculateKdv(order) {
+  const productTotal = calculateProductTotal(order.kalemler);
+  const tepsiTotal = order.toplamTepsiMaliyeti || 0;
+  const kargoTotal = order.kargoUcreti || 0;
+  const digerTotal = order.digerHizmetTutari || 0;
+  const kdvOrani = getKdvOrani(order);
+  // KDV matrahı: ürün + tepsi + kargo + hizmet
+  const matrah = productTotal + tepsiTotal + kargoTotal + digerTotal;
+  return matrah * kdvOrani;
+}
+// --- Grand Total KDV dahil ---
+function calculateGrandTotal(order) {
+  if (!order) return 0;
+  const productTotal = calculateProductTotal(order.kalemler);
+  const tepsiTotal = order.toplamTepsiMaliyeti || 0;
+  const kargoTotal = order.kargoUcreti || 0;
+  const digerTotal = order.digerHizmetTutari || 0;
+  const kdv = calculateKdv(order);
+  return productTotal + tepsiTotal + kargoTotal + digerTotal + kdv;
+}
+// --- Gruplama Fonksiyonu (DÜZELTİLDİ) Sonu ---
+
+function getActivePrice(kalem) {
+  if (!kalem.urunId || !kalem.birim) return null;
+  const key = `${kalem.urunId}-${kalem.birim}`;
+  const priceObj = activePricesMap.value[key];
+  return priceObj ? priceObj.fiyat?.toFixed(2) : null;
+}
 
 </script>
 

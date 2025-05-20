@@ -15,20 +15,22 @@ import * as directives from 'vuetify/directives';
 // import * as labsComponents from 'vuetify/labs/components';
 
 // --- Tema Tanımlaması ---
-const myCustomLightTheme = {
+const baklavaGreenTheme = {
     dark: false,
     colors: {
-        primary: '#FF9800', // Örnek Turuncu
-        'primary-darken-1': '#F57C00',
-        secondary: '#607D8B', // Örnek Mavi Gri
-        'secondary-darken-1': '#455A64',
-        accent: '#FFC107',
+        primary: '#7BAE7F', // Soluk yeşil
+        'primary-darken-1': '#5C8D5A',
+        secondary: '#E9D8A6', // Pastel altın/krem
+        'secondary-darken-1': '#C9B37C',
+        accent: '#F6C177', // Hafif altın vurgusu
         error: '#D32F2F',
-        info: '#1976D2',
-        success: '#388E3C',
-        warning: '#FFA000',
-        background: '#ECEFF1',
+        info: '#7BAE7F', // Bilgi için de yeşil
+        success: '#A3C9A8', // Açık yeşil
+        warning: '#F6C177', // Hafif altın
+        background: '#F4F8F3', // Çok açık yeşil/krem arka plan
         surface: '#FFFFFF',
+        'baklava-gold': '#E9D8A6', // Ekstra vurgu için
+        'baklava-green': '#7BAE7F',
     },
 };
 
@@ -36,9 +38,9 @@ const myCustomLightTheme = {
 const vuetify = createVuetify({
     // 1. TEMA AYARLARI
     theme: {
-        defaultTheme: 'myCustomLightTheme',
+        defaultTheme: 'baklavaGreenTheme',
         themes: {
-            myCustomLightTheme,
+            baklavaGreenTheme,
         },
     },
 

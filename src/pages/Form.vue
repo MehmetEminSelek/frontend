@@ -367,7 +367,7 @@ async function submitForm() {
   const payload = { tarih: form.tarih, teslimatTuruId: form.teslimatTuruId, subeId: form.subeId, gonderenTipiId: form.gonderenTipiId, gonderenAdi: form.gonderenAdi, gonderenTel: form.gonderenTel, aliciAdi: form.aliciAdi, aliciTel: form.aliciTel, adres: form.adres, aciklama: form.aciklama, siparisler: siparisPayload, gorunecekAd: aliciGondericiAdi };
   console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
   try {
-    const { data } = await axios.post('/api/siparis', payload);
+    const { data } = await axios.post('http://localhost:3000/api/siparis', payload);
     console.log('✅ Sipariş kaydedildi:', data);
     alert('Sipariş başarıyla kaydedildi!');
     // Formu sıfırlama işlemleri...

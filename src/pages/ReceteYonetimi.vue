@@ -1,0 +1,285 @@
+<template>
+    <v-container class="py-6 px-2 px-md-8" fluid>
+        <v-card class="pa-4 rounded-xl" elevation="2"
+            style="background: linear-gradient(135deg, #e8f5e9 60%, #fffde7 100%);">
+            <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
+                <span class="d-flex align-center">
+                    <v-icon color="success" class="mr-2">mdi-food-variant</v-icon>
+                    Reçete Yönetimi
+                </span>
+                <div class="d-flex align-center flex-wrap">
+                    <v-text-field v-model="search" label="Ara..." dense hide-details clearable class="mr-2 mb-2 mb-md-0"
+                        style="max-width:180px" @keyup.enter="fetchReceteler" color="success" />
+                    <v-select v-model="filterUrunId" :items="urunler" item-title="ad" item-value="id"
+                        label="Ürün Filtrele" dense hide-details clearable class="mr-2 mb-2 mb-md-0"
+                        style="max-width:180px" color="success" />
+                    <v-btn color="success" class="mr-2 mb-2 mb-md-0" @click="openAddDialog"
+                        prepend-icon="mdi-plus-circle-outline">Yeni Reçete</v-btn>
+                    <v-btn icon="mdi-refresh" variant="text" @click="fetchReceteler" title="Yenile"
+                        color="success"></v-btn>
+                </div>
+            </v-card-title>
+            <v-divider class="mb-4"></v-divider>
+            <v-row dense>
+                <v-col cols="12" v-if="loading">
+                    <v-skeleton-loader type="card@3" class="my-4" />
+                </v-col>
+                <v-col cols="12" v-if="!loading && filteredReceteler.length === 0">
+                    <v-alert type="info" color="success" variant="tonal" class="my-8 text-center">
+                        <v-icon size="large" color="success">mdi-emoticon-sad-outline</v-icon>
+                        <div class="mt-2">Hiç reçete bulunamadı. Yeni bir reçete ekleyin!</div>
+                    </v-alert>
+                </v-col>
+                <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" md="6" lg="4">
+                    <v-card class="mb-4 pa-0 rounded-lg" elevation="1"
+                        style="background: linear-gradient(120deg, #f1f8e9 80%, #fffde7 100%);">
+                        <v-card-title class="text-body-1 font-weight-bold d-flex justify-space-between align-center"
+                            style="background:rgba(76,175,80,0.08);">
+                            <span class="d-flex align-center">
+                                <v-icon color="success" class="mr-1">mdi-clipboard-list-outline</v-icon>
+                                <span>{{ recete.urunAd || recete.name }}</span>
+                            </span>
+                            <span>
+                                <v-btn icon="mdi-content-copy" size="small" variant="text" color="primary"
+                                    @click="copyRecete(recete)" title="Kopyala"></v-btn>
+                                <v-btn icon="mdi-pencil" size="small" variant="text" color="warning"
+                                    @click="openEditDialog(recete)"></v-btn>
+                                <v-btn icon="mdi-delete" size="small" variant="text" color="error"
+                                    @click="confirmDelete(recete)"></v-btn>
+                            </span>
+                        </v-card-title>
+                        <v-divider></v-divider>
+                        <v-table density="compact" class="rounded-b-lg">
+                            <thead style="background:#f9fbe7;">
+                                <tr>
+                                    <th>Stok Adı</th>
+                                    <th>Tip</th>
+                                    <th class="text-end">Miktar (gr)</th>
+                                    <th>Kod</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="ing in recete.ingredients" :key="ing.id">
+                                    <td>{{ ing.stokAd }}</td>
+                                    <td>
+                                        <v-chip :color="ing.stokTip === 'Hammadde' ? 'success' : 'warning'"
+                                            size="x-small" label>{{ ing.stokTip }}</v-chip>
+                                    </td>
+                                    <td class="text-end font-weight-bold">{{ ing.miktarGram?.toLocaleString() }} gr</td>
+                                    <td>{{ ing.stokKod }}</td>
+                                </tr>
+                            </tbody>
+                        </v-table>
+                    </v-card>
+                </v-col>
+            </v-row>
+        </v-card>
+        <v-dialog v-model="dialog" max-width="600px">
+            <v-card class="rounded-xl">
+                <v-card-title class="text-h6 font-weight-bold">{{ editMode ? 'Reçeteyi Düzenle' : 'Yeni Reçete Ekle'
+                    }}</v-card-title>
+                <v-card-text>
+                    <v-form @submit.prevent="saveRecete">
+                        <v-text-field v-model="form.name" label="Reçete Adı" required color="success"></v-text-field>
+                        <v-select v-model="form.urunId" :items="urunler" item-title="ad" item-value="id"
+                            label="Ürün (opsiyonel)" color="success"></v-select>
+                        <div class="mb-2 mt-4 font-weight-bold">Malzemeler</div>
+                        <div v-for="(ing, idx) in form.ingredients" :key="idx"
+                            class="d-flex align-center mb-2 flex-wrap">
+                            <v-select v-model="ing.stokKod" :items="stokOptions" item-title="label" item-value="kod"
+                                label="Stok" class="mr-2 mb-2 mb-md-0" style="min-width: 180px" dense required
+                                color="success"></v-select>
+                            <v-text-field v-model.number="ing.miktarGram" label="Miktar (gr)" type="number" min="1"
+                                style="max-width:120px" dense required color="success"></v-text-field>
+                            <v-btn icon="mdi-delete" size="small" color="error" variant="text"
+                                @click="removeIngredient(idx)"></v-btn>
+                        </div>
+                        <v-btn color="primary" variant="tonal" class="mb-2" @click="addIngredient"
+                            prepend-icon="mdi-plus">Malzeme Ekle</v-btn>
+                    </v-form>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="closeDialog">İptal</v-btn>
+                    <v-btn color="success" @click="saveRecete">Kaydet</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <v-dialog v-model="deleteDialog" max-width="400px">
+            <v-card class="rounded-xl">
+                <v-card-title class="text-h6">Reçete Sil</v-card-title>
+                <v-card-text>Bu reçeteyi silmek istediğinize emin misiniz?</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="deleteDialog = false">Vazgeç</v-btn>
+                    <v-btn color="error" @click="deleteRecete">Sil</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+        <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">{{ snackbar.text }}</v-snackbar>
+    </v-container>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import axios from 'axios';
+
+const receteler = ref([]);
+const loading = ref(true);
+const urunler = ref([]);
+const stokOptions = ref([]);
+const dialog = ref(false);
+const deleteDialog = ref(false);
+const editMode = ref(false);
+const form = ref({ id: null, name: '', urunId: null, ingredients: [] });
+const deleteId = ref(null);
+const snackbar = ref({ show: false, text: '', color: 'success' });
+const search = ref('');
+const filterUrunId = ref(null);
+
+async function fetchReceteler() {
+    loading.value = true;
+    try {
+        const response = await axios.get('http://localhost:3000/api/receteler');
+        receteler.value = response.data;
+    } catch (err) {
+        receteler.value = [];
+    } finally {
+        loading.value = false;
+    }
+}
+async function fetchDropdowns() {
+    try {
+        const res = await axios.get('http://localhost:3000/api/dropdown');
+        urunler.value = res.data.urunler;
+        stokOptions.value = [
+            ...res.data.hammaddeler.map(x => ({ kod: x.kod, label: x.ad + ' (Hammadde)' })),
+            ...res.data.yariMamuller.map(x => ({ kod: x.kod, label: x.ad + ' (Yarı Mamul)' }))
+        ];
+    } catch (err) {
+        urunler.value = [];
+        stokOptions.value = [];
+    }
+}
+function openAddDialog() {
+    editMode.value = false;
+    form.value = { id: null, name: '', urunId: null, ingredients: [{ stokKod: '', miktarGram: null }] };
+    dialog.value = true;
+}
+function openEditDialog(recete) {
+    editMode.value = true;
+    form.value = {
+        id: recete.id,
+        name: recete.name,
+        urunId: urunler.value.find(u => u.ad === recete.urunAd)?.id || null,
+        ingredients: recete.ingredients.map(ing => ({ stokKod: ing.stokKod, miktarGram: ing.miktarGram }))
+    };
+    dialog.value = true;
+}
+function closeDialog() {
+    dialog.value = false;
+}
+function addIngredient() {
+    form.value.ingredients.push({ stokKod: '', miktarGram: null });
+}
+function removeIngredient(idx) {
+    form.value.ingredients.splice(idx, 1);
+}
+async function saveRecete() {
+    if (!form.value.name || form.value.ingredients.some(ing => !ing.stokKod || !ing.miktarGram)) {
+        snackbar.value = { show: true, text: 'Tüm alanları doldurun.', color: 'error' };
+        return;
+    }
+    try {
+        if (editMode.value) {
+            await axios.put('http://localhost:3000/api/receteler', form.value);
+            snackbar.value = { show: true, text: 'Reçete güncellendi.', color: 'success' };
+        } else {
+            await axios.post('http://localhost:3000/api/receteler', form.value);
+            snackbar.value = { show: true, text: 'Reçete eklendi.', color: 'success' };
+        }
+        dialog.value = false;
+        fetchReceteler();
+    } catch (err) {
+        snackbar.value = { show: true, text: 'Kayıt sırasında hata oluştu.', color: 'error' };
+    }
+}
+function confirmDelete(recete) {
+    deleteId.value = recete.id;
+    deleteDialog.value = true;
+}
+async function deleteRecete() {
+    try {
+        await axios.delete('http://localhost:3000/api/receteler', { data: { id: deleteId.value } });
+        snackbar.value = { show: true, text: 'Reçete silindi.', color: 'success' };
+        deleteDialog.value = false;
+        fetchReceteler();
+    } catch (err) {
+        snackbar.value = { show: true, text: 'Silme sırasında hata oluştu.', color: 'error' };
+    }
+}
+function copyRecete(recete) {
+    editMode.value = false;
+    form.value = {
+        id: null,
+        name: recete.name + ' (Kopya)',
+        urunId: urunler.value.find(u => u.ad === recete.urunAd)?.id || null,
+        ingredients: recete.ingredients.map(ing => ({ stokKod: ing.stokKod, miktarGram: ing.miktarGram }))
+    };
+    dialog.value = true;
+}
+const filteredReceteler = computed(() => {
+    let list = receteler.value;
+    if (search.value) {
+        const s = search.value.toLowerCase();
+        list = list.filter(r =>
+            (r.name && r.name.toLowerCase().includes(s)) ||
+            (r.urunAd && r.urunAd.toLowerCase().includes(s)) ||
+            (urunler.value.find(u => u.id === r.urunId)?.ad?.toLowerCase().includes(s))
+        );
+    }
+    if (filterUrunId.value) {
+        list = list.filter(r => r.urunId === filterUrunId.value);
+    }
+    return list;
+});
+onMounted(() => { fetchReceteler(); fetchDropdowns(); });
+</script>
+
+<style scoped>
+.v-card[variant="tonal"] {
+    border: 1.5px solid #c8e6c9;
+    box-shadow: 0 2px 8px 0 rgba(76, 175, 80, 0.07);
+}
+
+.v-card .v-card-title {
+    background: none;
+}
+
+.v-table thead th {
+    color: #388e3c;
+    font-weight: 600;
+    background: #f9fbe7;
+}
+
+.v-table tbody tr {
+    transition: background 0.2s;
+}
+
+.v-table tbody tr:hover {
+    background: #e8f5e9;
+}
+
+.v-chip {
+    font-size: 0.85em;
+}
+
+@media (max-width: 960px) {
+
+    .v-card-title,
+    .v-table thead th,
+    .v-table tbody td {
+        font-size: 0.95em !important;
+    }
+}
+</style>
