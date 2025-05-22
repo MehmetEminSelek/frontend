@@ -39,7 +39,7 @@
     </v-container>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, provide } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -52,6 +52,7 @@ import {
     PointElement,
     LineElement
 } from 'chart.js';
+import { createCustomVuetify } from '../plugins/vuetify';
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const startDate = ref(new Date().toISOString().slice(0, 10));
@@ -102,6 +103,24 @@ const barOptions = {
     scales: { x: { beginAtZero: true } }
 };
 
+// Üretim Planı modülüne özel tema ile Vuetify instance'ı oluştur
+const uretimPlaniTheme = {
+    dark: false,
+    colors: {
+        primary: '#2196F3', // Mavi
+        secondary: '#A5D6A7', // Açık yeşil
+        accent: '#64B5F6',
+        error: '#D32F2F',
+        info: '#2196F3',
+        success: '#388E3C',
+        warning: '#FBC02D',
+        background: '#F5F7FA',
+        surface: '#FFFFFF',
+    },
+};
+const uretimPlaniVuetify = createCustomVuetify({ themeName: 'uretimPlaniTheme', customTheme: uretimPlaniTheme });
+provide('vuetify', uretimPlaniVuetify);
+
 async function fetchReport() {
     loading.value = true;
     try {
@@ -125,3 +144,27 @@ async function fetchReport() {
 // Sayfa açıldığında bugünün raporunu getir
 fetchReport();
 </script>
+
+<style scoped>
+.v-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px #2196f322;
+}
+
+.v-btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.v-chip {
+    border-radius: 8px;
+}
+
+.v-alert {
+    border-radius: 8px;
+}
+
+.v-data-table {
+    border-radius: 12px;
+}
+</style>

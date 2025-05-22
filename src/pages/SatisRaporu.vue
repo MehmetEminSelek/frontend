@@ -42,7 +42,7 @@
                         <span class="text-h6">₺{{ ortalamaSepetTutari.toLocaleString('tr-TR', {
                             minimumFractionDigits: 2
                         })
-                            }}</span>
+                        }}</span>
                     </v-sheet>
                 </v-col>
             </v-row>
@@ -140,7 +140,7 @@
     </v-container>
 </template>
 <script setup>
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, provide } from 'vue';
 import { Bar, Line } from 'vue-chartjs';
 import {
     Chart as ChartJS,
@@ -153,6 +153,7 @@ import {
     PointElement,
     LineElement
 } from 'chart.js';
+import { createCustomVuetify } from '../plugins/vuetify';
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const startDate = ref(new Date().toISOString().slice(0, 10));
@@ -394,6 +395,24 @@ async function exportChartPng(chartKey) {
     }
 }
 
+// Satış Raporu modülüne özel tema ile Vuetify instance'ı oluştur
+const satisRaporuTheme = {
+    dark: false,
+    colors: {
+        primary: '#2196F3', // Mavi
+        secondary: '#A5D6A7', // Açık yeşil
+        accent: '#64B5F6',
+        error: '#D32F2F',
+        info: '#2196F3',
+        success: '#388E3C',
+        warning: '#FBC02D',
+        background: '#F5F7FA',
+        surface: '#FFFFFF',
+    },
+};
+const satisRaporuVuetify = createCustomVuetify({ themeName: 'satisRaporuTheme', customTheme: satisRaporuTheme });
+provide('vuetify', satisRaporuVuetify);
+
 // Sayfa açıldığında bugünün raporunu getir
 fetchReport();
 </script>
@@ -401,5 +420,27 @@ fetchReport();
 .highlight-row {
     background: linear-gradient(90deg, #fffde7 0%, #ffe082 100%) !important;
     font-weight: bold;
+}
+
+.v-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px #2196f322;
+}
+
+.v-btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.v-chip {
+    border-radius: 8px;
+}
+
+.v-alert {
+    border-radius: 8px;
+}
+
+.v-data-table {
+    border-radius: 12px;
 }
 </style>

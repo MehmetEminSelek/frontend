@@ -14,7 +14,7 @@ import * as directives from 'vuetify/directives';
 // Eğer v-data-table-server gibi labs bileşenleri de kullanacaksan bu da gerekli:
 // import * as labsComponents from 'vuetify/labs/components';
 
-// --- Tema Tanımlaması ---
+// --- Tema Tanımlamaları ---
 const baklavaGreenTheme = {
     dark: false,
     colors: {
@@ -34,42 +34,52 @@ const baklavaGreenTheme = {
     },
 };
 
-// --- Vuetify Örneğini Oluşturma ---
-const vuetify = createVuetify({
-    // 1. TEMA AYARLARI
-    theme: {
-        defaultTheme: 'baklavaGreenTheme',
-        themes: {
-            baklavaGreenTheme,
+// Sipariş modülü için örnek tema
+const siparisTheme = {
+    dark: false,
+    colors: {
+        primary: '#1976D2', // Mavi
+        secondary: '#FFC107', // Sarı
+        accent: '#82B1FF',
+        error: '#FF5252',
+        info: '#2196F3',
+        success: '#4CAF50',
+        warning: '#FFC107',
+        background: '#F5F7FA',
+        surface: '#FFFFFF',
+    },
+};
+
+// createVuetify fonksiyonunu dışarıdan tema parametresi alacak şekilde güncelliyorum
+export function createCustomVuetify({ themeName = 'baklavaGreenTheme', extraThemes = {} } = {}) {
+    return createVuetify({
+        theme: {
+            defaultTheme: themeName,
+            themes: {
+                baklavaGreenTheme,
+                siparisTheme,
+                ...extraThemes,
+            },
         },
-    },
-
-    // 2. BİLEŞENLER VE DİREKTİFLER
-    // Vuetify'a hangi bileşenleri ve direktifleri kullanacağını söyle
-    components: {
-        ...components,
-        // ...labsComponents, // Eğer labs bileşenleri import ettiysen
-    },
-    directives,
-
-    // 3. VARSAYILAN BİLEŞEN PROPLARI (Defaults)
-    defaults: {
-        VCard: { elevation: 2, rounded: 'lg' },
-        VTextField: { variant: 'filled', density: 'comfortable' },
-        VTextarea: { variant: 'filled', density: 'comfortable' },
-        VSelect: { variant: 'filled', density: 'comfortable' },
-        VBtn: { variant: 'flat', color: 'secondary' }, // Varsayılan buton stili
-        // VDataTable: { density: 'compact' } // v-data-table için varsayılanlar (isteğe bağlı)
-    },
-
-    // 4. İKON AYARLARI
-    icons: {
-        defaultSet: 'mdi',
-        aliases,
-        sets: {
-            mdi,
+        components: {
+            ...components,
         },
-    },
-});
+        directives,
+        defaults: {
+            VCard: { elevation: 2, rounded: 'lg' },
+            VTextField: { variant: 'filled', density: 'comfortable' },
+            VTextarea: { variant: 'filled', density: 'comfortable' },
+            VSelect: { variant: 'filled', density: 'comfortable' },
+            VBtn: { variant: 'flat', color: 'secondary' },
+        },
+        icons: {
+            defaultSet: 'mdi',
+            aliases,
+            sets: { mdi },
+        },
+    });
+}
 
+// Varsayılan olarak baklavaGreenTheme ile export
+const vuetify = createCustomVuetify();
 export default vuetify;

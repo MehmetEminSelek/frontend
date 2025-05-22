@@ -7,13 +7,7 @@ import 'vuetify/styles'
 import './plugins/vuetify.js'
 import '@mdi/font/css/materialdesignicons.css'
 
-
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-
-
-const vuetify = createVuetify({ components, directives })
+import vuetify from './plugins/vuetify.js'
 
 createApp(App)
     .use(router)

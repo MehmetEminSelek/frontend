@@ -74,8 +74,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
 
 const orders = ref([]); // API'den gelen siparişler (içindeki kalemler düzenlenecek)
 const loading = ref(false);
@@ -87,6 +88,24 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
+
+// Onay Bekleyen modülüne özel tema ile Vuetify instance'ı oluştur
+const onayBekleyenTheme = {
+  dark: false,
+  colors: {
+    primary: '#6C63FF', // Mor-mavi
+    secondary: '#E0E7FF', // Açık mavi
+    accent: '#B39DDB',
+    error: '#D32F2F',
+    info: '#6C63FF',
+    success: '#388E3C',
+    warning: '#FBC02D',
+    background: '#F5F7FA',
+    surface: '#FFFFFF',
+  },
+};
+const onayBekleyenVuetify = createCustomVuetify({ themeName: 'onayBekleyenTheme', customTheme: onayBekleyenTheme });
+provide('vuetify', onayBekleyenVuetify);
 
 function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbarText.value = text; snackbarColor.value = color; snackbarTimeout.value = timeout; snackbar.value = true;
@@ -195,5 +214,32 @@ function getUrunIcon(urunAdi) {
 
 .list-item-border:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.v-expansion-panel {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #6c63ff22;
+  margin-bottom: 8px;
+}
+
+.v-card {
+  background: linear-gradient(135deg, #e0e7ff 60%, #fff 100%);
+}
+
+.v-btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.v-chip {
+  border-radius: 8px;
+}
+
+.v-alert {
+  border-radius: 8px;
+}
+
+.v-progress-linear {
+  border-radius: 8px;
 }
 </style>

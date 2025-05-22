@@ -150,8 +150,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
+import { ref, onMounted, reactive, computed, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
+
+// Fiyat modülüne özel tema ile Vuetify instance'ı oluştur
+const fiyatTheme = {
+  dark: false,
+  colors: {
+    primary: '#F6C177', // Altın/Sarı
+    secondary: '#FFF3CD', // Açık sarı
+    accent: '#FFD700',
+    error: '#D32F2F',
+    info: '#F6C177',
+    success: '#388E3C',
+    warning: '#FBC02D',
+    background: '#FFFBEA',
+    surface: '#FFFFFF',
+  },
+};
+const fiyatVuetify = createCustomVuetify({ themeName: 'fiyatTheme', extraThemes: { fiyatTheme } });
+provide('vuetify', fiyatVuetify);
 
 // Data Table State
 const itemsPerPage = ref(50);
@@ -326,5 +345,50 @@ const filteredPriceHistory = computed(() => {
 </script>
 
 <style scoped>
-/* ... */
+.v-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(246, 193, 119, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+  box-shadow: 0 4px 16px rgba(246, 193, 119, 0.16);
+}
+
+.v-btn {
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 8px rgba(246, 193, 119, 0.10);
+}
+
+.v-avatar {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.v-data-table {
+  border-radius: 12px;
+  background: #fff;
+}
+
+.v-data-table th {
+  background: #FFF3CD !important;
+  color: #F6C177 !important;
+  font-weight: bold;
+}
+
+.v-chip {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.v-card-title.bg-primary {
+  background: #F6C177 !important;
+  color: #fff !important;
+  border-radius: 12px 12px 0 0;
+}
 </style>

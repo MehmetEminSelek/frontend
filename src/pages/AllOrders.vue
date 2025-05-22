@@ -17,7 +17,7 @@
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-            }})</span> </template>
+        }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
           <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
@@ -207,8 +207,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
+
+// Tüm Siparişler modülüne özel tema ile Vuetify instance'ı oluştur
+const allOrdersTheme = {
+  dark: false,
+  colors: {
+    primary: '#1976D2', // Mavi
+    secondary: '#B0BEC5', // Gri
+    accent: '#64B5F6',
+    error: '#D32F2F',
+    info: '#1976D2',
+    success: '#388E3C',
+    warning: '#FBC02D',
+    background: '#F5F7FA',
+    surface: '#FFFFFF',
+  },
+};
+const allOrdersVuetify = createCustomVuetify({ themeName: 'allOrdersTheme', customTheme: allOrdersTheme });
+provide('vuetify', allOrdersVuetify);
 
 // Data Table State
 const itemsPerPage = ref(10);
@@ -446,7 +465,25 @@ function getActivePrice(kalem) {
 </script>
 
 <style scoped>
-.v-data-table__expanded__content td {
-  /* ... */
+.v-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #1976d222;
+}
+
+.v-btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.v-chip {
+  border-radius: 8px;
+}
+
+.v-alert {
+  border-radius: 8px;
+}
+
+.v-data-table {
+  border-radius: 12px;
 }
 </style>

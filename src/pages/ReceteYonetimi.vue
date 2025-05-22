@@ -85,7 +85,7 @@
         <v-dialog v-model="dialog" max-width="600px">
             <v-card class="rounded-xl">
                 <v-card-title class="text-h6 font-weight-bold">{{ editMode ? 'Reçeteyi Düzenle' : 'Yeni Reçete Ekle'
-                    }}</v-card-title>
+                }}</v-card-title>
                 <v-card-text>
                     <v-form @submit.prevent="saveRecete">
                         <v-text-field v-model="form.name" label="Reçete Adı" required color="success"></v-text-field>
@@ -129,8 +129,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
 
 const receteler = ref([]);
 const loading = ref(true);
@@ -144,6 +145,24 @@ const deleteId = ref(null);
 const snackbar = ref({ show: false, text: '', color: 'success' });
 const search = ref('');
 const filterUrunId = ref(null);
+
+// Reçete modülüne özel tema ile Vuetify instance'ı oluştur
+const receteTheme = {
+    dark: false,
+    colors: {
+        primary: '#43A047', // Yeşil
+        secondary: '#FFFDE7', // Açık sarı
+        accent: '#FFD600',
+        error: '#D32F2F',
+        info: '#43A047',
+        success: '#388E3C',
+        warning: '#FBC02D',
+        background: '#F4F8F3',
+        surface: '#FFFFFF',
+    },
+};
+const receteVuetify = createCustomVuetify({ themeName: 'receteTheme', customTheme: receteTheme });
+provide('vuetify', receteVuetify);
 
 async function fetchReceteler() {
     loading.value = true;
@@ -255,6 +274,28 @@ onMounted(() => { fetchReceteler(); fetchDropdowns(); });
 </script>
 
 <style scoped>
+.v-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px #43a04722;
+}
+
+.v-btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.v-chip {
+    border-radius: 8px;
+}
+
+.v-alert {
+    border-radius: 8px;
+}
+
+.v-data-table {
+    border-radius: 12px;
+}
+
 .v-card[variant="tonal"] {
     border: 1.5px solid #c8e6c9;
     box-shadow: 0 2px 8px 0 rgba(76, 175, 80, 0.07);

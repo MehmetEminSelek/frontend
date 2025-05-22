@@ -112,7 +112,7 @@
         loading-text="Hareketler yükleniyor...">
         <template v-slot:item.stok="{ item }">
           <span>{{ item.stok.hammadde?.ad || item.stok.yariMamul?.ad }}<br><small>{{ item.stok.operasyonBirimi?.ad
-              }}</small></span>
+          }}</small></span>
         </template>
         <template v-slot:item.tip="{ item }">
           <span>{{ hareketTipLabel(item.tip) }}</span>
@@ -207,8 +207,28 @@
   </v-container>
 </template>
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
+
+// Stok modülüne özel tema ile Vuetify instance'ı oluştur
+const stokTheme = {
+  dark: false,
+  colors: {
+    primary: '#388E3C', // Yeşil
+    secondary: '#C8E6C9', // Açık yeşil
+    accent: '#81C784',
+    error: '#D32F2F',
+    info: '#388E3C',
+    success: '#43A047',
+    warning: '#FBC02D',
+    background: '#F4F8F3',
+    surface: '#FFFFFF',
+  },
+};
+const stokVuetify = createCustomVuetify({ themeName: 'stokTheme', extraThemes: { stokTheme } });
+provide('vuetify', stokVuetify);
+
 const headers = [
   { title: 'Hammadde/Yarı Mamul', key: 'ad', sortable: true },
   { title: 'Kod', key: 'kod', sortable: true },
@@ -449,3 +469,52 @@ async function consumeOrderStok(siparisId) {
   }
 }
 </script>
+
+<style scoped>
+.v-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+  box-shadow: 0 4px 16px rgba(56, 142, 60, 0.16);
+}
+
+.v-btn {
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.10);
+}
+
+.v-avatar {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.v-data-table {
+  border-radius: 12px;
+  background: #fff;
+}
+
+.v-data-table th {
+  background: #C8E6C9 !important;
+  color: #388E3C !important;
+  font-weight: bold;
+}
+
+.v-chip {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.v-card-title.bg-primary {
+  background: #388E3C !important;
+  color: #fff !important;
+  border-radius: 12px 12px 0 0;
+}
+</style>

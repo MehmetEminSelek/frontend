@@ -45,9 +45,29 @@
   </v-container>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, provide } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { createCustomVuetify } from '../plugins/vuetify';
+
+// Kullanıcı yönetimi modülüne özel tema ile Vuetify instance'ı oluştur
+const kullaniciTheme = {
+  dark: false,
+  colors: {
+    primary: '#8e24aa', // Mor
+    secondary: '#ede7f6', // Açık lila
+    accent: '#ce93d8',
+    error: '#D32F2F',
+    info: '#8e24aa',
+    success: '#388E3C',
+    warning: '#FBC02D',
+    background: '#f8f5fc',
+    surface: '#FFFFFF',
+  },
+};
+const kullaniciVuetify = createCustomVuetify({ themeName: 'kullaniciTheme', extraThemes: { kullaniciTheme } });
+provide('vuetify', kullaniciVuetify);
+
 const headers = [
   { title: 'Ad', key: 'ad', sortable: true },
   { title: 'Email', key: 'email', sortable: true },
@@ -140,3 +160,52 @@ async function deleteUser(user) {
 }
 onMounted(fetchUsers);
 </script>
+
+<style scoped>
+.v-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(142, 36, 170, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+  box-shadow: 0 4px 16px rgba(142, 36, 170, 0.16);
+}
+
+.v-btn {
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 8px rgba(142, 36, 170, 0.10);
+}
+
+.v-avatar {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.v-data-table {
+  border-radius: 12px;
+  background: #fff;
+}
+
+.v-data-table th {
+  background: #ede7f6 !important;
+  color: #8e24aa !important;
+  font-weight: bold;
+}
+
+.v-chip {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.v-card-title.bg-primary {
+  background: #8e24aa !important;
+  color: #fff !important;
+  border-radius: 12px 12px 0 0;
+}
+</style>

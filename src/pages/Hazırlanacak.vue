@@ -20,7 +20,7 @@
                             <v-col cols="12" sm="3"> <strong>ID:</strong> {{ order.id }} </v-col>
                             <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih) }} </v-col>
                             <v-col cols="12" sm="5"> <strong>Müşteri:</strong> {{ order.gorunecekAd || order.gonderenAdi
-                            }} </v-col>
+                                }} </v-col>
                         </v-row>
                     </v-expansion-panel-title>
 
@@ -74,8 +74,9 @@
     </v-container>
 </template>
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
 
 const orders = ref([]); // API'den gelen siparişler (içindeki kalemler düzenlenecek)
 const loading = ref(false);
@@ -87,6 +88,24 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
+
+// Hazırlanacak modülüne özel tema ile Vuetify instance'ı oluştur
+const hazirlanacakTheme = {
+    dark: false,
+    colors: {
+        primary: '#FF9800', // Turuncu
+        secondary: '#FFE0B2', // Açık turuncu
+        accent: '#FFB74D',
+        error: '#D32F2F',
+        info: '#FF9800',
+        success: '#388E3C',
+        warning: '#FBC02D',
+        background: '#FFF8E1',
+        surface: '#FFFFFF',
+    },
+};
+const hazirlanacakVuetify = createCustomVuetify({ themeName: 'hazirlanacakTheme', extraThemes: { hazirlanacakTheme } });
+provide('vuetify', hazirlanacakVuetify);
 
 function showSnackbar(text, color = 'info', timeout = 4000) {
     snackbarText.value = text; snackbarColor.value = color; snackbarTimeout.value = timeout; snackbar.value = true;
@@ -168,6 +187,53 @@ function getUrunIcon(urunAdi) { if (!urunAdi) return 'mdi-help-circle-outline'; 
 </script>
 
 <style scoped>
+.v-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.08);
+    background: #fff;
+    transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.16);
+}
+
+.v-btn {
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.10);
+}
+
+.v-avatar {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.v-data-table {
+    border-radius: 12px;
+    background: #fff;
+}
+
+.v-data-table th {
+    background: #FFE0B2 !important;
+    color: #FF9800 !important;
+    font-weight: bold;
+}
+
+.v-chip {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.v-card-title.bg-primary {
+    background: #FF9800 !important;
+    color: #fff !important;
+    border-radius: 12px 12px 0 0;
+}
+
 .expansion-panel-no-padding :deep(.v-expansion-panel-text__wrapper) {
     padding: 0;
 }

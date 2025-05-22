@@ -185,11 +185,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
 
-// isMounted ref'i kaldırıldı
-// const isMounted = ref(false);
+// Sipariş modülüne özel tema ile Vuetify instance'ı oluştur
+const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
+provide('vuetify', siparisVuetify);
 
 const valid = ref(true);
 const formRef = ref(null);
@@ -255,7 +257,6 @@ onMounted(async () => {
   } catch (err) {
     console.error('❌ Dropdown API hatası:', err.response?.data || err.message || err);
   }
-  // finally bloğu ve isMounted ataması kaldırıldı
 });
 
 const selectedTeslimatTuru = computed(() => dropdowns.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
@@ -392,18 +393,45 @@ async function submitForm() {
 <style scoped>
 .v-chip-group .v-chip {
   margin: 4px !important;
-  /* Daha belirgin boşluk */
   transition: transform 0.1s ease-in-out;
-  /* Hover efekti */
 }
 
 .v-chip-group .v-chip:hover {
   transform: translateY(-2px);
-  /* Hover efekti */
 }
 
-/* Dialog içindeki ürün listesi için */
+.v-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+}
+
+.v-btn {
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+}
+
+.v-avatar {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
 .v-list-item:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.v-card-title.bg-primary {
+  background: #1976D2 !important;
+  color: #fff !important;
+  border-radius: 12px 12px 0 0;
 }
 </style>

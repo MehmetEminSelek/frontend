@@ -111,8 +111,28 @@
     </v-container>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, provide } from 'vue';
 import axios from 'axios';
+import { createCustomVuetify } from '../plugins/vuetify';
+
+// Kargo modülüne özel tema ile Vuetify instance'ı oluştur
+const kargoTheme = {
+    dark: false,
+    colors: {
+        primary: '#1976D2', // Mavi
+        secondary: '#90A4AE', // Gri
+        accent: '#64B5F6',
+        error: '#D32F2F',
+        info: '#1976D2',
+        success: '#388E3C',
+        warning: '#FBC02D',
+        background: '#F5F7FA',
+        surface: '#FFFFFF',
+    },
+};
+const kargoVuetify = createCustomVuetify({ themeName: 'kargoTheme', extraThemes: { kargoTheme } });
+provide('vuetify', kargoVuetify);
+
 const tab = ref('kargoyaVerilecek');
 const headers = [
     { title: 'ID', key: 'id', sortable: true },
@@ -250,6 +270,53 @@ function yazdirEtiket() {
 onMounted(fetchKargoSiparisler);
 </script>
 <style scoped>
+.v-card {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+    background: #fff;
+    transition: box-shadow 0.2s;
+}
+
+.v-card:hover {
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+}
+
+.v-btn {
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.v-btn:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+}
+
+.v-avatar {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.v-data-table {
+    border-radius: 12px;
+    background: #fff;
+}
+
+.v-data-table th {
+    background: #90A4AE !important;
+    color: #1976D2 !important;
+    font-weight: bold;
+}
+
+.v-chip {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.v-card-title.bg-primary {
+    background: #1976D2 !important;
+    color: #fff !important;
+    border-radius: 12px 12px 0 0;
+}
+
 .etiket-yazdir {
     background: #fff;
     border: 1px solid #333;
