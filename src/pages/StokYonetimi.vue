@@ -250,8 +250,8 @@ onMounted(() => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user && user.role === 'admin';
   if (!user || (user.role !== 'admin' && user.role !== 'mudur')) {
-    alert('Bu sayfaya erişim için yetkiniz yok.');
-    window.location.href = '/login';
+    showSnackbar('Bu sayfaya erişim için yetkiniz yok.', 'error');
+    setTimeout(() => { window.location.href = '/login'; }, 2000);
     return;
   }
   const token = localStorage.getItem('token');
@@ -435,6 +435,17 @@ async function fetchRapor() {
     rapor.value = {};
   } finally {
     raporLoading.value = false;
+  }
+}
+// Siparişe göre stoktan otomatik düşüm fonksiyonu (örnek buton ve fonksiyon)
+async function consumeOrderStok(siparisId) {
+  try {
+    await axios.post('http://localhost:3000/api/stok/consume-order', { siparisId });
+    showSnackbar('Sipariş stoktan başarıyla düşüldü!', 'success');
+    fetchStoklar();
+    fetchHareketler(); // HAREKETLERİ GÜNCELLE
+  } catch (err) {
+    showSnackbar('Stok düşümü sırasında hata oluştu.', 'error');
   }
 }
 </script>

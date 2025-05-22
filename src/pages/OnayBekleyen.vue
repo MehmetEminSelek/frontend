@@ -112,10 +112,11 @@ onMounted(() => { fetchPendingOrders(); });
 async function saveChangesAndApprove(order, index) {
   if (!order || !order.kalemler) return;
 
+  // TODO: Vue dialog ile onay alınmalı!
   // Kullanıcıya onay soralım
-  if (!confirm(`ID: ${order.id} siparişindeki değişiklikleri kaydedip onaylamak istediğinizden emin misiniz?`)) {
-    return;
-  }
+  // if (!confirm(`ID: ${order.id} siparişindeki değişiklikleri kaydedip onaylamak istediğinizden emin misiniz?`)) {
+  //   return;
+  // }
 
   const orderId = order.id;
   approveLoading[orderId] = true; // Bu sipariş için loading başlat

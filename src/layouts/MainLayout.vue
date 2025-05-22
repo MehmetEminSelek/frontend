@@ -2,41 +2,45 @@
   <v-app>
     <v-layout>
       <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile"
-        class="bg-grey-darken-4 text-white" width="260">
+        class="bg-grey-darken-4 text-white" width="260" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
+        :touchless="!isMobile" @click:outside="onDrawerOutsideClick" @update:model-value="onDrawerUpdate">
         <v-list nav density="comfortable">
           <v-list-item title="OGS Panel" class="text-h6 font-weight-bold mb-1" /> <v-divider class="mb-2"></v-divider>
 
           <v-list-item to="/main/form" title="Sipariş Formu" link prepend-icon="mdi-clipboard-edit-outline"
-            :active="isActive('/main/form')" class="main-nav-item"></v-list-item>
+            :active="isActive('/main/form')" class="main-nav-item" @click="onMenuClick"></v-list-item>
 
           <v-list-group value="Siparisler">
             <template v-slot:activator="{ props }">
-              <v-list-item v-bind="props" prepend-icon="mdi-cart-outline" title="Sipariş Yönetimi"
-                class="main-nav-item"></v-list-item>
+              <v-list-item v-bind="props" prepend-icon="mdi-cart-outline" title="Sipariş Yönetimi" class="main-nav-item"
+                @click="onMenuClick"></v-list-item>
             </template>
 
             <v-list-item to="/main/orders" title="Onay Bekleyenler" link prepend-icon="mdi-clock-alert-outline"
-              :active="isActive('/main/orders')" class="sub-nav-item"></v-list-item>
+              :active="isActive('/main/orders')" class="sub-nav-item" @click="onMenuClick"></v-list-item>
             <v-list-item to="/main/hazirlanacak" title="Hazırlanacaklar" link prepend-icon="mdi-food-fork-drink"
-              :active="isActive('/main/hazirlanacak')" class="sub-nav-item"></v-list-item>
+              :active="isActive('/main/hazirlanacak')" class="sub-nav-item" @click="onMenuClick"></v-list-item>
             <v-list-item to="/main/allorders" title="Tüm Siparişler" link prepend-icon="mdi-format-list-bulleted"
-              :active="isActive('/main/allorders')" class="sub-nav-item"></v-list-item>
+              :active="isActive('/main/allorders')" class="sub-nav-item" @click="onMenuClick"></v-list-item>
           </v-list-group>
 
+          <v-list-item to="/main/cari-yonetimi" title="Cari Yönetimi" link prepend-icon="mdi-account-cash"
+            :active="isActive('/main/cari-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+
           <v-list-item to="/main/stok-yonetimi" title="Stok Yönetimi" link prepend-icon="mdi-warehouse"
-            :active="isActive('/main/stok-yonetimi')" class="main-nav-item"></v-list-item>
+            :active="isActive('/main/stok-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/kullanici-yonetimi" title="Kullanıcı Yönetimi" link
-            prepend-icon="mdi-account-group" :active="isActive('/main/kullanici-yonetimi')"
-            class="main-nav-item"></v-list-item>
+            prepend-icon="mdi-account-group" :active="isActive('/main/kullanici-yonetimi')" class="main-nav-item"
+            @click="onMenuClick"></v-list-item>
           <v-list-item to="/main/fiyatyonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-clipboard-edit-outline"
-            :active="isActive('/main/fiyatlar')" class="main-nav-item"></v-list-item>
+            :active="isActive('/main/fiyatlar')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/recete-yonetimi" title="Reçete Yönetimi" link
-            prepend-icon="mdi-food-apple" :active="isActive('/main/recete-yonetimi')"
-            class="main-nav-item"></v-list-item>
+            prepend-icon="mdi-food-apple" :active="isActive('/main/recete-yonetimi')" class="main-nav-item"
+            @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/uretim-plani" title="Üretim Planı" link prepend-icon="mdi-factory"
-            :active="isActive('/main/uretim-plani')" class="main-nav-item"></v-list-item>
+            :active="isActive('/main/uretim-plani')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/satis-raporu" title="Satış Raporu" link prepend-icon="mdi-chart-bar"
-            :active="isActive('/main/satis-raporu')" class="main-nav-item"></v-list-item>
+            :active="isActive('/main/satis-raporu')" class="main-nav-item" @click="onMenuClick"></v-list-item>
 
         </v-list>
       </v-navigation-drawer>
@@ -76,6 +80,18 @@ function updateScreen() {
 function isActive(path) {
   // Aktif rotayı kontrol et (başlangıç kontrolü kaldırıldı, tam eşleşme veya alt rota kontrolü)
   return route.path === path || route.path.startsWith(path + '/');
+}
+
+function onDrawerOutsideClick() {
+  if (isMobile.value) drawer.value = false;
+}
+
+function onDrawerUpdate(val) {
+  // Drawer açılıp kapanınca odak kaybı veya başka bir şey yapılacaksa burada yönetilebilir
+}
+
+function onMenuClick() {
+  if (isMobile.value) drawer.value = false;
 }
 
 onMounted(() => {

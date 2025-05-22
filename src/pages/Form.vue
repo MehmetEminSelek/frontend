@@ -319,7 +319,7 @@ function addItemToCurrentPackage() {
     });
     newItemInPackage.value = { urunId: null, urunAdi: '', miktar: null, birim: 'Gram' };
   } else {
-    alert("Lütfen ürün, miktar ve birim seçiniz.");
+    showSnackbar('Lütfen ürün, miktar ve birim seçiniz.', 'warning');
   }
 }
 
@@ -332,8 +332,14 @@ function isSpecificPackageSelected() {
 }
 
 function savePackage() {
-  if (currentPackage.urunler.length === 0) { alert("Pakete en az bir ürün eklemelisiniz."); return; }
-  if (!isSpecificPackageSelected()) { alert("Lütfen spesifik Kutu veya Tepsi/Tava tipini seçiniz."); return; }
+  if (currentPackage.urunler.length === 0) {
+    showSnackbar('Pakete en az bir ürün eklemelisiniz.', 'warning');
+    return;
+  }
+  if (!isSpecificPackageSelected()) {
+    showSnackbar('Lütfen spesifik Kutu veya Tepsi/Tava tipini seçiniz.', 'warning');
+    return;
+  }
   let specificName = '';
   if (currentPackage.kutuId) { specificName = dropdowns.kutular.find(k => k.id === currentPackage.kutuId)?.ad || ''; }
   else if (currentPackage.tepsiTavaId) { specificName = dropdowns.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || ''; }
@@ -341,6 +347,7 @@ function savePackage() {
   packageToAdd.specificPackageName = specificName;
   orderPackages.value.push(packageToAdd);
   isPackageDialogOpen.value = false;
+  showSnackbar('Sipariş başarıyla kaydedildi!', 'success');
 }
 
 function removeOrderPackage(index) { orderPackages.value.splice(index, 1); }
@@ -361,7 +368,10 @@ function getUrunIcon(urunAdi) {
 
 async function submitForm() {
   const { valid: formIsValid } = await formRef.value.validate();
-  if (!formIsValid || orderPackages.value.length === 0) { alert('Lütfen formdaki tüm zorunlu alanları doldurun ve en az bir paket ekleyin.'); return; }
+  if (!formIsValid || orderPackages.value.length === 0) {
+    showSnackbar('Lütfen formdaki tüm zorunlu alanları doldurun ve en az bir paket ekleyin.', 'warning');
+    return;
+  }
   const aliciGondericiAdi = form.aliciAdi ? form.aliciAdi : form.gonderenAdi;
   const siparisPayload = orderPackages.value.map(pkg => ({ AmbalajId: pkg.ambalajId, KutuId: pkg.kutuId, TepsiTavaId: pkg.tepsiTavaId, Urunler: pkg.urunler.map(item => ({ UrunId: item.urunId, Miktar: item.miktar, Birim: item.birim })) }));
   const payload = { tarih: form.tarih, teslimatTuruId: form.teslimatTuruId, subeId: form.subeId, gonderenTipiId: form.gonderenTipiId, gonderenAdi: form.gonderenAdi, gonderenTel: form.gonderenTel, aliciAdi: form.aliciAdi, aliciTel: form.aliciTel, adres: form.adres, aciklama: form.aciklama, siparisler: siparisPayload, gorunecekAd: aliciGondericiAdi };
@@ -369,11 +379,11 @@ async function submitForm() {
   try {
     const { data } = await axios.post('http://localhost:3000/api/siparis', payload);
     console.log('✅ Sipariş kaydedildi:', data);
-    alert('Sipariş başarıyla kaydedildi!');
+    showSnackbar('Sipariş başarıyla kaydedildi!', 'success');
     // Formu sıfırlama işlemleri...
   } catch (err) {
     console.error('❌ Sipariş gönderilemedi:', err.response?.data || err.message || err);
-    alert(`Sipariş gönderilirken hata oluştu: ${err.response?.data?.message || err.message}`);
+    showSnackbar(`Sipariş gönderilirken hata oluştu: ${err.response?.data?.message || err.message}`, 'error');
   }
 }
 

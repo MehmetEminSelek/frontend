@@ -20,7 +20,7 @@
                             <v-col cols="12" sm="3"> <strong>ID:</strong> {{ order.id }} </v-col>
                             <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih) }} </v-col>
                             <v-col cols="12" sm="5"> <strong>Müşteri:</strong> {{ order.gorunecekAd || order.gonderenAdi
-                                }} </v-col>
+                            }} </v-col>
                         </v-row>
                     </v-expansion-panel-title>
 
@@ -113,10 +113,11 @@ onMounted(() => { fetchOrdersToPrepare(); });
 async function saveAndMarkAsPrepared(order, index) {
     if (!order || !order.kalemler) return;
 
+    // TODO: Vue dialog ile onay alınmalı!
     // Kullanıcıya onay soralım (isteğe bağlı ama önerilir)
-    if (!confirm(`ID: ${order.id} siparişindeki gramajları kaydedip 'Hazırlandı' olarak işaretlemek istediğinizden emin misiniz?`)) {
-        return;
-    }
+    // if (!confirm(`ID: ${order.id} siparişindeki gramajları kaydedip 'Hazırlandı' olarak işaretlemek istediğinizden emin misiniz?`)) {
+    //     return;
+    // }
 
     const orderId = order.id;
     prepareLoading[orderId] = true; // Bu sipariş için loading başlat

@@ -85,6 +85,12 @@ const routes = [
         meta: { requiresAuth: true, adminOnly: true }
       },
       {
+        path: 'cari-yonetimi',
+        name: 'CariYonetimi',
+        component: () => import('../pages/CariYonetimi.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: '',
         redirect: { name: 'SiparisFormu' }
       }

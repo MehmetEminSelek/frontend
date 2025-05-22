@@ -20,7 +20,7 @@
                 </div>
             </v-card-title>
             <v-divider class="mb-4"></v-divider>
-            <v-row dense>
+            <v-row dense class="recete-grid">
                 <v-col cols="12" v-if="loading">
                     <v-skeleton-loader type="card@3" class="my-4" />
                 </v-col>
@@ -30,11 +30,11 @@
                         <div class="mt-2">Hiç reçete bulunamadı. Yeni bir reçete ekleyin!</div>
                     </v-alert>
                 </v-col>
-                <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" md="6" lg="4">
-                    <v-card class="mb-4 pa-0 rounded-lg" elevation="1"
-                        style="background: linear-gradient(120deg, #f1f8e9 80%, #fffde7 100%);">
+                <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" md="6" lg="4" class="d-flex">
+                    <v-card class="mb-4 pa-0 rounded-lg flex-grow-1 recipe-card" elevation="1"
+                        style="background: linear-gradient(120deg, #f1f8e9 80%, #fffde7 100%); min-height: 340px; display: flex; flex-direction: column; justify-content: space-between;">
                         <v-card-title class="text-body-1 font-weight-bold d-flex justify-space-between align-center"
-                            style="background:rgba(76,175,80,0.08);">
+                            style="background:rgba(76,175,80,0.08); min-height: 48px;">
                             <span class="d-flex align-center">
                                 <v-icon color="success" class="mr-1">mdi-clipboard-list-outline</v-icon>
                                 <span>{{ recete.urunAd || recete.name }}</span>
@@ -49,7 +49,7 @@
                             </span>
                         </v-card-title>
                         <v-divider></v-divider>
-                        <v-table density="compact" class="rounded-b-lg">
+                        <v-table density="compact" class="rounded-b-lg" style="flex:1;">
                             <thead style="background:#f9fbe7;">
                                 <tr>
                                     <th>Stok Adı</th>
@@ -60,13 +60,21 @@
                             </thead>
                             <tbody>
                                 <tr v-for="ing in recete.ingredients" :key="ing.id">
-                                    <td>{{ ing.stokAd }}</td>
+                                    <td>{{ ing.stokAd || ing.stokKod || '-' }}</td>
                                     <td>
                                         <v-chip :color="ing.stokTip === 'Hammadde' ? 'success' : 'warning'"
-                                            size="x-small" label>{{ ing.stokTip }}</v-chip>
+                                            size="x-small" label>{{ ing.stokTip || '-' }}</v-chip>
                                     </td>
-                                    <td class="text-end font-weight-bold">{{ ing.miktarGram?.toLocaleString() }} gr</td>
-                                    <td>{{ ing.stokKod }}</td>
+                                    <td class="text-end font-weight-bold">{{ ing.miktarGram ?
+                                        ing.miktarGram.toLocaleString() + ' gr' : '-' }}</td>
+                                    <td>{{ ing.stokKod || '-' }}</td>
+                                </tr>
+                                <tr v-if="!recete.ingredients || recete.ingredients.length === 0">
+                                    <td colspan="4" class="text-center text-grey">Malzeme eklenmemiş</td>
+                                </tr>
+                                <tr v-for="n in (5 - (recete.ingredients?.length || 0))"
+                                    v-if="recete.ingredients && recete.ingredients.length < 5" :key="'empty' + n">
+                                    <td colspan="4" style="height:28px;"></td>
                                 </tr>
                             </tbody>
                         </v-table>
@@ -280,6 +288,29 @@ onMounted(() => { fetchReceteler(); fetchDropdowns(); });
     .v-table thead th,
     .v-table tbody td {
         font-size: 0.95em !important;
+    }
+}
+
+.recete-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px 24px;
+}
+
+.recipe-card {
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+@media (max-width: 960px) {
+    .recete-grid {
+        gap: 16px 0;
+    }
+
+    .recipe-card {
+        min-height: 260px;
     }
 }
 </style>

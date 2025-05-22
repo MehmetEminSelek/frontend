@@ -17,7 +17,7 @@
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-        }})</span> </template>
+            }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
           <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
@@ -360,9 +360,10 @@ function formatDate(dateString, includeTime = false) {
     return `${day}.${month}.${year}`;
   } catch (e) { console.error("Tarih formatlama hatası:", e); return 'Hatalı Tarih'; }
 }
-function editOrder(id) { console.log('Düzenle ID:', id); alert(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`); }
+function editOrder(id) { console.log('Düzenle ID:', id); showSnackbar(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`, 'info'); }
 async function deleteOrder(id) {
-  console.log('Sil ID:', id); if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
+  console.log('Sil ID:', id); /* Vue dialog ile onay alınmalı! */
+  // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
     await axios.delete(`http://localhost:3000/api/siparis/${id}`);

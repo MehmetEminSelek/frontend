@@ -127,7 +127,8 @@ async function saveUserDialog() {
   }
 }
 async function deleteUser(user) {
-  if (!confirm('Kullanıcı silinsin mi?')) return;
+  // if (!confirm('Kullanıcı silinsin mi?')) return;
+  // TODO: Vue dialog ile onay alınmalı!
   try {
     const token = localStorage.getItem('token');
     await axios.delete('http://localhost:3000/api/auth/users', { data: { id: user.id }, headers: { Authorization: 'Bearer ' + token } });
