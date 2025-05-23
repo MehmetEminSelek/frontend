@@ -117,7 +117,7 @@
     </v-container>
 </template>
 <script setup>
-import { ref, onMounted, provide } from 'vue';
+import { ref, onMounted, provide, watch } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
@@ -158,7 +158,13 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
-const showOnlyHazirlandi = ref(true);
+const showOnlyHazirlandi = ref(false);
+
+// Watch showOnlyHazirlandi değişimini
+watch(showOnlyHazirlandi, () => {
+    fetchKargoSiparisler();
+});
+
 function showSnackbar(text, color = 'info', timeout = 4000) {
     snackbarText.value = text;
     snackbarColor.value = color;
@@ -181,22 +187,42 @@ const etiketRef = ref(null);
 async function fetchKargoSiparisler() {
     loading.value = true; error.value = null;
     try {
-        const [kargoRes, subeRes, dropdownRes] = await Promise.all([
-            axios.get('http://localhost:3000/api/siparis', { params: { kargoDurumu: 'Kargoya Verilecek' } }),
+        // Tüm siparişleri çek (kargo durumu filtresiz)
+        const [allOrdersRes, subeRes, dropdownRes] = await Promise.all([
+            axios.get('http://localhost:3000/api/siparis'),
             axios.get('http://localhost:3000/api/siparis', { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
             axios.get('http://localhost:3000/api/dropdown'),
         ]);
+        
+        console.log('🚚 Tüm Siparişler API Yanıtı:', allOrdersRes.data?.length);
+        
+        // Kargo için uygun teslimat türü kodları
         const kargoTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
-        let filtered = (kargoRes.data || []).filter(siparis =>
-            kargoTeslimatKodlari.includes(siparis.teslimatTuru?.kodu)
-        );
+        
+        // Teslimat türüne göre filtrele ve kargo durumu kontrol et
+        let filtered = (allOrdersRes.data || []).filter(siparis => {
+            const teslimatKodu = siparis.teslimatTuru?.kodu;
+            const isKargoTeslimati = kargoTeslimatKodlari.includes(teslimatKodu);
+            const kargoCompatible = siparis.kargoDurumu === 'Kargoya Verilecek' || 
+                                  siparis.kargoDurumu === null || 
+                                  siparis.kargoDurumu === '';
+            return isKargoTeslimati && kargoCompatible;
+        });
+        
+        console.log('🚚 Teslimat Türüne Göre Filtrelenmiş:', filtered.length);
+        
+        // Sadece hazırlandı filtresi
         if (showOnlyHazirlandi.value) {
             filtered = filtered.filter(siparis => siparis.hazirlanmaDurumu === 'Hazırlandı');
+            console.log('🚚 Sadece Hazırlandı Olanlar:', filtered.length);
         }
+        
+        console.log('🚚 Final Kargo Listesi:', filtered.length);
         kargoyaVerilecek.value = filtered;
         subeyeGonderilecek.value = subeRes.data;
         subeler.value = dropdownRes.data.subeler || [];
     } catch (err) {
+        console.error('🚚 Kargo siparişleri yüklenirken hata:', err);
         error.value = 'Siparişler yüklenirken hata oluştu.';
         kargoyaVerilecek.value = [];
         subeyeGonderilecek.value = [];

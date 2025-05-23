@@ -14,50 +14,86 @@ import * as directives from 'vuetify/directives';
 // Eğer v-data-table-server gibi labs bileşenleri de kullanacaksan bu da gerekli:
 // import * as labsComponents from 'vuetify/labs/components';
 
-// --- Tema Tanımlamaları ---
-const baklavaGreenTheme = {
+// --- Baklava Business Theme ---
+const baklavaBusinessTheme = {
     dark: false,
     colors: {
-        primary: '#7BAE7F', // Soluk yeşil
-        'primary-darken-1': '#5C8D5A',
-        secondary: '#E9D8A6', // Pastel altın/krem
-        'secondary-darken-1': '#C9B37C',
-        accent: '#F6C177', // Hafif altın vurgusu
+        primary: '#D4A574', // Honey gold - baklava rengi
+        'primary-darken-1': '#B8956A',
+        'primary-lighten-1': '#E5C297',
+        secondary: '#8B4513', // Walnut brown - ceviz rengi
+        'secondary-darken-1': '#6D340F',
+        'secondary-lighten-1': '#A0572B',
+        accent: '#F5F5DC', // Cream - kaymak rengi
         error: '#D32F2F',
-        info: '#7BAE7F', // Bilgi için de yeşil
-        success: '#A3C9A8', // Açık yeşil
-        warning: '#F6C177', // Hafif altın
-        background: '#F4F8F3', // Çok açık yeşil/krem arka plan
+        info: '#4A90E2',
+        success: '#228B22', // Pistachio green - antep fıstığı yeşili
+        warning: '#FFB74D',
+        background: '#F8F4E6', // Warm honey background
         surface: '#FFFFFF',
-        'baklava-gold': '#E9D8A6', // Ekstra vurgu için
-        'baklava-green': '#7BAE7F',
+        'surface-variant': '#F5F5DC',
+        'on-surface': '#5D4037',
+        'on-primary': '#FFFFFF',
+        'on-secondary': '#FFFFFF',
+        // Custom baklava colors
+        'honey-gold': '#D4A574',
+        'walnut-brown': '#8B4513',
+        'cream': '#F5F5DC',
+        'pistachio-green': '#228B22',
+        'warm-honey': '#F8F4E6',
+        'baklava-layers': '#E5C297',
     },
 };
 
-// Sipariş modülü için örnek tema
-const siparisTheme = {
+// Professional Light Theme (Alternative)
+const professionalTheme = {
     dark: false,
     colors: {
-        primary: '#1976D2', // Mavi
-        secondary: '#FFC107', // Sarı
+        primary: '#1976D2',
+        'primary-darken-1': '#1565C0',
+        secondary: '#424242',
+        'secondary-darken-1': '#212121',
         accent: '#82B1FF',
         error: '#FF5252',
         info: '#2196F3',
         success: '#4CAF50',
-        warning: '#FFC107',
+        warning: '#FF9800',
         background: '#F5F7FA',
         surface: '#FFFFFF',
     },
 };
 
-// createVuetify fonksiyonunu dışarıdan tema parametresi alacak şekilde güncelliyorum
-export function createCustomVuetify({ themeName = 'baklavaGreenTheme', extraThemes = {} } = {}) {
+// Dark Pastry Theme
+const darkPastryTheme = {
+    dark: true,
+    colors: {
+        primary: '#D4A574',
+        'primary-darken-1': '#B8956A',
+        secondary: '#A0572B',
+        'secondary-darken-1': '#8B4513',
+        accent: '#F5F5DC',
+        error: '#FF6B6B',
+        info: '#4ECDC4',
+        success: '#51CF66',
+        warning: '#FFD93D',
+        background: '#2C1810',
+        surface: '#3E2723',
+        'surface-variant': '#4E342E',
+        'on-surface': '#F5F5DC',
+        'on-primary': '#2C1810',
+        'on-secondary': '#F5F5DC',
+    },
+};
+
+// createVuetify fonksiyonunu güncelliyorum
+export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraThemes = {} } = {}) {
     return createVuetify({
         theme: {
             defaultTheme: themeName,
             themes: {
-                baklavaGreenTheme,
-                siparisTheme,
+                baklavaBusinessTheme,
+                professionalTheme,
+                darkPastryTheme,
                 ...extraThemes,
             },
         },
@@ -66,11 +102,39 @@ export function createCustomVuetify({ themeName = 'baklavaGreenTheme', extraThem
         },
         directives,
         defaults: {
-            VCard: { elevation: 2, rounded: 'lg' },
-            VTextField: { variant: 'filled', density: 'comfortable' },
-            VTextarea: { variant: 'filled', density: 'comfortable' },
-            VSelect: { variant: 'filled', density: 'comfortable' },
-            VBtn: { variant: 'flat', color: 'secondary' },
+            VCard: {
+                elevation: 2,
+                rounded: 'lg',
+                class: 'modern-card'
+            },
+            VTextField: {
+                variant: 'outlined',
+                density: 'comfortable',
+                color: 'primary'
+            },
+            VTextarea: {
+                variant: 'outlined',
+                density: 'comfortable',
+                color: 'primary'
+            },
+            VSelect: {
+                variant: 'outlined',
+                density: 'comfortable',
+                color: 'primary'
+            },
+            VBtn: {
+                variant: 'flat',
+                color: 'primary',
+                class: 'text-none'
+            },
+            VChip: {
+                variant: 'flat',
+                rounded: 'lg'
+            },
+            VAlert: {
+                variant: 'tonal',
+                rounded: 'lg'
+            }
         },
         icons: {
             defaultSet: 'mdi',
@@ -80,6 +144,6 @@ export function createCustomVuetify({ themeName = 'baklavaGreenTheme', extraThem
     });
 }
 
-// Varsayılan olarak baklavaGreenTheme ile export
+// Varsayılan olarak baklavaBusinessTheme ile export
 const vuetify = createCustomVuetify();
 export default vuetify;

@@ -64,9 +64,12 @@
           @click="snackbar = false">Kapat</v-btn>
       </template>
     </v-snackbar>
-    <v-overlay v-if="loadingExcel" :persistent="true" class="d-flex align-center justify-center" style="z-index:9999">
-      <v-progress-circular indeterminate size="64" color="primary" />
-    </v-overlay>
+    <ExcelLoadingScreen 
+      :show="loadingExcel"
+      title="Kullanıcılar Yükleniyor"
+      subtitle="Excel dosyasından kullanıcılar okunuyor ve sisteme ekleniyor..."
+      :stats="excelLoadingStats"
+    />
   </v-container>
 </template>
 <script setup>
@@ -74,6 +77,7 @@ import { ref, onMounted, provide } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { createCustomVuetify } from '../plugins/vuetify';
+import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
 
 // Kullanıcı yönetimi modülüne özel tema ile Vuetify instance'ı oluştur
 const kullaniciTheme = {
@@ -116,6 +120,7 @@ const router = useRouter();
 const excelInput = ref(null);
 const excelResults = ref([]);
 const loadingExcel = ref(false);
+const excelLoadingStats = ref(null);
 const selectedUsers = ref([]);
 const isAdmin = ref(false);
 
@@ -209,19 +214,49 @@ async function downloadExcelTemplate() {
 async function onExcelFileChange(e) {
   const file = e.target.files[0];
   if (!file) return;
+  
   const formData = new FormData();
   formData.append('file', file);
+  
   loadingExcel.value = true;
+  excelLoadingStats.value = null;
+  
   try {
-    const res = await axios.post('/api/excel/upload/kullanici', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-    excelResults.value = res.data.results || [];
-    showSnackbar('Excel yükleme tamamlandı!', 'success');
+    // Simulate file reading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const res = await axios.post('/api/excel/upload/kullanici', formData, { 
+      headers: { 'Content-Type': 'multipart/form-data' } 
+    });
+    
+    const results = res.data.results || [];
+    excelResults.value = results;
+    
+    // Calculate stats for loading screen
+    const stats = {
+      success: results.filter(r => r.status === 'ok').length,
+      skipped: results.filter(r => r.status === 'skipped').length,
+      errors: results.filter(r => r.status === 'error').length
+    };
+    excelLoadingStats.value = stats;
+    
+    // Show stats for a moment before closing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    showSnackbar(
+      `Excel yükleme tamamlandı! ${stats.success} başarılı, ${stats.skipped} atlandı, ${stats.errors} hata`, 
+      stats.errors > 0 ? 'warning' : 'success'
+    );
+    
     fetchUsers();
   } catch (err) {
-    showSnackbar('Excel yüklenemedi.', 'error');
+    showSnackbar('Excel yüklenemedi: ' + (err.response?.data?.error || err.message), 'error');
     excelResults.value = [];
+    excelLoadingStats.value = null;
   } finally {
     loadingExcel.value = false;
+    // Reset file input
+    if (e.target) e.target.value = '';
   }
 }
 async function deleteSelectedUsers() {

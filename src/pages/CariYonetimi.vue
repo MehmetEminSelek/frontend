@@ -33,7 +33,7 @@
                             class="modern-table">
                             <template #item.ad="{ item }">
                                 <v-avatar color="primary" size="32" class="mr-2">{{ item.ad.charAt(0).toUpperCase()
-                                    }}</v-avatar>
+                                }}</v-avatar>
                                 <span>{{ item.ad }}</span>
                             </template>
                             <template #item.musteriKodu="{ item }">
@@ -49,12 +49,14 @@
                                 <span>{{ item.enYakinVade || '-' }}</span>
                             </template>
                             <template #item.actions="{ item }">
-                                <v-btn icon color="secondary"
+                                <v-btn icon color="secondary" density="compact" class="mr-1"
                                     @click="openAdresDialog(item)"><v-icon>mdi-home-map-marker</v-icon></v-btn>
-                                <v-btn icon color="info" @click="openDialogDetay(item)"><v-icon>mdi-eye</v-icon></v-btn>
-                                <v-btn icon color="primary"
+                                <v-btn icon color="info" density="compact" class="mr-1"
+                                    @click="openDialogDetay(item)"><v-icon>mdi-eye</v-icon></v-btn>
+                                <v-btn icon color="primary" density="compact" class="mr-1"
                                     @click="openDialogFullEdit(item)"><v-icon>mdi-pencil</v-icon></v-btn>
-                                <v-btn icon color="red" @click="deleteCari(item)"><v-icon>mdi-delete</v-icon></v-btn>
+                                <v-btn icon color="red" density="compact"
+                                    @click="deleteCari(item)"><v-icon>mdi-delete</v-icon></v-btn>
                             </template>
                         </v-data-table>
                     </div>
@@ -109,8 +111,31 @@
                             <template #item.createdAt="{ item }">
                                 {{ formatDate(item.createdAt, true) }}
                             </template>
+                            <template #item.tip="{ item }">
+                                <v-chip :color="item.tip === 'siparis_odeme' ? 'success' : 'info'" size="small"
+                                    variant="tonal">
+                                    <v-icon start size="16">
+                                        {{ item.tip === 'siparis_odeme' ? 'mdi-receipt-text' : 'mdi-cash' }}
+                                    </v-icon>
+                                    {{ item.tip === 'siparis_odeme' ? 'Sipariş Ödemesi' : item.tip }}
+                                </v-chip>
+                            </template>
                             <template #item.tutar="{ item }">
-                                <span class="text-right d-block">{{ item.tutar }}</span>
+                                <span class="text-right d-block font-weight-medium"
+                                    :class="item.direction === 'alacak' ? 'text-success' : 'text-error'">
+                                    {{ item.direction === 'alacak' ? '+' : '-' }}{{ item.tutar }} ₺
+                                </span>
+                            </template>
+                            <template #item.aciklama="{ item }">
+                                <div>
+                                    {{ item.aciklama }}
+                                    <v-chip v-if="item.siparisDetay" size="x-small" color="primary" variant="outlined"
+                                        class="ml-2" @click="openSiparisDetay(item.siparisDetay)"
+                                        style="cursor: pointer;">
+                                        <v-icon start size="12">mdi-eye</v-icon>
+                                        Detay
+                                    </v-chip>
+                                </div>
                             </template>
                         </v-data-table>
                     </div>
@@ -246,11 +271,10 @@
             :location="isMobile ? 'top' : 'bottom'">{{
                 snackbar.text }}</v-snackbar>
 
-        <!-- Loading Overlay -->
-        <v-overlay v-if="loadingExcel" :persistent="true" class="d-flex align-center justify-center"
-            style="z-index:9999">
-            <v-progress-circular indeterminate size="64" color="primary" />
-        </v-overlay>
+        <!-- Epic Excel Loading Screen -->
+        <ExcelLoadingScreen :show="loadingExcel" title="Cariler Yükleniyor"
+            subtitle="Excel dosyasından müşteri bilgileri okunuyor ve sisteme ekleniyor..."
+            :stats="excelLoadingStats" />
     </v-container>
 </template>
 
@@ -261,6 +285,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDate } from '../utils/date';
+import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
 
 const cariler = ref([]);
 const search = ref('');
@@ -285,6 +310,7 @@ const editCari = ref({ ad: '', telefon: '', email: '', aciklama: '', musteriKodu
 const excelInput = ref(null);
 const excelResults = ref([]);
 const loadingExcel = ref(false);
+const excelLoadingStats = ref(null);
 const adreslerList = ref([]);
 const adresCariId = ref(null);
 const yeniAdres = ref({ tip: 'Ev', adres: '' });
@@ -393,8 +419,66 @@ async function addCari() {
 }
 
 async function fetchHareketler(cariId) {
-    const { data } = await axios.get('/api/cari/hareket?cariId=' + cariId);
-    hareketler.value = data;
+    try {
+        console.log('🔍 Cari ID için hareketler çekiliyor:', cariId);
+
+        // Hem cari hareketlerini hem de sipariş ödemelerini çek
+        const [cariHareketRes, siparislerRes] = await Promise.all([
+            axios.get('/api/cari/hareket?cariId=' + cariId),
+            axios.get('http://localhost:3000/api/siparis') // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
+        ]);
+
+        const cariHareketler = cariHareketRes.data || [];
+        const tumSiparisler = siparislerRes.data || [];
+
+        // Bu cariye ait siparişleri filtrele
+        const cariSiparisler = tumSiparisler.filter(siparis =>
+            siparis.cariId === cariId ||
+            (siparis.gonderenAdi && detayCari.value &&
+                siparis.gonderenAdi.toLowerCase().includes(detayCari.value.ad.toLowerCase()))
+        );
+
+        console.log('🏦 Cari Hareketler:', cariHareketler.length);
+        console.log('📦 Cari Siparişleri:', cariSiparisler.length);
+
+        // Sipariş ödemelerini düzleştir
+        const siparisOdemeleri = [];
+        cariSiparisler.forEach(siparis => {
+            if (siparis.odemeler && siparis.odemeler.length > 0) {
+                siparis.odemeler.forEach(odeme => {
+                    siparisOdemeleri.push({
+                        ...odeme,
+                        tip: 'siparis_odeme',
+                        direction: 'alacak',
+                        aciklama: `Sipariş #${siparis.id} ödemesi${odeme.aciklama ? ' - ' + odeme.aciklama : ''}${odeme.odemeYontemi ? ' (' + odeme.odemeYontemi + ')' : ''}`,
+                        tutar: odeme.tutar,
+                        createdAt: odeme.odemeTarihi,
+                        siparisId: siparis.id,
+                        siparisDetay: {
+                            id: siparis.id,
+                            tarih: siparis.tarih,
+                            gonderenAdi: siparis.gonderenAdi,
+                            toplamTutar: siparis.birimFiyat || 0,
+                            teslimatTuru: siparis.teslimatTuru?.ad
+                        }
+                    });
+                });
+            }
+        });
+
+        console.log('💰 Sipariş Ödemeleri:', siparisOdemeleri.length);
+
+        // Tüm hareketleri birleştir ve tarihe göre sırala
+        const tumHareketler = [...cariHareketler, ...siparisOdemeleri];
+        tumHareketler.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        hareketler.value = tumHareketler;
+        console.log('📊 Toplam Hareket:', tumHareketler.length);
+
+    } catch (error) {
+        console.error('❌ Hareketler çekilirken hata:', error);
+        hareketler.value = [];
+    }
 }
 
 function openDialogOdeme() { dialogOdeme.value = true; }
@@ -559,22 +643,52 @@ async function downloadExcelTemplate() {
 async function onExcelFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file);
+
     loadingExcel.value = true;
+    excelLoadingStats.value = null;
+
     try {
-        const res = await axios.post('/api/excel/upload/cari', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        excelResults.value = res.data.results || [];
-        snackbar.value = { show: true, color: 'success', text: 'Excel yükleme tamamlandı.' };
+        // Simulate file reading delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const res = await axios.post('/api/excel/upload/cari', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        const results = res.data.results || [];
+        excelResults.value = results;
+
+        // Calculate stats for loading screen
+        const stats = {
+            success: results.filter(r => r.status === 'ok').length,
+            skipped: results.filter(r => r.status === 'skipped').length,
+            errors: results.filter(r => r.status === 'error').length
+        };
+        excelLoadingStats.value = stats;
+
+        // Show stats for a moment before closing
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        snackbar.value = {
+            show: true,
+            color: stats.errors > 0 ? 'warning' : 'success',
+            text: `Excel yükleme tamamlandı! ${stats.success} başarılı, ${stats.skipped} atlandı, ${stats.errors} hata`
+        };
+
         await fetchCariler();
     } catch (err) {
         const msg = err.response?.data?.error || 'Yükleme hatası.';
         snackbar.value = { show: true, color: 'error', text: msg };
         excelResults.value = [];
+        excelLoadingStats.value = null;
     } finally {
         loadingExcel.value = false;
+        // Reset file input
+        if (e.target) e.target.value = '';
     }
-    e.target.value = '';
 }
 
 function openAdresDialog(item) {
