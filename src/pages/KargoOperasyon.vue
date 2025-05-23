@@ -3,7 +3,11 @@
         <v-card class="pa-4 rounded-lg" elevation="2">
             <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
                 <span>🚚 Kargo Operasyonları</span>
-                <v-btn icon="mdi-refresh" variant="text" @click="fetchKargoSiparisler" title="Yenile"></v-btn>
+                <div class="d-flex align-center">
+                    <v-checkbox v-model="showOnlyHazirlandi" label="Sadece Hazırlandı olanları göster" density="compact"
+                        hide-details class="mr-4" />
+                    <v-btn icon="mdi-refresh" variant="text" @click="fetchKargoSiparisler" title="Yenile"></v-btn>
+                </div>
             </v-card-title>
             <v-alert v-if="error" type="error" class="mb-4" closable>{{ error }}</v-alert>
             <v-tabs v-model="tab" grow>
@@ -15,6 +19,7 @@
                     <v-data-table :headers="headers" :items="kargoyaVerilecek" :loading="loading" item-value="id"
                         class="elevation-1" hover density="comfortable" items-per-page="20"
                         no-data-text="Kargoya verilecek sipariş yok." loading-text="Yükleniyor...">
+                        <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
                         <template v-slot:item.actions="{ item }">
                             <v-btn color="primary" size="small" @click="openKargoDialog(item)">Kargo İşlemi</v-btn>
                             <v-btn color="secondary" size="small" class="ml-2" @click="openEtiketDialog(item)">Etiket
@@ -26,6 +31,7 @@
                     <v-data-table :headers="headers" :items="subeyeGonderilecek" :loading="loading" item-value="id"
                         class="elevation-1" hover density="comfortable" items-per-page="20"
                         no-data-text="Şubeye gönderilecek sipariş yok." loading-text="Yükleniyor...">
+                        <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
                         <template v-slot:item.actions="{ item }">
                             <v-btn color="primary" size="small" @click="openTransferDialog(item)">Transfer
                                 İşlemi</v-btn>
@@ -86,7 +92,7 @@
                         <div><strong>Adres:</strong> {{ etiketSiparis?.adres || '-' }}</div>
                         <div><strong>Tel:</strong> {{ etiketSiparis?.aliciTel || '-' }}</div>
                         <div><strong>Sipariş ID:</strong> {{ etiketSiparis?.id }}</div>
-                        <div><strong>Tarih:</strong> {{ etiketSiparis?.tarih ? (etiketSiparis.tarih + '').slice(0, 10) :
+                        <div><strong>Tarih:</strong> {{ etiketSiparis?.tarih ? formatDate(etiketSiparis.tarih, true) :
                             '-' }}
                         </div>
                         <div><strong>Not:</strong> {{ etiketSiparis?.kargoNotu || '-' }}</div>
@@ -114,6 +120,7 @@
 import { ref, onMounted, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 
 // Kargo modülüne özel tema ile Vuetify instance'ı oluştur
 const kargoTheme = {
@@ -151,6 +158,7 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
+const showOnlyHazirlandi = ref(true);
 function showSnackbar(text, color = 'info', timeout = 4000) {
     snackbarText.value = text;
     snackbarColor.value = color;
@@ -178,7 +186,14 @@ async function fetchKargoSiparisler() {
             axios.get('http://localhost:3000/api/siparis', { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
             axios.get('http://localhost:3000/api/dropdown'),
         ]);
-        kargoyaVerilecek.value = kargoRes.data;
+        const kargoTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
+        let filtered = (kargoRes.data || []).filter(siparis =>
+            kargoTeslimatKodlari.includes(siparis.teslimatTuru?.kodu)
+        );
+        if (showOnlyHazirlandi.value) {
+            filtered = filtered.filter(siparis => siparis.hazirlanmaDurumu === 'Hazırlandı');
+        }
+        kargoyaVerilecek.value = filtered;
         subeyeGonderilecek.value = subeRes.data;
         subeler.value = dropdownRes.data.subeler || [];
     } catch (err) {

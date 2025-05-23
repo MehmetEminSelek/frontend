@@ -97,7 +97,7 @@
           <span>{{ item.miktarGram.toLocaleString() }} gr</span>
         </template>
         <template v-slot:item.createdAt="{ item }">
-          <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
+          <span>{{ formatDate(item.createdAt, true) }}</span>
         </template>
       </v-data-table>
     </v-card>
@@ -123,7 +123,7 @@
               item.miktarGram.toLocaleString() }} gr</span>
         </template>
         <template v-slot:item.createdAt="{ item }">
-          <span>{{ new Date(item.createdAt).toLocaleString() }}</span>
+          <span>{{ formatDate(item.createdAt, true) }}</span>
         </template>
         <template v-slot:item["user.ad"]="{ item }">
           <span>{{ item.user?.ad || '-' }}</span>
@@ -210,6 +210,7 @@
 import { ref, reactive, computed, onMounted, watch, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 
 // Stok modülüne özel tema ile Vuetify instance'ı oluştur
 const stokTheme = {
@@ -268,8 +269,8 @@ async function fetchStoklar() {
 }
 onMounted(() => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const isAdmin = user && user.role === 'admin';
-  if (!user || (user.role !== 'admin' && user.role !== 'mudur')) {
+  const isAdmin = user && (user.role === 'admin' || user.role === 'superadmin');
+  if (!user || (user.role !== 'admin' && user.role !== 'mudur' && user.role !== 'superadmin')) {
     showSnackbar('Bu sayfaya erişim için yetkiniz yok.', 'error');
     setTimeout(() => { window.location.href = '/login'; }, 2000);
     return;

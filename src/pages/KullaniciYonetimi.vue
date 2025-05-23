@@ -3,12 +3,34 @@
     <v-card class="pa-4 rounded-lg" elevation="2">
       <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
         <span>Kullanıcı Yönetimi</span>
-        <v-btn color="primary" @click="openUserDialog()">Yeni Kullanıcı</v-btn>
+        <div>
+          <v-btn color="info" class="elevation-1 mr-2" @click="downloadExcelTemplate">
+            <v-icon left>mdi-download</v-icon>Excel Şablonunu İndir
+          </v-btn>
+          <input ref="excelInput" type="file" accept=".xlsx" style="display:none" @change="onExcelFileChange" />
+          <v-btn color="success" class="elevation-1 mr-2" @click="triggerExcelInput">
+            <v-icon left>mdi-upload</v-icon>Excel'den Yükle
+          </v-btn>
+          <v-btn color="primary" @click="openUserDialog()">Yeni Kullanıcı</v-btn>
+        </div>
       </v-card-title>
       <v-alert v-if="error" type="error" class="mb-4" closable>{{ error }}</v-alert>
+      <v-alert v-if="excelResults.length > 0" type="info" border="left" prominent class="my-2">
+        <div v-for="(r, i) in excelResults" :key="i">
+          <span v-if="r.status === 'ok'" class="text-success">✔</span>
+          <span v-else-if="r.status === 'skipped'" class="text-warning">⏭</span>
+          <span v-else class="text-error">✖</span>
+          {{ r.email }} - {{ r.ad }} <span v-if="r.message">({{ r.message }})</span>
+        </div>
+      </v-alert>
       <v-data-table :headers="headers" :items="users" :loading="loading" item-value="id" class="elevation-1" hover
         density="comfortable" items-per-page="50" no-data-text="Kullanıcı yok."
-        loading-text="Kullanıcılar yükleniyor...">
+        loading-text="Kullanıcılar yükleniyor..." show-select v-model:selected="selectedUsers">
+        <template v-slot:top>
+          <v-btn v-if="selectedUsers.length > 0" color="error" class="mb-2" @click="deleteSelectedUsers">
+            <v-icon left>mdi-delete</v-icon>Seçilenleri Sil ({{ selectedUsers.length }})
+          </v-btn>
+        </template>
         <template v-slot:item.actions="{ item }">
           <v-btn icon="mdi-pencil" size="small" color="primary" variant="text" @click="openUserDialog(item)"
             title="Düzenle"></v-btn>
@@ -42,6 +64,9 @@
           @click="snackbar = false">Kapat</v-btn>
       </template>
     </v-snackbar>
+    <v-overlay v-if="loadingExcel" :persistent="true" class="d-flex align-center justify-center" style="z-index:9999">
+      <v-progress-circular indeterminate size="64" color="primary" />
+    </v-overlay>
   </v-container>
 </template>
 <script setup>
@@ -88,6 +113,12 @@ const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
 const router = useRouter();
+const excelInput = ref(null);
+const excelResults = ref([]);
+const loadingExcel = ref(false);
+const selectedUsers = ref([]);
+const isAdmin = ref(false);
+
 function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbarText.value = text;
   snackbarColor.value = color;
@@ -96,8 +127,8 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 }
 function checkAdmin() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (!user || user.role !== 'admin') {
-    showSnackbar('Bu sayfaya erişim için admin olmalısınız.', 'error');
+  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+    showSnackbar('Bu sayfaya erişim için admin veya superadmin olmalısınız.', 'error');
     setTimeout(() => router.push({ name: 'StokYonetimi' }), 1500);
     return false;
   }
@@ -158,7 +189,66 @@ async function deleteUser(user) {
     showSnackbar('Kullanıcı silinirken hata oluştu.', 'error');
   }
 }
-onMounted(fetchUsers);
+function triggerExcelInput() {
+  excelInput.value && excelInput.value.click();
+}
+async function downloadExcelTemplate() {
+  try {
+    const res = await axios.get('/api/excel/template/kullanici', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'kullanici-sablon.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (e) {
+    showSnackbar('Şablon indirilemedi.', 'error');
+  }
+}
+async function onExcelFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  loadingExcel.value = true;
+  try {
+    const res = await axios.post('/api/excel/upload/kullanici', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    excelResults.value = res.data.results || [];
+    showSnackbar('Excel yükleme tamamlandı!', 'success');
+    fetchUsers();
+  } catch (err) {
+    showSnackbar('Excel yüklenemedi.', 'error');
+    excelResults.value = [];
+  } finally {
+    loadingExcel.value = false;
+  }
+}
+async function deleteSelectedUsers() {
+  if (selectedUsers.value.length === 0) return;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // Kendi id'sini silmeye izin verme
+  const idsToDelete = selectedUsers.value.filter(id => id !== user.id);
+  if (idsToDelete.length === 0) {
+    showSnackbar('Kendi hesabınızı silemezsiniz.', 'error');
+    return;
+  }
+  if (!confirm('Seçili kullanıcılar silinsin mi?')) return;
+  try {
+    const token = localStorage.getItem('token');
+    await axios.delete('http://localhost:3000/api/auth/users', { data: { ids: idsToDelete }, headers: { Authorization: 'Bearer ' + token } });
+    showSnackbar('Seçili kullanıcılar silindi!', 'success');
+    selectedUsers.value = [];
+    fetchUsers();
+  } catch (err) {
+    showSnackbar('Toplu silme sırasında hata oluştu.', 'error');
+  }
+}
+onMounted(() => {
+  fetchUsers();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  isAdmin.value = user && (user.role === 'admin' || user.role === 'superadmin');
+});
 </script>
 
 <style scoped>

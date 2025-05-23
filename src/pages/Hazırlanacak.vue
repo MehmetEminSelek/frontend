@@ -18,9 +18,10 @@
                     <v-expansion-panel-title>
                         <v-row no-gutters align="center">
                             <v-col cols="12" sm="3"> <strong>ID:</strong> {{ order.id }} </v-col>
-                            <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih) }} </v-col>
+                            <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih, true) }}
+                            </v-col>
                             <v-col cols="12" sm="5"> <strong>Müşteri:</strong> {{ order.gorunecekAd || order.gonderenAdi
-                                }} </v-col>
+                            }} </v-col>
                         </v-row>
                     </v-expansion-panel-title>
 
@@ -77,6 +78,7 @@
 import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 
 const orders = ref([]); // API'den gelen siparişler (içindeki kalemler düzenlenecek)
 const loading = ref(false);
@@ -177,10 +179,6 @@ async function saveAndMarkAsPrepared(order, index) {
 }
 
 // --- Diğer Yardımcı Fonksiyonlar ---
-function formatDate(dateString) {
-    if (!dateString) return '';
-    try { const date = new Date(dateString); if (isNaN(date.getTime())) return 'Geçersiz Tarih'; const day = String(date.getDate()).padStart(2, '0'); const month = String(date.getMonth() + 1).padStart(2, '0'); const year = date.getFullYear(); return `${day}.${month}.${year}`; } catch (e) { console.error("Tarih formatlama hatası:", e); return 'Hatalı Tarih'; }
-}
 function getAmbalajIcon(ambalajAdi) { if (ambalajAdi === 'Kutu') return 'mdi-package-variant-closed'; if (ambalajAdi === 'Tepsi/Tava') return 'mdi-silverware-fork-knife'; if (ambalajAdi === 'Özel') return 'mdi-star-outline'; return 'mdi-help-box-outline'; }
 function getUrunIcon(urunAdi) { if (!urunAdi) return 'mdi-help-circle-outline'; if (urunAdi.toLowerCase().includes('baklava')) return 'mdi-diamond-stone'; if (urunAdi.toLowerCase().includes('börek')) return 'mdi-chart-pie'; if (urunAdi.toLowerCase().includes('kadayıf')) return 'mdi-noodles'; return 'mdi-food-variant'; }
 

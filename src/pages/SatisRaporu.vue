@@ -42,15 +42,22 @@
                         <span class="text-h6">₺{{ ortalamaSepetTutari.toLocaleString('tr-TR', {
                             minimumFractionDigits: 2
                         })
-                        }}</span>
+                            }}</span>
                     </v-sheet>
                 </v-col>
             </v-row>
             <v-row>
                 <v-col cols="12" md="6">
                     <v-card class="pa-3 mb-4" color="amber-lighten-5">
-                        <div class="text-h6 font-weight-bold mb-2">Dönemsel Ciro (₺)</div>
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="text-h6 font-weight-bold">Aylık Ciro (₺)</div>
+                            <v-select v-model="selectedMonth" :items="monthOptions" label="Ay Seçiniz" item-text="label"
+                                item-value="value" dense style="max-width:180px; min-width:120px;" />
+                        </div>
                         <Line :data="ciroLineData" :options="ciroLineOptions" style="max-height:300px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            X: Gün, Y: Ciro (₺) — Seçili ay: {{ selectedMonthLabel }}
+                        </div>
                     </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
@@ -64,6 +71,9 @@
                             :data="filteredUrunBarDataAdet || { labels: [], datasets: [] }"
                             :options="{ ...urunBarOptions, title: { text: 'En Çok Satılan Ürünler (Adet)' } }"
                             style="max-height:220px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            X: Satış (adet), Y: Ürün Adı
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
@@ -79,12 +89,18 @@
                             :data="filteredUrunBarDataCiro || { labels: [], datasets: [] }"
                             :options="{ ...urunBarOptions, title: { text: 'En Çok Ciro Yapan Ürünler (₺)' } }"
                             style="max-height:220px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            X: Ciro (₺), Y: Ürün Adı
+                        </div>
                     </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
                     <v-card class="pa-3 mb-4" color="blue-lighten-5">
                         <div class="text-h6 font-weight-bold mb-2">En Çok Satış Yapan Şubeler</div>
                         <Bar :data="subeBarData" :options="subeBarOptions" style="max-height:300px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            X: Satış (adet), Y: Şube Adı
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
@@ -100,6 +116,9 @@
                             :data="filteredSubeBarDataCiro || { labels: [], datasets: [] }"
                             :options="{ ...subeBarOptions, title: { text: 'En Çok Ciro Yapan Şubeler (₺)' } }"
                             style="max-height:220px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            X: Ciro (₺), Y: Şube Adı
+                        </div>
                     </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
@@ -121,17 +140,36 @@
                     <v-card class="pa-3 mb-4" color="grey-lighten-5">
                         <div class="text-h6 font-weight-bold mb-2">Satış Detay Tablosu</div>
                         <v-data-table :headers="satisHeaders" :items="filteredSatisDetay" :loading="loading"
-                            class="elevation-0" density="compact" hide-default-footer :row-class="rowClass" />
+                            class="elevation-0 modern-table" density="compact" hide-default-footer :row-class="rowClass"
+                            item-value="tutar" :footer-props="{ 'items-per-page-options': [10, 20, 50] }">
+                            <template #item.tutar="{ item }">
+                                <span class="font-weight-bold">₺{{ (item.tutar || 0).toLocaleString('tr-TR', {
+                                    minimumFractionDigits: 2
+                                }) }}</span>
+                            </template>
+                            <template #bottom>
+                                <tr class="font-weight-bold">
+                                    <td colspan="5" class="text-right pr-4">Toplam:</td>
+                                    <td class="text-right">₺{{filteredSatisDetay.reduce((sum, r) => sum + (r.tutar ||
+                                        0), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}}</td>
+                                </tr>
+                            </template>
+                        </v-data-table>
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            {{ formattedDateRange }}
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
             <v-row>
                 <v-col cols="12" md="8">
                     <v-card class="pa-3 mb-4" color="blue-lighten-4">
-                        <div class="text-h6 font-weight-bold mb-2">Saatlik Satış Dağılımı (₺)</div>
-                        <Line
-                            v-if="Array.isArray(saatlikCiroLineData.labels) && Array.isArray(saatlikCiroLineData.datasets)"
-                            :data="saatlikCiroLineData" :options="saatlikCiroLineOptions" style="max-height:260px;" />
+                        <div class="text-h6 font-weight-bold mb-2">Kalan Hammadde Dağılımı (Örnek)</div>
+                        <Bar :data="kalanHammaddeBarData" :options="kalanHammaddeBarOptions"
+                            style="max-height:260px;" />
+                        <div class="mt-2 text-caption text-grey-darken-2">
+                            {{ formattedDateRange }}
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
@@ -154,6 +192,7 @@ import {
     LineElement
 } from 'chart.js';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const startDate = ref(new Date().toISOString().slice(0, 10));
@@ -205,20 +244,32 @@ function safeChartData(data) {
     };
 }
 
-const ciroLineData = computed(() => safeChartData({
-    labels: safeLabels(ciro.value?.map?.(x => x.tarih)),
-    datasets: [{
-        label: 'Ciro',
-        data: safeData(ciro.value?.map?.(x => x.toplam)),
-        borderColor: '#ffd54f',
-        backgroundColor: 'rgba(255, 213, 79, 0.2)',
-        tension: 0.3,
-        fill: true,
-        pointBackgroundColor: '#ffd54f',
-        pointBorderColor: '#ffd54f',
-        pointRadius: 4
-    }]
-}));
+const ciroLineData = computed(() => {
+    const [yil, ay] = selectedMonth.value.split('-');
+    const days = getDaysInMonth(+yil, +ay);
+    const labels = Array.from({ length: days }, (_, i) => `${(i + 1).toString().padStart(2, '0')} ${monthOptions[+ay - 1].label.split(' ')[0]}`);
+    // Her gün için ciroyu bul
+    const dataArr = Array(days).fill(0);
+    ciro.value.forEach(x => {
+        const d = new Date(x.tarih);
+        const gun = d.getDate();
+        dataArr[gun - 1] = x.toplam || 0;
+    });
+    return {
+        labels,
+        datasets: [{
+            label: 'Ciro',
+            data: dataArr,
+            borderColor: '#ffd54f',
+            backgroundColor: 'rgba(255, 213, 79, 0.2)',
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#ffd54f',
+            pointBorderColor: '#ffd54f',
+            pointRadius: 4
+        }]
+    };
+});
 const ciroLineOptions = {
     responsive: true,
     plugins: {
@@ -230,94 +281,57 @@ const ciroLineOptions = {
 
 const urunBarOptions = { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } };
 
-const urunBarDataAdet = computed(() => {
-    const base = safeLabels(urunlerAdet.value).length ? urunlerAdet.value.slice(0, 5) : [];
-    return {
-        labels: safeLabels(base.map?.(x => x.urunAd)),
-        datasets: [{
-            label: 'Satış (adet)',
-            data: safeData(base.map?.(x => x.toplamMiktar)),
-            backgroundColor: base.map?.((_, i) => i === 0 ? '#ffd54f' : '#81c784') || []
-        }]
-    };
-});
-const urunBarDataCiro = computed(() => {
-    const base = safeLabels(urunlerCiro.value).length ? urunlerCiro.value.slice(0, 5) : [];
-    return {
-        labels: safeLabels(base.map?.(x => x.urunAd)),
-        datasets: [{
-            label: 'Ciro (₺)',
-            data: safeData(base.map?.(x => x.toplamTutar)),
-            backgroundColor: base.map?.((_, i) => i === 0 ? '#ffd54f' : '#ffd180') || []
-        }]
-    };
-});
-const filteredUrunBarDataAdet = computed(() => {
-    const data = urunBarDataAdet.value;
-    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return { labels: [], datasets: [] };
-    if (!urunFilter.value) return data;
-    const idx = data.labels.indexOf(urunFilter.value);
-    return idx === -1 ? data : { ...data, labels: [data.labels[idx]], datasets: [{ ...data.datasets[0], data: [data.datasets[0].data[idx]], backgroundColor: [data.datasets[0].backgroundColor[idx]] }] };
-});
-const filteredUrunBarDataCiro = computed(() => {
-    const data = urunBarDataCiro.value;
-    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return { labels: [], datasets: [] };
-    if (!urunFilter.value) return data;
-    const idx = data.labels.indexOf(urunFilter.value);
-    return idx === -1 ? data : { ...data, labels: [data.labels[idx]], datasets: [{ ...data.datasets[0], data: [data.datasets[0].data[idx]], backgroundColor: [data.datasets[0].backgroundColor[idx]] }] };
-});
-const filteredSubeBarDataCiro = computed(() => {
-    const data = subeBarDataCiro.value;
-    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return { labels: [], datasets: [] };
-    if (!subeFilter.value) return data;
-    const idx = data.labels.indexOf(subeFilter.value);
-    return idx === -1 ? data : { ...data, labels: [data.labels[idx]], datasets: [{ ...data.datasets[0], data: [data.datasets[0].data[idx]], backgroundColor: [data.datasets[0].backgroundColor[idx]] }] };
-});
-const filteredSubeBarDataAdet = computed(() => {
-    const data = subeBarDataAdet.value;
-    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return { labels: [], datasets: [] };
-    if (!subeFilter.value) return data;
-    const idx = data.labels.indexOf(subeFilter.value);
-    return idx === -1 ? data : { ...data, labels: [data.labels[idx]], datasets: [{ ...data.datasets[0], data: [data.datasets[0].data[idx]], backgroundColor: [data.datasets[0].backgroundColor[idx]] }] };
-});
+const urunBarDataAdet = computed(() => safeChartData({
+    labels: safeLabels((urunlerAdet.value || []).slice(0, 5).map(x => x.urunAd)),
+    datasets: [{
+        label: 'Satış (adet)',
+        data: safeData((urunlerAdet.value || []).slice(0, 5).map(x => x.toplamMiktar)),
+        backgroundColor: (urunlerAdet.value || []).slice(0, 5).map((_, i) => i === 0 ? '#ffd54f' : '#81c784')
+    }]
+}));
+const urunBarDataCiro = computed(() => safeChartData({
+    labels: safeLabels((urunlerCiro.value || []).slice(0, 5).map(x => x.urunAd)),
+    datasets: [{
+        label: 'Ciro (₺)',
+        data: safeData((urunlerCiro.value || []).slice(0, 5).map(x => x.toplamTutar)),
+        backgroundColor: (urunlerCiro.value || []).slice(0, 5).map((_, i) => i === 0 ? '#ffd54f' : '#81c784')
+    }]
+}));
+const filteredUrunBarDataAdet = computed(() => safeChartData(urunBarDataAdet.value));
+const filteredUrunBarDataCiro = computed(() => safeChartData(urunBarDataCiro.value));
+const filteredSubeBarDataCiro = computed(() => safeChartData({
+    labels: safeLabels((subelerCiro.value || []).slice(0, 5).map(x => x.sube)),
+    datasets: [{
+        label: 'Ciro (₺)',
+        data: safeData((subelerCiro.value || []).slice(0, 5).map(x => x.toplamTutar)),
+        backgroundColor: (subelerCiro.value || []).slice(0, 5).map((_, i) => i === 0 ? '#ffd54f' : '#64b5f6')
+    }]
+}));
+const filteredSubeBarDataAdet = computed(() => safeChartData(subeBarData.value));
 
-const subeBarDataCiro = computed(() => {
-    const base = safeLabels(subelerCiro.value).length ? subelerCiro.value.slice(0, 5) : [];
-    return {
-        labels: safeLabels(base.map?.(x => x.sube)),
-        datasets: [{
-            label: 'Satış (₺)',
-            data: safeData(base.map?.(x => x.toplamTutar)),
-            backgroundColor: base.map?.((_, i) => i === 0 ? '#ffd54f' : '#64b5f6') || []
-        }]
-    };
-});
-const subeBarDataAdet = computed(() => {
-    const base = safeLabels(subelerAdet.value).length ? subelerAdet.value.slice(0, 5) : [];
-    return {
-        labels: safeLabels(base.map?.(x => x.sube)),
-        datasets: [{
-            label: 'Sipariş Adedi',
-            data: safeData(base.map?.(x => x.toplamSiparis)),
-            backgroundColor: base.map?.((_, i) => i === 0 ? '#ffd54f' : '#b39ddb') || []
-        }]
-    };
-});
+const subeBarData = computed(() => safeChartData({
+    labels: safeLabels((subelerAdet.value || []).slice(0, 5).map(x => x.sube)),
+    datasets: [{
+        label: 'Satış (adet)',
+        data: safeData((subelerAdet.value || []).slice(0, 5).map(x => x.toplamMiktar)),
+        backgroundColor: (subelerAdet.value || []).slice(0, 5).map((_, i) => i === 0 ? '#ffd54f' : '#64b5f6')
+    }]
+}));
 const subeBarOptions = { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } };
 
 const ortalamaSepetTutari = ref(0);
 const saatlikCiro = ref([]);
-const saatlikCiroLineData = computed(() => ({
-    labels: safeLabels(saatlikCiro.value?.map?.(x => x.saat)),
+const saatlikCiroLineData = computed(() => safeChartData({
+    labels: safeLabels((saatlikCiro.value || []).map(x => x.saat)),
     datasets: [{
-        label: 'Saatlik Ciro',
-        data: safeData(saatlikCiro.value?.map?.(x => x.toplam)),
-        borderColor: '#64b5f6',
-        backgroundColor: 'rgba(100,181,246,0.15)',
+        label: 'Ciro',
+        data: safeData((saatlikCiro.value || []).map(x => x.tutar)),
+        borderColor: '#ffd54f',
+        backgroundColor: 'rgba(255, 213, 79, 0.2)',
         tension: 0.3,
         fill: true,
-        pointBackgroundColor: '#64b5f6',
-        pointBorderColor: '#64b5f6',
+        pointBackgroundColor: '#ffd54f',
+        pointBorderColor: '#ffd54f',
         pointRadius: 4
     }]
 }));
@@ -413,6 +427,73 @@ const satisRaporuTheme = {
 const satisRaporuVuetify = createCustomVuetify({ themeName: 'satisRaporuTheme', customTheme: satisRaporuTheme });
 provide('vuetify', satisRaporuVuetify);
 
+// Kalan hammadde için örnek veri
+const kalanHammadde = ref([
+    { ad: 'Un', miktar: 1200 },
+    { ad: 'Şeker', miktar: 800 },
+    { ad: 'Tuz', miktar: 500 },
+    { ad: 'Yağ', miktar: 300 },
+    { ad: 'Yumurta', miktar: 200 }
+]);
+const kalanHammaddeBarData = computed(() => ({
+    labels: kalanHammadde.value.map(x => x.ad),
+    datasets: [{
+        label: 'Kalan Miktar (kg)',
+        data: kalanHammadde.value.map(x => x.miktar),
+        backgroundColor: ['#81c784', '#ffd54f', '#64b5f6', '#ffb74d', '#e57373']
+    }]
+}));
+const kalanHammaddeBarOptions = {
+    responsive: true,
+    plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Kalan Hammadde Dağılımı' }
+    },
+    indexAxis: 'y',
+    scales: { x: { beginAtZero: true } }
+};
+
+// Tarih aralığını güzelce formatlayan fonksiyon
+function formatDateTR(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' });
+}
+const formattedDateRange = computed(() => {
+    if (!startDate.value || !endDate.value) return '';
+    return `${formatDate(startDate.value, true)} - ${formatDate(endDate.value, true)}`;
+});
+
+// Ay seçici için
+const monthOptions = [
+    { value: '2024-01', label: 'Ocak 2024' },
+    { value: '2024-02', label: 'Şubat 2024' },
+    { value: '2024-03', label: 'Mart 2024' },
+    { value: '2024-04', label: 'Nisan 2024' },
+    { value: '2024-05', label: 'Mayıs 2024' },
+    { value: '2024-06', label: 'Haziran 2024' },
+    { value: '2024-07', label: 'Temmuz 2024' },
+    { value: '2024-08', label: 'Ağustos 2024' },
+    { value: '2024-09', label: 'Eylül 2024' },
+    { value: '2024-10', label: 'Ekim 2024' },
+    { value: '2024-11', label: 'Kasım 2024' },
+    { value: '2024-12', label: 'Aralık 2024' },
+];
+const selectedMonth = ref(monthOptions[4].value); // default: Mayıs 2024
+const selectedMonthLabel = computed(() => monthOptions.find(m => m.value === selectedMonth.value)?.label || '');
+
+// ciroLineData ve ilgili veriler sadece seçili ayı gösterecek şekilde filtrelenmeli
+function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+const ciroAyVerisi = computed(() => {
+    // ciro.value içinden sadece seçili ayı filtrele
+    const [yil, ay] = selectedMonth.value.split('-');
+    return (ciro.value || []).filter(x => {
+        const d = new Date(x.tarih);
+        return d.getFullYear() === +yil && (d.getMonth() + 1) === +ay;
+    });
+});
+
 // Sayfa açıldığında bugünün raporunu getir
 fetchReport();
 </script>
@@ -442,5 +523,18 @@ fetchReport();
 
 .v-data-table {
     border-radius: 12px;
+}
+
+.modern-table>>>tbody tr:nth-child(even) {
+    background-color: #f5f5f5;
+}
+
+.modern-table>>>tbody tr:hover {
+    background-color: #e3f2fd;
+}
+
+.modern-table>>>thead th {
+    font-weight: bold;
+    background: #e3e3e3;
 }
 </style>

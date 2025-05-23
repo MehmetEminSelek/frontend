@@ -14,7 +14,7 @@
         :items="allOrders" :loading="loading" :search="search" item-value="id" class="elevation-1" hover
         density="comfortable" items-per-page-text="Sayfa başına sipariş:"
         no-data-text="Gösterilecek sipariş bulunamadı." loading-text="Siparişler yükleniyor..." show-expand>
-        <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih) }} </template>
+        <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
         }})</span> </template>
@@ -207,9 +207,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from 'vue';
+import { ref, computed, onMounted, provide, reactive } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 
 // Tüm Siparişler modülüne özel tema ile Vuetify instance'ı oluştur
 const allOrdersTheme = {
@@ -363,22 +364,6 @@ async function savePayment() {
 // --- Ödeme Dialogu Fonksiyonları Sonu ---
 
 // <<< YARDIMCI FONKSİYONLAR GERİ EKLENDİ >>>
-function formatDate(dateString, includeTime = false) {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Geçersiz Tarih';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    if (includeTime) {
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${day}.${month}.${year} ${hours}:${minutes}`;
-    }
-    return `${day}.${month}.${year}`;
-  } catch (e) { console.error("Tarih formatlama hatası:", e); return 'Hatalı Tarih'; }
-}
 function editOrder(id) { console.log('Düzenle ID:', id); showSnackbar(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`, 'info'); }
 async function deleteOrder(id) {
   console.log('Sil ID:', id); /* Vue dialog ile onay alınmalı! */

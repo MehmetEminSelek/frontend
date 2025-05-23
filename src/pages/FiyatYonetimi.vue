@@ -153,6 +153,7 @@
 import { ref, onMounted, reactive, computed, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { formatDate } from '../utils/date';
 
 // Fiyat modülüne özel tema ile Vuetify instance'ı oluştur
 const fiyatTheme = {
@@ -231,7 +232,6 @@ async function fetchUrunler() {
 
 onMounted(() => { fetchFiyatlar(); fetchUrunler(); });
 function handleOptionsUpdate(options) { console.log('Data table options updated:', options); }
-function formatDate(dateString) { if (!dateString) return ''; try { const date = new Date(dateString); if (isNaN(date.getTime())) return ''; const day = String(date.getDate()).padStart(2, '0'); const month = String(date.getMonth() + 1).padStart(2, '0'); const year = date.getFullYear(); return `${day}.${month}.${year}`; } catch (e) { return ''; } }
 
 // Dialog Fonksiyonları
 function openNewPriceDialog() { editingFiyat.value = null; priceForm.urunId = null; priceForm.birim = 'KG'; priceForm.fiyat = null; priceForm.gecerliTarih = new Date().toISOString().split('T')[0]; priceForm.bitisTarihi = null; priceDialog.value = true; }

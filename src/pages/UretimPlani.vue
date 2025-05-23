@@ -21,7 +21,8 @@
                     <v-card class="pa-3 mb-4" color="green-lighten-5">
                         <div class="text-h6 font-weight-bold mb-2">Üretim Planı (Toplam Hammadde/Yarı Mamul İhtiyacı)
                         </div>
-                        <Bar :data="barData" :options="barOptions" style="max-height:300px;" />
+                        <Bar v-if="Array.isArray(barData.labels) && Array.isArray(barData.datasets)" :data="barData"
+                            :options="barOptions" style="max-height:300px;" />
                         <v-data-table :headers="planHeaders" :items="uretimPlani" :loading="loading" class="elevation-0"
                             density="compact" hide-default-footer />
                     </v-card>
@@ -81,12 +82,20 @@ const top5Uretim = computed(() => {
         .slice(0, 5);
 });
 
-const barData = computed(() => ({
-    labels: top5Uretim.value.map(x => x.stokAd),
+const safeChartData = data => {
+    if (!data || typeof data !== 'object') return { labels: [], datasets: [] };
+    return {
+        labels: Array.isArray(data.labels) ? data.labels : [],
+        datasets: Array.isArray(data.datasets) ? data.datasets : []
+    };
+};
+
+const barData = computed(() => safeChartData({
+    labels: (top5Uretim.value || []).map(x => x.stokAd),
     datasets: [
         {
             label: 'İhtiyaç (gr)',
-            data: top5Uretim.value.map(x => x.toplamGram),
+            data: (top5Uretim.value || []).map(x => x.toplamGram),
             backgroundColor: [
                 '#81c784', '#aed581', '#ffd54f', '#ffb74d', '#e57373'
             ]

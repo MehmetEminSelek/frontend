@@ -24,11 +24,13 @@
               :active="isActive('/main/allorders')" class="sub-nav-item" @click="onMenuClick"></v-list-item>
           </v-list-group>
 
-          <v-list-item to="/main/cari-yonetimi" title="Cari Yönetimi" link prepend-icon="mdi-account-cash"
+          <v-list-item :to="{ name: 'CariYonetimi' }" title="Cari Yönetimi" link prepend-icon="mdi-account-cash"
             :active="isActive('/main/cari-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
 
           <v-list-item to="/main/stok-yonetimi" title="Stok Yönetimi" link prepend-icon="mdi-warehouse"
             :active="isActive('/main/stok-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item to="/main/kargo-yonetimi" title="Kargo Yönetimi" link prepend-icon="mdi-truck"
+            :active="isActive('/main/kargo-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/kullanici-yonetimi" title="Kullanıcı Yönetimi" link
             prepend-icon="mdi-account-group" :active="isActive('/main/kullanici-yonetimi')" class="main-nav-item"
             @click="onMenuClick"></v-list-item>
@@ -53,6 +55,36 @@
               <component :is="Component" />
             </transition>
           </router-view>
+          <!-- Sol alt köşe kullanıcı/login ikonu -->
+          <div style="position:fixed;left:24px;bottom:24px;z-index:2000;">
+            <v-btn icon size="large" color="primary" @click="loginDialog = true">
+              <v-icon v-if="!currentUser">mdi-account-circle</v-icon>
+              <v-avatar v-else color="primary" size="36"><span>{{ currentUser.ad?.charAt(0).toUpperCase()
+              }}</span></v-avatar>
+            </v-btn>
+          </div>
+          <!-- Login Dialog -->
+          <v-dialog v-model="loginDialog" max-width="400">
+            <v-card>
+              <v-card-title class="text-h6">Giriş Yap</v-card-title>
+              <v-card-text>
+                <v-text-field v-model="loginForm.email" label="Kullanıcı Adı veya Email"
+                  placeholder="Kullanıcı Adı veya Email" prepend-inner-icon="mdi-account" required autofocus />
+                <v-text-field v-model="loginForm.password" label="Şifre" placeholder="Şifre"
+                  prepend-inner-icon="mdi-lock" type="password" required />
+                <v-alert v-if="loginError" type="error" dense class="mt-2">{{ loginError }}</v-alert>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn text @click="loginDialog = false">İptal</v-btn>
+                <v-btn color="success" @click="handleLogin" :loading="loginLoading">GİRİŞ YAP</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <!-- Çıkış butonu -->
+          <div v-if="currentUser" style="position:fixed;left:90px;bottom:24px;z-index:2000;">
+            <v-btn color="error" size="small" @click="handleLogout">Çıkış</v-btn>
+          </div>
         </v-container>
       </v-main>
     </v-layout>
@@ -60,14 +92,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import axios from 'axios';
 
 const drawer = ref(true);
 const isMobile = ref(false);
 const route = useRoute();
 const user = JSON.parse(localStorage.getItem('user') || '{}');
-const isAdmin = user && user.role === 'admin';
+const isAdmin = computed(() => user && (user.role === 'admin' || user.role === 'superadmin'));
+const loginDialog = ref(false);
+const loginForm = ref({ email: '', password: '' });
+const loginError = ref('');
+const loginLoading = ref(false);
+const currentUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
 
 function updateScreen() {
   const wasMobile = isMobile.value;
@@ -78,8 +116,10 @@ function updateScreen() {
 }
 
 function isActive(path) {
-  // Aktif rotayı kontrol et (başlangıç kontrolü kaldırıldı, tam eşleşme veya alt rota kontrolü)
-  return route.path === path || route.path.startsWith(path + '/');
+  if (!route.path || !path) return false;
+  const currentPath = route.path.toLowerCase();
+  const targetPath = path.toLowerCase();
+  return currentPath === targetPath || currentPath.startsWith(targetPath + '/');
 }
 
 function onDrawerOutsideClick() {
@@ -92,6 +132,34 @@ function onDrawerUpdate(val) {
 
 function onMenuClick() {
   if (isMobile.value) drawer.value = false;
+}
+
+async function handleLogin() {
+  loginError.value = '';
+  loginLoading.value = true;
+  try {
+    const res = await axios.post('/api/auth/login', loginForm.value);
+    if (res.data && res.data.user && res.data.token) {
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('token', res.data.token);
+      currentUser.value = res.data.user;
+      loginDialog.value = false;
+      window.location.reload();
+    } else {
+      loginError.value = 'Giriş başarısız.';
+    }
+  } catch (e) {
+    loginError.value = e.response?.data?.message || 'Giriş başarısız.';
+  } finally {
+    loginLoading.value = false;
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  currentUser.value = null;
+  window.location.reload();
 }
 
 onMounted(() => {

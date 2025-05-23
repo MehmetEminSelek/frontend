@@ -11,6 +11,8 @@ import FiyatYönetimi from '../pages/FiyatYonetimi.vue'
 import StokYonetimi from '../pages/StokYonetimi.vue'
 import KullaniciYonetimi from '../pages/KullaniciYonetimi.vue'
 import UretimPlani from '../pages/UretimPlani.vue'
+import CariYonetimi from '../pages/CariYonetimi.vue'
+import KargoOperasyon from '../pages/KargoOperasyon.vue'
 
 // ROUTER SETUP
 
@@ -87,7 +89,13 @@ const routes = [
       {
         path: 'cari-yonetimi',
         name: 'CariYonetimi',
-        component: () => import('../pages/CariYonetimi.vue'),
+        component: CariYonetimi,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'kargo-yonetimi',
+        name: 'KargoYonetimi',
+        component: KargoOperasyon,
         meta: { requiresAuth: true }
       },
       {
@@ -112,7 +120,7 @@ router.beforeEach((to, from, next) => {
     }
     if (to.meta.adminOnly) {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user || user.role !== 'admin') {
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
         return next({ name: 'StokYonetimi' });
       }
     }

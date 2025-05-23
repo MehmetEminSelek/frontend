@@ -1,151 +1,152 @@
 <template>
     <v-container fluid>
         <v-row>
-            <v-col cols="12" md="8">
+            <v-col cols="12">
                 <v-card class="pa-4 elevation-3 rounded-lg" style="background: #fafbfc;">
                     <v-card-title class="d-flex align-center">
                         <v-text-field v-model="search" label="Müşteri Ara" prepend-inner-icon="mdi-magnify" dense
-                            hide-details :class="isMobile ? 'w-100' : ''" class="mr-4" style="max-width:300px;" />
+                            hide-details class="mr-4" style="max-width:300px;" />
                         <v-spacer />
-                        <v-btn color="primary" class="elevation-1" @click="dialogYeni = true"><v-icon
+                        <v-btn color="info" class="elevation-1 mr-2" @click="downloadExcelTemplate">
+                            <v-icon left>mdi-download</v-icon>Excel Şablonunu İndir
+                        </v-btn>
+                        <input ref="excelInput" type="file" accept=".xlsx" style="display:none"
+                            @change="onExcelFileChange" />
+                        <v-btn color="success" class="elevation-1 mr-2" @click="triggerExcelInput">
+                            <v-icon left>mdi-upload</v-icon>Excel'den Yükle
+                        </v-btn>
+                        <v-btn color="primary" class="elevation-1" @click="openDialogYeni"><v-icon
                                 left>mdi-account-plus</v-icon>Yeni Müşteri</v-btn>
                     </v-card-title>
+                    <div v-if="excelResults.length > 0" class="my-2">
+                        <v-alert type="info" border="left" prominent>
+                            <div v-for="(r, i) in excelResults" :key="i">
+                                <span v-if="r.status === 'ok'" class="text-success">✔</span>
+                                <span v-else-if="r.status === 'skipped'" class="text-warning">⏭</span>
+                                <span v-else class="text-error">✖</span>
+                                {{ r.musteriKodu }} - {{ r.ad }} <span v-if="r.message">({{ r.message }})</span>
+                            </div>
+                        </v-alert>
+                    </div>
                     <div style="overflow-x:auto">
-                        <v-data-table :headers="headers" :items="filteredCariler" :search="search" item-key="id" dense
+                        <v-data-table :headers="headers" :items="filteredCariler" item-key="id" dense
                             class="modern-table">
                             <template #item.ad="{ item }">
                                 <v-avatar color="primary" size="32" class="mr-2">{{ item.ad.charAt(0).toUpperCase()
                                     }}</v-avatar>
                                 <span>{{ item.ad }}</span>
                             </template>
+                            <template #item.musteriKodu="{ item }">
+                                <span>{{ item.musteriKodu }}</span>
+                            </template>
+                            <template #item.telefon="{ item }">
+                                <span>{{ item.telefon }}</span>
+                            </template>
+                            <template #item.bakiye="{ item }">
+                                <span>{{ item.bakiye }}</span>
+                            </template>
+                            <template #item.enYakinVade="{ item }">
+                                <span>{{ item.enYakinVade || '-' }}</span>
+                            </template>
                             <template #item.actions="{ item }">
-                                <v-btn icon color="info" @click="openDetay(item)"><v-icon>mdi-eye</v-icon></v-btn>
-                                <v-btn icon color="primary" @click="openEdit(item)"><v-icon>mdi-pencil</v-icon></v-btn>
+                                <v-btn icon color="secondary"
+                                    @click="openAdresDialog(item)"><v-icon>mdi-home-map-marker</v-icon></v-btn>
+                                <v-btn icon color="info" @click="openDialogDetay(item)"><v-icon>mdi-eye</v-icon></v-btn>
+                                <v-btn icon color="primary"
+                                    @click="openDialogFullEdit(item)"><v-icon>mdi-pencil</v-icon></v-btn>
                                 <v-btn icon color="red" @click="deleteCari(item)"><v-icon>mdi-delete</v-icon></v-btn>
                             </template>
                         </v-data-table>
                     </div>
                 </v-card>
             </v-col>
-            <v-col cols="12" md="4" v-if="!isMobile">
-                <v-card v-if="detayCari" class="pa-4 elevation-4 rounded-xl" style="background: #fff;">
-                    <v-card-title class="d-flex align-center">
-                        <v-avatar color="primary" size="40" class="mr-3">{{ detayCari.ad.charAt(0).toUpperCase()
-                            }}</v-avatar>
-                        <div>
-                            <div class="font-weight-bold text-h6">{{ detayCari.ad }}</div>
-                            <div class="grey--text">{{ detayCari.email }}<br>{{ detayCari.telefon }}</div>
-                        </div>
-                    </v-card-title>
-                    <v-card-text>
-                        <div v-if="detayCari && detayCari.adresler && detayCari.adresler.length">
-                            <b>Adresler:</b>
-                            <ul class="pa-0">
-                                <li v-for="adres in detayCari.adresler" :key="adres.id" class="mb-1">
-                                    <v-chip :color="adres.tip === 'Ev' ? 'green' : adres.tip === 'İş' ? 'blue' : 'grey'"
-                                        text-color="white" small class="mr-2">{{ adres.tip }}</v-chip>
-                                    <span>{{ adres.adres }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div v-else><b>Adres:</b> Yok</div>
-                        <div class="mt-2"><b>Bakiye:</b> <span class="font-weight-bold">{{ detayCari.bakiye }} TL</span>
-                        </div>
-                        <div><b>Toplam Borç:</b> {{ toplamBorc }} TL</div>
-                        <div><b>Toplam Alacak:</b> {{ toplamAlacak }} TL</div>
-                        <div><b>Kalan Borç:</b> {{ kalanBorc }} TL</div>
-                        <div v-if="enYakinVade"><b>En Yakın Vade:</b> {{ enYakinVade }}</div>
-                        <div><b>Açıklama:</b> {{ detayCari.aciklama }}</div>
-                        <v-divider class="my-2" />
-                        <b>Hareketler</b>
-                        <div style="overflow-x:auto">
-                            <v-data-table :headers="hareketHeaders" :items="hareketler" dense hide-default-footer
-                                :items-per-page="5" class="modern-table" />
-                        </div>
-                        <div class="mt-3 d-flex flex-wrap gap-2">
-                            <v-btn color="success" class="elevation-1 mr-2 mb-2" @click="dialogOdeme = true"><v-icon
-                                    left>mdi-cash-plus</v-icon>Ödeme Ekle</v-btn>
-                            <v-btn color="info" class="elevation-1 mr-2 mb-2" @click="exportExcel"
-                                prepend-icon="mdi-file-excel">Excel</v-btn>
-                            <v-btn color="deep-orange" class="elevation-1 mr-2 mb-2" @click="exportPDF"
-                                prepend-icon="mdi-file-pdf">PDF</v-btn>
-                            <v-btn color="warning" class="elevation-1 mr-2 mb-2" @click="openVadeTakip"><v-icon
-                                    left>mdi-calendar-clock</v-icon>Vade Takibi</v-btn>
-                            <v-btn color="primary" class="elevation-1 mb-2" @click="openFullEdit(detayCari)"><v-icon
-                                    left>mdi-pencil</v-icon>Detayları Düzenle</v-btn>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
         </v-row>
 
         <!-- Detay Dialog (Mobil) -->
-        <v-dialog v-model="dialogDetay" max-width="95vw" persistent scrollable>
+        <v-dialog v-model="dialogDetay" max-width="900" persistent scrollable>
             <v-card v-if="detayCari">
-                <v-card-title>{{ detayCari.ad }}</v-card-title>
-                <v-card-subtitle>{{ detayCari.email }}<br>{{ detayCari.telefon }}</v-card-subtitle>
+                <v-card-title class="text-h5 font-weight-bold mb-1">{{ detayCari.ad }}</v-card-title>
+                <v-card-subtitle class="mb-2">{{ detayCari.email }}<br>{{ detayCari.telefon }}</v-card-subtitle>
                 <v-card-text>
-                    <div v-if="detayCari && detayCari.adresler && detayCari.adresler.length">
-                        <b>Adresler:</b>
-                        <ul>
-                            <li v-for="adres in detayCari.adresler" :key="adres.id">
-                                <b>{{ adres.tip }}:</b> {{ adres.adres }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div v-else><b>Adres:</b> Yok</div>
-                    <div><b>Bakiye:</b> {{ detayCari.bakiye }} TL</div>
-                    <div><b>Toplam Borç:</b> {{ toplamBorc }} TL</div>
-                    <div><b>Toplam Alacak:</b> {{ toplamAlacak }} TL</div>
-                    <div><b>Kalan Borç:</b> {{ kalanBorc }} TL</div>
-                    <div v-if="enYakinVade"><b>En Yakın Vade:</b> {{ enYakinVade }}</div>
-                    <div><b>Açıklama:</b> {{ detayCari.aciklama }}</div>
-                    <v-divider class="my-2" />
-                    <b>Hareketler</b>
+                    <v-row class="mb-2">
+                        <v-col cols="12" md="6">
+                            <v-sheet class="pa-3 mb-2 rounded-lg" color="#f5f7fa">
+                                <div class="d-flex align-center mb-1">
+                                    <span class="font-weight-bold mr-2">Bakiye:</span>
+                                    <span class="text-h6">{{ detayCari.bakiye }} TL</span>
+                                </div>
+                                <div class="d-flex align-center mb-1">
+                                    <span class="font-weight-bold mr-2">Toplam Borç:</span>
+                                    <span>{{ toplamBorc }} TL</span>
+                                </div>
+                                <div class="d-flex align-center mb-1">
+                                    <span class="font-weight-bold mr-2">Toplam Alacak:</span>
+                                    <span>{{ toplamAlacak }} TL</span>
+                                </div>
+                                <div class="d-flex align-center mb-1">
+                                    <span class="font-weight-bold mr-2">Kalan Borç:</span>
+                                    <span :class="{ 'text-error': kalanBorc > 0, 'text-success': kalanBorc <= 0 }">{{
+                                        kalanBorc }}
+                                        TL</span>
+                                </div>
+                                <div v-if="enYakinVade" class="d-flex align-center mb-1">
+                                    <span class="font-weight-bold mr-2">En Yakın Vade:</span>
+                                    <span>{{ enYakinVade }}</span>
+                                </div>
+                            </v-sheet>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-sheet class="pa-3 mb-2 rounded-lg" color="#f5f7fa">
+                                <div class="font-weight-bold mb-1">Açıklama:</div>
+                                <div>{{ detayCari.aciklama || '—' }}</div>
+                            </v-sheet>
+                        </v-col>
+                    </v-row>
+                    <div class="font-weight-bold mb-2 mt-2 text-h6">Hareketler</div>
                     <div style="overflow-x:auto">
                         <v-data-table :headers="hareketHeaders" :items="hareketler" dense hide-default-footer
-                            :items-per-page="5" />
+                            :items-per-page="5" class="modern-table modern-movement-table">
+                            <template #item.createdAt="{ item }">
+                                {{ formatDate(item.createdAt, true) }}
+                            </template>
+                            <template #item.tutar="{ item }">
+                                <span class="text-right d-block">{{ item.tutar }}</span>
+                            </template>
+                        </v-data-table>
                     </div>
-                    <v-btn color="success" class="mt-2" @click="dialogOdeme = true">Ödeme Ekle</v-btn>
-                    <v-btn color="info" class="mt-2" @click="exportExcel" prepend-icon="mdi-file-excel">Excel</v-btn>
-                    <v-btn color="deep-orange" class="mt-2 ml-2" @click="exportPDF"
-                        prepend-icon="mdi-file-pdf">PDF</v-btn>
-                    <v-btn color="warning" class="mt-2 ml-2" @click="openVadeTakip">Vade Takibi</v-btn>
-                    <v-btn color="primary" class="mt-2" @click="openFullEdit(detayCari)"><v-icon
-                            left>mdi-pencil</v-icon>Detayları Düzenle</v-btn>
+                    <div class="mt-4 d-flex flex-wrap gap-2">
+                        <v-btn color="success" class="elevation-1 mr-2 mb-2" @click="openDialogOdeme"><v-icon
+                                left>mdi-cash-plus</v-icon>Ödeme Ekle</v-btn>
+                        <v-btn color="info" class="elevation-1 mr-2 mb-2" @click="exportExcel"
+                            prepend-icon="mdi-file-excel">Excel</v-btn>
+                        <v-btn color="deep-orange" class="elevation-1 mr-2 mb-2" @click="exportPDF"
+                            prepend-icon="mdi-file-pdf">PDF</v-btn>
+                        <v-btn color="warning" class="elevation-1 mr-2 mb-2" @click="openVadeTakipDialog"><v-icon
+                                left>mdi-calendar-clock</v-icon>Vade Takibi</v-btn>
+                        <v-btn color="primary" class="elevation-1 mb-2" @click="openDialogFullEdit(detayCari)"><v-icon
+                                left>mdi-pencil</v-icon>Detayları Düzenle</v-btn>
+                    </div>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn color="primary" @click="closeDetay">Kapat</v-btn>
+                    <v-btn color="primary" @click="closeDialogDetay">Kapat</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
 
         <!-- Yeni Müşteri Dialog -->
         <v-dialog v-model="dialogYeni" max-width="600">
-            <v-card :class="isMobile ? 'pa-4' : ''">
+            <v-card>
                 <v-card-title>Yeni Müşteri</v-card-title>
                 <v-card-text>
                     <v-text-field v-model="yeniCari.ad" label="Ad" required />
                     <v-text-field v-model="yeniCari.telefon" label="Telefon" />
                     <v-text-field v-model="yeniCari.email" label="Email" />
                     <v-textarea v-model="yeniCari.aciklama" label="Açıklama" />
-                    <div class="mt-4">
-                        <b>Adresler</b>
-                        <div v-for="(adres, idx) in yeniCari.adresler" :key="idx" class="d-flex align-center mb-2">
-                            <v-select v-model="adres.tip" :items="['Ev', 'İş', 'Diğer']" label="Tip" dense
-                                style="max-width:100px" />
-                            <v-text-field v-model="adres.adres" label="Adres" dense class="ml-2" />
-                            <v-btn icon color="red" @click="removeAdres(idx)"
-                                v-if="yeniCari.adresler.length > 1"><v-icon>mdi-delete</v-icon></v-btn>
-                        </div>
-                        <v-btn color="primary" variant="text" @click="addAdres"><v-icon left>mdi-plus</v-icon>Adres
-                            Ekle</v-btn>
-                    </div>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn text @click="closeYeni">İptal</v-btn>
+                    <v-btn text @click="closeDialogYeni">İptal</v-btn>
                     <v-btn color="primary" @click="addCari">Kaydet</v-btn>
                 </v-card-actions>
             </v-card>
@@ -153,7 +154,7 @@
 
         <!-- Ödeme Dialogu -->
         <v-dialog v-model="dialogOdeme" max-width="400">
-            <v-card :class="isMobile ? 'pa-4' : ''">
+            <v-card>
                 <v-card-title>Ödeme Ekle</v-card-title>
                 <v-card-text>
                     <v-text-field v-model.number="odemeTutar" label="Tutar (TL)" type="number" />
@@ -164,7 +165,7 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn text @click="closeOdeme">İptal</v-btn>
+                    <v-btn text @click="closeDialogOdeme">İptal</v-btn>
                     <v-btn color="success" @click="addOdeme">Ekle</v-btn>
                 </v-card-actions>
             </v-card>
@@ -183,7 +184,7 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn text @click="dialogVadeTakip = false">Kapat</v-btn>
+                    <v-btn text @click="closeVadeTakip">İptal</v-btn>
                     <v-btn color="success" @click="sendVadeSms" :disabled="selectedVade.length === 0">SMS Gönder</v-btn>
                 </v-card-actions>
             </v-card>
@@ -198,26 +199,44 @@
                     <v-text-field v-model="editCari.telefon" label="Telefon" />
                     <v-text-field v-model="editCari.email" label="Email" />
                     <v-text-field v-model="editCari.musteriKodu" label="Müşteri Kodu" disabled />
-                    <v-text-field v-model="editCari.sube?.ad" label="Şube" disabled />
+                    <v-text-field :value="editCari.sube?.ad" label="Şube" disabled />
                     <v-textarea v-model="editCari.aciklama" label="Açıklama" />
-                    <div class="mt-4">
-                        <b>Adresler</b>
-                        <div v-for="(adres, idx) in editCari.adresler" :key="adres.id || idx"
-                            class="d-flex align-center mb-2">
-                            <v-select v-model="adres.tip" :items="['Ev', 'İş', 'Diğer']" label="Tip" dense
-                                style="max-width:100px" />
-                            <v-text-field v-model="adres.adres" label="Adres" dense class="ml-2" />
-                            <v-btn icon color="red" @click="removeEditAdres(idx)"
-                                v-if="editCari.adresler.length > 1"><v-icon>mdi-delete</v-icon></v-btn>
-                        </div>
-                        <v-btn color="primary" variant="text" @click="addEditAdres"><v-icon left>mdi-plus</v-icon>Adres
-                            Ekle</v-btn>
-                    </div>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn text @click="closeFullEdit">İptal</v-btn>
+                    <v-btn text @click="closeDialogFullEdit">İptal</v-btn>
                     <v-btn color="primary" @click="saveFullEdit">Kaydet</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Adres Dialogu -->
+        <v-dialog v-model="dialogAdres" max-width="600">
+            <v-card>
+                <v-card-title class="text-h5 font-weight-bold">Adresler</v-card-title>
+                <v-card-text>
+                    <div v-if="adreslerList.length === 0" class="mb-2">Kayıtlı adres yok.</div>
+                    <v-row v-else class="mb-2" dense>
+                        <v-col v-for="(adres, i) in adreslerList" :key="i" cols="12">
+                            <v-card class="adres-card d-flex flex-row justify-space-between align-center mb-2 pa-4">
+                                <div class="adres-info">
+                                    <div class="adres-baslik">{{ adres.adres }}</div>
+                                    <div class="adres-tip">{{ adres.tip }}</div>
+                                </div>
+                                <v-btn icon color="red" @click="removeAdres(i)"
+                                    size="small"><v-icon>mdi-delete</v-icon></v-btn>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                    <v-divider class="my-2" />
+                    <v-text-field v-model="yeniAdres.adres" label="Yeni Adres" class="mb-2" />
+                    <v-select v-model="yeniAdres.tip" :items="['Ev', 'İş', 'Diğer']" label="Adres Tipi" class="mb-2" />
+                    <v-btn color="success" @click="addAdres" :disabled="!yeniAdres.adres">Ekle</v-btn>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn text @click="closeAdresDialog">Kapat</v-btn>
+                    <v-btn color="primary" @click="saveAdresler" :loading="adresKayitLoading">Kaydet</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -226,6 +245,12 @@
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="2000"
             :location="isMobile ? 'top' : 'bottom'">{{
                 snackbar.text }}</v-snackbar>
+
+        <!-- Loading Overlay -->
+        <v-overlay v-if="loadingExcel" :persistent="true" class="d-flex align-center justify-center"
+            style="z-index:9999">
+            <v-progress-circular indeterminate size="64" color="primary" />
+        </v-overlay>
     </v-container>
 </template>
 
@@ -234,7 +259,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+import { formatDate } from '../utils/date';
 
 const cariler = ref([]);
 const search = ref('');
@@ -245,7 +271,8 @@ const dialogOdeme = ref(false);
 const dialogDetay = ref(false);
 const dialogVadeTakip = ref(false);
 const dialogFullEdit = ref(false);
-const yeniCari = ref({ ad: '', telefon: '', email: '', aciklama: '', adresler: [{ tip: 'Ev', adres: '' }] });
+const dialogAdres = ref(false);
+const yeniCari = ref({ ad: '', telefon: '', email: '', aciklama: '' });
 const odemeTutar = ref(0);
 const odemeAciklama = ref('');
 const odemeYontemi = ref('');
@@ -255,12 +282,21 @@ const isMobile = ref(false);
 const vadeList = ref([]);
 const selectedVade = ref([]);
 const editCari = ref({ ad: '', telefon: '', email: '', aciklama: '', musteriKodu: '', sube: {}, adresler: [] });
+const excelInput = ref(null);
+const excelResults = ref([]);
+const loadingExcel = ref(false);
+const adreslerList = ref([]);
+const adresCariId = ref(null);
+const yeniAdres = ref({ tip: 'Ev', adres: '' });
+const adresKayitLoading = ref(false);
 
 const headers = [
-    { text: 'Ad', value: 'ad' },
-    { text: 'Telefon', value: 'telefon' },
-    { text: 'Bakiye', value: 'bakiye' },
-    { text: 'İşlemler', value: 'actions', sortable: false },
+    { title: 'ADI', key: 'ad' },
+    { title: 'MÜŞTERİ KODU', key: 'musteriKodu' },
+    { title: 'TEL', key: 'telefon' },
+    { title: 'GÜNCEL BORÇ', key: 'bakiye' },
+    { title: 'EN YAKIN VADE/GEÇMİŞ VADE', key: 'enYakinVade' },
+    { title: 'İşlemler', key: 'actions', sortable: false },
 ];
 const hareketHeaders = [
     { text: 'Tarih', value: 'createdAt' },
@@ -308,28 +344,20 @@ async function fetchCariler() {
     cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
 }
 
-function openDetay(item) {
+function openDialogYeni() { dialogYeni.value = true; }
+function closeDialogYeni() {
+    dialogYeni.value = false;
+    yeniCari.value = { ad: '', telefon: '', email: '', aciklama: '' };
+}
+
+function openDialogDetay(item) {
     detayCari.value = item;
     fetchHareketler(item.id);
-    if (isMobile.value) dialogDetay.value = true;
+    dialogDetay.value = true;
 }
-
-function closeDetay() {
+function closeDialogDetay() {
     dialogDetay.value = false;
     detayCari.value = null;
-}
-
-function openEdit(item) {
-    Object.assign(yeniCari.value, item);
-    if (!yeniCari.value.adresler || !Array.isArray(yeniCari.value.adresler) || yeniCari.value.adresler.length === 0) {
-        yeniCari.value.adresler = [{ tip: 'Ev', adres: '' }];
-    }
-    dialogYeni.value = true;
-}
-
-function closeYeni() {
-    dialogYeni.value = false;
-    yeniCari.value = { ad: '', telefon: '', email: '', aciklama: '', adresler: [{ tip: 'Ev', adres: '' }] };
 }
 
 async function deleteCari(item) {
@@ -348,8 +376,10 @@ async function addCari() {
         return;
     }
     const payload = { ...yeniCari.value };
-    if (!payload.adresler || !Array.isArray(payload.adresler) || payload.adresler.length === 0) {
-        payload.adresler = [{ tip: 'Ev', adres: '' }];
+    payload.adresler = (payload.adresler || []).filter(a => a.adres && a.adres.trim() !== '');
+    if (payload.adresler.length === 0) {
+        snackbar.value = { show: true, text: 'En az bir adres girin', color: 'error' };
+        return;
     }
     if (payload.id) {
         await axios.put('/api/cari', payload);
@@ -358,7 +388,7 @@ async function addCari() {
         await axios.post('/api/cari', payload);
         snackbar.value = { show: true, text: 'Müşteri eklendi', color: 'success' };
     }
-    closeYeni();
+    closeDialogYeni();
     fetchCariler();
 }
 
@@ -367,22 +397,8 @@ async function fetchHareketler(cariId) {
     hareketler.value = data;
 }
 
-async function addOdeme() {
-    if (!detayCari.value) return;
-    await axios.post('/api/cari/odeme', {
-        cariId: detayCari.value.id,
-        tutar: odemeTutar.value,
-        aciklama: odemeAciklama.value,
-        odemeYontemi: odemeYontemi.value,
-        vadeTarihi: odemeVade.value || null,
-    });
-    snackbar.value = { show: true, text: 'Ödeme eklendi', color: 'success' };
-    closeOdeme();
-    fetchCariler();
-    fetchHareketler(detayCari.value.id);
-}
-
-function closeOdeme() {
+function openDialogOdeme() { dialogOdeme.value = true; }
+function closeDialogOdeme() {
     dialogOdeme.value = false;
     odemeTutar.value = 0;
     odemeAciklama.value = '';
@@ -404,10 +420,48 @@ function exportExcel() {
 }
 
 function exportPDF() {
-    if (!detayCari.value || !hareketler.value.length) return;
-    const doc = new jsPDF();
-    doc.text(`Cari Ekstresi: ${detayCari.value.ad}`, 14, 14);
-    doc.autoTable({
+    if (!detayCari.value || !Array.isArray(hareketler.value) || !hareketler.value.length)
+        return;
+    const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        putOnlyUsedFonts: true
+    });
+    doc.setFont('helvetica', '');
+    // Başlık ve üst bilgi
+    doc.setFontSize(18);
+    doc.setTextColor(40, 70, 150);
+    doc.text(`Cari Ekstresi`, 14, 16, { encoding: 'windows-1254' });
+    doc.setFontSize(13);
+    doc.setTextColor(30, 30, 30);
+    doc.text(`Müşteri: ${detayCari.value.ad}`, 14, 26, { encoding: 'windows-1254' });
+    doc.setFontSize(10);
+    doc.text(`Telefon: ${detayCari.value.telefon || '-'}`, 14, 32, { encoding: 'windows-1254' });
+    doc.text(`E-posta: ${detayCari.value.email || '-'}`, 80, 32, { encoding: 'windows-1254' });
+
+    // Özet kutusu (gri arka plan)
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(12, 36, 185, 16, 3, 3, 'F');
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Bakiye: ${detayCari.value.bakiye} TL`, 16, 44, { encoding: 'windows-1254' });
+    doc.text(`Toplam Borç: ${toplamBorc.value} TL`, 60, 44, { encoding: 'windows-1254' });
+    doc.text(`Toplam Alacak: ${toplamAlacak.value} TL`, 120, 44, { encoding: 'windows-1254' });
+    doc.text(`Kalan Borç: ${kalanBorc.value} TL`, 16, 50, { encoding: 'windows-1254' });
+    if (enYakinVade.value) {
+        doc.text(`En Yakın Vade: ${enYakinVade.value}`, 60, 50, { encoding: 'windows-1254' });
+    }
+
+    // Açıklama kutusu (her zaman özet kutusunun altında, tam genişlikte)
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(12, 54, 185, 12, 3, 3, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Açıklama: ${detayCari.value.aciklama || '—'}`, 16, 62, { encoding: 'windows-1254' });
+
+    // Hareketler tablosu
+    autoTable(doc, {
         head: [['Tarih', 'Tip', 'Tutar', 'Açıklama']],
         body: hareketler.value.map(h => [
             new Date(h.createdAt).toLocaleString(),
@@ -415,53 +469,36 @@ function exportPDF() {
             h.tutar,
             h.aciklama || ''
         ]),
-        startY: 20
+        startY: 70,
+        headStyles: { fillColor: [40, 70, 150], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { fontSize: 10, halign: 'center' },
+        styles: { cellPadding: 2, overflow: 'linebreak' },
+        margin: { left: 12, right: 12 }
     });
+
     doc.save(`CariEkstresi_${detayCari.value.ad}.pdf`);
 }
 
-function openVadeTakip() {
+function openVadeTakipDialog() {
     axios.get('/api/cari/vade-takip').then(r => {
         vadeList.value = r.data;
         selectedVade.value = [];
         dialogVadeTakip.value = true;
     });
 }
+function closeVadeTakip() { dialogVadeTakip.value = false; }
 
-async function sendVadeSms() {
-    if (!selectedVade.value.length) return;
-    const { data } = await axios.post('/api/cari/vade-takip', { cariIds: selectedVade.value });
-    snackbar.value = { show: true, text: `${data.sent.length} kişiye SMS gönderildi`, color: 'success' };
-    dialogVadeTakip.value = false;
-}
-
-function addAdres() {
-    yeniCari.value.adresler.push({ tip: 'Ev', adres: '' });
-}
-
-function removeAdres(idx) {
-    yeniCari.value.adresler.splice(idx, 1);
-}
-
-function openFullEdit(item) {
-    editCari.value = JSON.parse(JSON.stringify(item));
+async function openDialogFullEdit(item) {
+    const { data } = await axios.get('/api/cari/' + item.id);
+    editCari.value = data;
     if (!editCari.value.adresler || !Array.isArray(editCari.value.adresler) || editCari.value.adresler.length === 0) {
         editCari.value.adresler = [{ tip: 'Ev', adres: '' }];
     }
     dialogFullEdit.value = true;
 }
-
-function closeFullEdit() {
+function closeDialogFullEdit() {
     dialogFullEdit.value = false;
     editCari.value = { ad: '', telefon: '', email: '', aciklama: '', musteriKodu: '', sube: {}, adresler: [] };
-}
-
-function addEditAdres() {
-    editCari.value.adresler.push({ tip: 'Ev', adres: '' });
-}
-
-function removeEditAdres(idx) {
-    editCari.value.adresler.splice(idx, 1);
 }
 
 async function saveFullEdit() {
@@ -474,8 +511,105 @@ async function saveFullEdit() {
     delete payload.sube;
     await axios.put('/api/cari', payload);
     snackbar.value = { show: true, text: 'Cari güncellendi', color: 'success' };
-    closeFullEdit();
+    closeDialogFullEdit();
     fetchCariler();
+}
+
+async function addOdeme() {
+    if (!detayCari.value) return;
+    await axios.post('/api/cari/odeme', {
+        cariId: detayCari.value.id,
+        tutar: odemeTutar.value,
+        aciklama: odemeAciklama.value,
+        odemeYontemi: odemeYontemi.value,
+        vadeTarihi: odemeVade.value || null,
+    });
+    snackbar.value = { show: true, text: 'Ödeme eklendi', color: 'success' };
+    closeDialogOdeme();
+    fetchCariler();
+    fetchHareketler(detayCari.value.id);
+}
+
+async function sendVadeSms() {
+    if (!selectedVade.value.length) return;
+    const { data } = await axios.post('/api/cari/vade-takip', { cariIds: selectedVade.value });
+    snackbar.value = { show: true, text: `${data.sent.length} kişiye SMS gönderildi`, color: 'success' };
+    dialogVadeTakip.value = false;
+}
+
+function triggerExcelInput() {
+    excelInput.value && excelInput.value.click();
+}
+
+async function downloadExcelTemplate() {
+    try {
+        const res = await axios.get('/api/excel/template/cari', { responseType: 'blob' });
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'cari-sablon.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (e) {
+        snackbar.value = { show: true, color: 'error', text: 'Şablon indirilemedi.' };
+    }
+}
+
+async function onExcelFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    loadingExcel.value = true;
+    try {
+        const res = await axios.post('/api/excel/upload/cari', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        excelResults.value = res.data.results || [];
+        snackbar.value = { show: true, color: 'success', text: 'Excel yükleme tamamlandı.' };
+        await fetchCariler();
+    } catch (err) {
+        const msg = err.response?.data?.error || 'Yükleme hatası.';
+        snackbar.value = { show: true, color: 'error', text: msg };
+        excelResults.value = [];
+    } finally {
+        loadingExcel.value = false;
+    }
+    e.target.value = '';
+}
+
+function openAdresDialog(item) {
+    adreslerList.value = Array.isArray(item.adresler) ? [...item.adresler] : [];
+    adresCariId.value = item.id;
+    yeniAdres.value = { tip: 'Ev', adres: '' };
+    dialogAdres.value = true;
+}
+function closeAdresDialog() {
+    dialogAdres.value = false;
+    adreslerList.value = [];
+    adresCariId.value = null;
+    yeniAdres.value = { tip: 'Ev', adres: '' };
+}
+function addAdres() {
+    if (!yeniAdres.value.adres) return;
+    adreslerList.value.push({ tip: yeniAdres.value.tip, adres: yeniAdres.value.adres });
+    yeniAdres.value = { tip: 'Ev', adres: '' };
+}
+function removeAdres(i) {
+    adreslerList.value.splice(i, 1);
+}
+async function saveAdresler() {
+    if (!adresCariId.value) return;
+    adresKayitLoading.value = true;
+    try {
+        await axios.put('/api/cari', { id: adresCariId.value, adresler: adreslerList.value });
+        snackbar.value = { show: true, text: 'Adresler kaydedildi', color: 'success' };
+        fetchCariler();
+        closeAdresDialog();
+    } catch (e) {
+        snackbar.value = { show: true, text: 'Adresler kaydedilemedi', color: 'error' };
+    } finally {
+        adresKayitLoading.value = false;
+    }
 }
 </script>
 
@@ -484,6 +618,41 @@ async function saveFullEdit() {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(60, 60, 60, 0.06);
     background: #fff;
+    font-size: 1.05em;
+}
+
+.v-data-table-header th,
+.v-data-table thead th,
+.v-data-table__th {
+    font-weight: bold !important;
+    background: #f5f7fa !important;
+    color: #263238 !important;
+    font-size: 1.08em;
+    letter-spacing: 0.02em;
+}
+
+.v-data-table__td,
+.v-data-table__th {
+    padding: 14px 18px !important;
+    vertical-align: middle;
+}
+
+.v-data-table__tr {
+    transition: background 0.2s;
+}
+
+.v-data-table__tr:hover {
+    background: #f5f7fa !important;
+}
+
+.v-data-table__tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+.v-avatar {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 8px;
 }
 
 .v-card {
@@ -503,8 +672,131 @@ async function saveFullEdit() {
     box-shadow: 0 2px 8px rgba(60, 60, 60, 0.10);
 }
 
-.v-avatar {
+.modern-movement-table .v-data-table__th {
+    font-weight: bold !important;
+    text-align: center;
+    background: #f5f7fa;
+}
+
+.modern-movement-table .v-data-table__td {
+    text-align: center;
+    font-size: 1.05em;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.modern-movement-table .v-data-table__td.text-right {
+    text-align: right !important;
+}
+
+.cari-mobile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+@media (min-width: 600px) {
+    .cari-mobile-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.cari-mobile-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(60, 60, 60, 0.08);
+    padding: 16px 14px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    font-size: 1.05em;
+}
+
+.cari-mobile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.cari-mobile-title {
     font-weight: bold;
-    font-size: 1.2em;
+    font-size: 1.15em;
+}
+
+.cari-mobile-row {
+    display: flex;
+    margin-bottom: 4px;
+}
+
+.cari-mobile-label {
+    font-weight: 500;
+    min-width: 110px;
+    color: #607d8b;
+    font-size: 0.98em;
+}
+
+.cari-mobile-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.cari-mobile-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    border-radius: 50% !important;
+    font-size: 1.3em !important;
+}
+
+.cari-mobile-header-row {
+    display: flex;
+    justify-content: space-between;
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: bold;
+    font-size: 1em;
+    margin-bottom: 8px;
+    color: #455a64;
+    gap: 8px;
+}
+
+.cari-mobile-header-cell {
+    flex: 1 1 0;
+    text-align: left;
+    min-width: 80px;
+    font-size: 0.98em;
+}
+
+.adres-card {
+    background: #f8f9fa;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(60, 60, 60, 0.07);
+    min-height: 70px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+}
+
+.adres-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 auto;
+}
+
+.adres-baslik {
+    font-size: 1.25em;
+    font-weight: bold;
+    color: #263238;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+.adres-tip {
+    font-size: 1em;
+    color: #607d8b;
+    font-weight: 500;
 }
 </style>
