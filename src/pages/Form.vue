@@ -47,13 +47,12 @@
           <template v-if="showAliciFields">
             <v-col cols="12" md="6">
               <v-autocomplete v-model="selectedCari" :items="dropdowns.cariler" item-title="ad" item-value="id"
-                label="Alıcı Adı" :search-input.sync="aliciSearch" :filter="customCariFilter" clearable hide-no-data
-                @update:modelValue="onCariSelected" @blur="onCariBlur" />
+                label="Alıcı Adı" clearable no-filter @update:model-value="onCariSelected" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field ref="aliciTelRef" :key="selectedCari" :value="form.aliciTel"
-                @update:modelValue="onAliciTelInput" label="Alıcı Tel" maxlength="11" :rules="[rules.optionalPhone]"
-                persistent-placeholder variant="outlined" color="primary" placeholder="5xxxxxxxxx" />
+              <v-text-field ref="aliciTelRef" :key="selectedCari" v-model="form.aliciTel" label="Alıcı Tel"
+                maxlength="11" :rules="[rules.optionalPhone]" persistent-placeholder variant="outlined" color="primary"
+                placeholder="5xxxxxxxxx" />
             </v-col>
           </template>
           <v-col cols="12">
@@ -69,7 +68,7 @@
                           <div class="adres-row-baslik">{{ adres.tip }}</div>
                           <div class="adres-row-tip">{{ adres.adres }}</div>
                         </div>
-                        <v-radio :model-value="selectedAdres" :value="adres.adres" color="primary" />
+                        <v-radio v-model="selectedAdres" :value="adres.adres" color="primary" />
                       </div>
                     </v-card>
                   </v-col>
@@ -77,12 +76,10 @@
               </div>
             </template>
             <template v-else-if="cariAdresler.length === 1">
-              <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                :disabled="!adresEnabled" rows="2" />
+              <v-textarea v-model="form.adres" label="Adres" :disabled="!adresEnabled" rows="2" />
             </template>
             <template v-else>
-              <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                :disabled="!adresEnabled" rows="2" />
+              <v-textarea v-model="form.adres" label="Adres" :disabled="!adresEnabled" rows="2" />
             </template>
           </v-col>
           <v-col cols="12">
@@ -298,7 +295,6 @@ const newItemInPackage = ref({
 });
 
 const selectedCari = ref(null);
-const aliciSearch = ref('');
 const cariAdresler = ref([]);
 const selectedAdres = ref('');
 const aliciTelRef = ref(null);
@@ -427,37 +423,52 @@ function getUrunIcon(urunAdi) {
   return 'mdi-food-variant';
 }
 
-function customCariFilter(item, queryText, itemText) {
-  const text = itemText.toLocaleLowerCase('tr-TR');
-  const query = queryText.toLocaleLowerCase('tr-TR');
-  return text.includes(query);
-}
-
 function onCariSelected(cariId) {
+  console.log('🔍 onCariSelected çağrıldı, cariId:', cariId);
+
   const cari = dropdowns.cariler.find(c => c.id === cariId);
+  console.log('📋 Bulunan cari:', cari);
+
   if (cari) {
     form.aliciAdi = cari.ad;
     form.aliciTel = cari.telefon || '';
+
+    console.log('📍 Cari adresler:', cari.adresler);
+
     // Adresleri ata
     if (cari.adresler && cari.adresler.length > 0) {
-      cariAdresler.value = cari.adresler.map(a => ({
-        adres: a.adres,
-        tip: a.tip,
-        adresGosterim: a.tip ? `${a.tip}: ${a.adres}` : a.adres
-      }));
+      cariAdresler.value = cari.adresler.map(a => {
+        console.log('🔄 Adres dönüştürülüyor:', a);
+        return {
+          adres: a.adres,
+          tip: a.tip,
+          adresGosterim: a.tip ? `${a.tip}: ${a.adres}` : a.adres
+        };
+      });
+
+      console.log('✅ Dönüştürülen adresler:', cariAdresler.value);
+
       selectedAdres.value = cariAdresler.value[0].adres;
       form.adres = cariAdresler.value[0].adres;
+
+      console.log('🎯 Seçilen adres:', selectedAdres.value);
+      console.log('📝 Form adres:', form.adres);
+
     } else {
       cariAdresler.value = [];
       selectedAdres.value = '';
       form.adres = '';
+      console.log('❌ Adres bulunamadı');
     }
+
     nextTick(() => {
       if (aliciTelRef.value) {
         aliciTelRef.value.focus();
         aliciTelRef.value.blur();
       }
     });
+  } else {
+    console.log('❌ Cari bulunamadı');
   }
 }
 
@@ -465,51 +476,9 @@ function onAdresSelected(adres) {
   form.adres = adres;
 }
 
-async function onCariBlur() {
-  // Eğer yazılan isim mevcut carilerde yoksa yeni müşteri oluştur
-  const girilenAd = aliciSearch.value?.trim();
-  if (!girilenAd) return;
-  const mevcutCari = dropdowns.cariler.find(c => c.ad.toLocaleLowerCase('tr-TR') === girilenAd.toLocaleLowerCase('tr-TR'));
-  if (!mevcutCari) {
-    // Yeni müşteri oluştur
-    try {
-      const { data } = await apiClient.post('/cari', { ad: girilenAd });
-      if (data && data.id) {
-        dropdowns.cariler.push(data);
-        selectedCari.value = data.id;
-        form.aliciAdi = data.ad;
-        form.aliciTel = data.telefon || '';
-        cariAdresler.value = data.adresler?.map(a => ({
-          adres: a.adres,
-          tip: a.tip,
-          adresGosterim: a.tip ? `${a.tip}: ${a.adres}` : a.adres
-        })) || [];
-        if (cariAdresler.value.length > 0) {
-          selectedAdres.value = cariAdresler.value[0].adres;
-          form.adres = cariAdresler.value[0].adres;
-        } else {
-          selectedAdres.value = '';
-          form.adres = '';
-        }
-        showSnackbar('Yeni müşteri oluşturuldu ve seçildi.', 'success');
-      }
-    } catch (err) {
-      showSnackbar('Yeni müşteri oluşturulamadı: ' + (err.response?.data?.message || err.message), 'error');
-    }
-  }
-}
-
-function onAliciTelInput(val) {
-  // Eğer değer boşsa, eski numarayı geri yaz
-  if (!val) {
-    // Hiçbir şey yapma veya eski değeri geri yaz
-    form.aliciTel = form.aliciTel || '';
-    return;
-  }
-  // Sadece rakam ise güncelle
-  if (/^\d{0,11}$/.test(val)) {
-    form.aliciTel = val;
-  }
+function showSnackbar(message, color = 'info') {
+  console.log(`${color.toUpperCase()}: ${message}`);
+  // Burada toast notification sistemi kullanabilirsiniz
 }
 
 async function submitForm() {
@@ -581,7 +550,6 @@ function resetForm() {
   form.aciklama = '';
   orderPackages.value = [];
   selectedCari.value = null;
-  aliciSearch.value = '';
   cariAdresler.value = [];
   selectedAdres.value = '';
 }

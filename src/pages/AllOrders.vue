@@ -17,7 +17,7 @@
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-            }})</span> </template>
+        }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
           <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
@@ -85,10 +85,15 @@
                                 <div class="d-flex flex-column align-end">
                                   <span class="text-body-2">{{ kalem.miktar }} {{ kalem.birim }}</span>
                                   <span class="text-caption text-grey">
-                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' :
-                                      kalem.birim }}
+                                    @ {{ getBirimFiyatDisplay(kalem) }} ₺/{{ kalem.birim === 'Gram' ? 'g' : kalem.birim
+                                    }}
                                     <span v-if="getActivePrice(kalem) !== null"> | Güncel: {{ getActivePrice(kalem) }}
-                                      ₺</span>
+                                      ₺/{{ kalem.birim === 'Gram' ? 'g' : kalem.birim }}</span>
+                                    <span v-if="getRecipeCost(kalem)" class="text-blue-grey cursor-pointer"
+                                      @click.stop="showRecipeDetails(kalem)">
+                                      | Maliyet: {{ getRecipeCost(kalem).oranlanmisMaliyet.toFixed(2) }} ₺
+                                      <v-icon size="x-small" class="ml-1">mdi-information-outline</v-icon>
+                                    </span>
                                     = {{ calculateItemTotal(kalem).toFixed(2) }} ₺
                                   </span>
                                 </div>
@@ -203,6 +208,116 @@
           @click="snackbar = false"> Kapat </v-btn> </template>
     </v-snackbar>
 
+    <!-- Reçete Detay Dialog -->
+    <v-dialog v-model="recipeDialog" max-width="800px">
+      <v-card v-if="selectedRecipe">
+        <v-card-title class="text-h6 bg-blue-grey-lighten-5 d-flex justify-space-between align-center">
+          <div>
+            {{ selectedRecipe.receteAdi }}
+            <div class="text-caption text-grey">{{ selectedRecipe.malzemeSayisi }} malzeme • {{
+              selectedRecipe.toplamGram
+            }}g</div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" @click="recipeDialog = false"></v-btn>
+        </v-card-title>
+
+        <v-card-text class="pa-4">
+          <v-row>
+            <!-- Özet Bilgiler -->
+            <v-col cols="12">
+              <v-row dense>
+                <v-col cols="12" sm="6" md="3">
+                  <v-card variant="outlined" class="pa-3">
+                    <div class="text-caption text-grey">Toplam Maliyet (1000g)</div>
+                    <div class="text-h6">₺{{ selectedRecipe.binGramMaliyet }}</div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                  <v-card variant="outlined" class="pa-3">
+                    <div class="text-caption text-grey">KG Maliyeti</div>
+                    <div class="text-h6">{{ selectedRecipe.kgMaliyeti }}₺</div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                  <v-card variant="outlined" class="pa-3">
+                    <div class="text-caption text-grey">Kar (1000g)</div>
+                    <div class="text-h6">₺{{ selectedRecipe.binGramKar }}</div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                  <v-card variant="outlined" class="pa-3">
+                    <div class="text-caption text-grey">Kar Marjı</div>
+                    <div class="text-h6">%{{ selectedRecipe.karMarji }}</div>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-col>
+
+            <!-- Fiyat Analizi -->
+            <v-col cols="12">
+              <v-card variant="outlined" class="pa-3">
+                <div class="text-subtitle-2 mb-2">Fiyat Analizi (1000g)</div>
+                <v-row dense>
+                  <v-col cols="12" sm="4">
+                    <div class="text-caption text-grey">Satış Fiyatı:</div>
+                    <div class="text-body-1">₺{{ selectedRecipe.fiyatAnalizi.satisFiyati }}</div>
+                  </v-col>
+                  <v-col cols="12" sm="4">
+                    <div class="text-caption text-grey">Maliyet:</div>
+                    <div class="text-body-1">₺{{ selectedRecipe.fiyatAnalizi.maliyet }}</div>
+                  </v-col>
+                  <v-col cols="12" sm="4">
+                    <div class="text-caption text-grey">Kar:</div>
+                    <div class="text-body-1">₺{{ selectedRecipe.fiyatAnalizi.kar }}</div>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-col>
+
+            <!-- Reçete Detayları -->
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-2">Reçete Detayları</div>
+              <v-table density="comfortable">
+                <thead>
+                  <tr>
+                    <th>Stok Kodu</th>
+                    <th>Malzeme</th>
+                    <th>Miktar</th>
+                    <th>Birim Maliyet</th>
+                    <th class="text-right">Toplam Maliyet</th>
+                    <th class="text-right">Yüzde</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(detay, index) in selectedRecipe.malzemeler" :key="index">
+                    <td>{{ detay.stokKodu }}</td>
+                    <td>
+                      {{ detay.malzemeAdi }}
+                      <span class="text-caption text-grey">({{ detay.malzemeTipi }})</span>
+                    </td>
+                    <td>{{ detay.miktar }}{{ detay.birim }}</td>
+                    <td>{{ detay.birimFiyat.toLocaleString('tr-TR', {
+                      minimumFractionDigits: 2, maximumFractionDigits: 2
+                    })
+                    }}₺/{{ detay.birimFiyatBirim }}</td>
+                    <td class="text-right">₺{{ detay.toplamMaliyet }}</td>
+                    <td class="text-right">%{{ detay.yuzde }}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4" class="text-right text-subtitle-2">Toplam:</td>
+                    <td class="text-right font-weight-bold">₺{{ selectedRecipe.binGramMaliyet }}</td>
+                    <td class="text-right font-weight-bold">%100</td>
+                  </tr>
+                </tfoot>
+              </v-table>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -265,25 +380,64 @@ function showSnackbar(text, color = 'info', timeout = 4000) { snackbarText.value
 // Validasyon Kuralları
 const rules = { required: value => !!value || 'Bu alan zorunludur.', positiveNumber: value => (typeof value === 'number' && value > 0) || 'Tutar 0 dan büyük bir sayı olmalıdır.' };
 
-// Active Prices Map
+// Active Prices Map ve Recipe Costs Map
 const activePricesMap = ref({});
+const recipeCostsMap = ref({});
 
-// Fetch active prices (latest for each product/unit)
-async function fetchActivePrices() {
+// Reçete Detay Dialog
+const recipeDialog = ref(false);
+const selectedRecipe = ref(null);
+
+// Fetch active prices and recipe costs
+async function fetchPricesAndCosts() {
   try {
+    // 1. Aktif fiyatları çek
     const response = await apiClient.get('/fiyatlar');
     const allPrices = response.data;
     const latestMap = {};
+
     allPrices.forEach(price => {
-      const key = `${price.urunId}-${price.birim}`;
-      if (!latestMap[key] || new Date(price.gecerliTarih) > new Date(latestMap[key].gecerliTarih)) {
-        latestMap[key] = price;
+      // Hem orijinal birim hem de eşdeğer birimler için kaydet
+      const originalKey = `${price.urunId}-${price.birim}`;
+
+      // GR fiyatını KG olarak da kaydet (gram siparişleri için)
+      if (price.birim === 'GR') {
+        const kgKey = `${price.urunId}-KG`;
+        if (!latestMap[kgKey] || new Date(price.gecerliTarih) > new Date(latestMap[kgKey].gecerliTarih)) {
+          latestMap[kgKey] = price;
+        }
+      }
+
+      // Orijinal birim için de kaydet
+      if (!latestMap[originalKey] || new Date(price.gecerliTarih) > new Date(latestMap[originalKey].gecerliTarih)) {
+        latestMap[originalKey] = price;
       }
     });
+
     activePricesMap.value = latestMap;
+    console.log('💰 Aktif fiyatlar yüklendi:', Object.keys(latestMap).length, 'adet');
+
+    // 2. Recipe maliyetlerini çek
+    for (const order of allOrders.value) {
+      for (const kalem of order.kalemler) {
+        if (kalem.urun?.recipes && kalem.urun.recipes.length > 0) {
+          try {
+            const recipeId = kalem.urun.recipes[0].id; // İlk recipe'yi al
+            const recipeResponse = await apiClient.get(`/receteler/maliyet?recipeId=${recipeId}&miktar=${kalem.miktar}`);
+            const key = `${recipeId}-${kalem.miktar}`;
+            recipeCostsMap.value[key] = recipeResponse.data;
+          } catch (err) {
+            console.error(`❌ Recipe maliyeti çekilemedi (Recipe ID: ${kalem.urun.recipes[0]?.id}):`, err);
+          }
+        }
+      }
+    }
+    console.log('📋 Recipe maliyetleri yüklendi:', Object.keys(recipeCostsMap.value).length, 'adet');
+
   } catch (err) {
-    console.error('❌ Aktif fiyatlar çekilemedi:', err);
+    console.error('❌ Fiyat ve maliyet bilgileri çekilemedi:', err);
     activePricesMap.value = {};
+    recipeCostsMap.value = {};
   }
 }
 
@@ -294,14 +448,27 @@ async function fetchOrders() {
     const response = await apiClient.get('/orders'); // Ödemeleri de içermeli
     allOrders.value = response.data;
     console.log('All orders loaded:', JSON.parse(JSON.stringify(allOrders.value)));
+    await fetchPricesAndCosts(); // Fiyat ve maliyet bilgilerini çek
   } catch (err) { console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err); error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`; allOrders.value = []; }
   finally { loading.value = false; }
 }
 
-onMounted(() => { fetchOrders(); fetchActivePrices(); });
+onMounted(() => { fetchOrders(); });
 
 // --- Hesaplama Fonksiyonları ---
-function calculateItemTotal(kalem) { if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0; let unitPrice = kalem.birimFiyat; if (kalem.birim.toLowerCase() === 'gram' && unitPrice > 0) { unitPrice = unitPrice / 1000; } return kalem.miktar * unitPrice; }
+function calculateItemTotal(kalem) {
+  if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0;
+
+  let unitPrice = kalem.birimFiyat;
+
+  // Eğer birim 'Gram' ise ve birimFiyat KG bazındaysa (>100), gram bazına çevir
+  // NOT: GR biriminde kaydedilmiş fiyatlar zaten gram bazındadır
+  if (kalem.birim.toLowerCase() === 'gram' && unitPrice > 100) {
+    unitPrice = unitPrice / 1000; // KG fiyatını gram fiyatına çevir
+  }
+
+  return kalem.miktar * unitPrice;
+}
 function calculatePackageProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
 function calculateProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
 function calculateTotalPaid(odemeler) { if (!odemeler || !Array.isArray(odemeler)) return 0; return odemeler.reduce((total, odeme) => total + (odeme.tutar || 0), 0); }
@@ -443,9 +610,71 @@ function calculateGrandTotal(order) {
 
 function getActivePrice(kalem) {
   if (!kalem.urunId || !kalem.birim) return null;
-  const key = `${kalem.urunId}-${kalem.birim}`;
-  const priceObj = activePricesMap.value[key];
-  return priceObj ? priceObj.fiyat?.toFixed(2) : null;
+
+  // Birim eşleştirmesi - Gram siparişi için KG veya GR fiyatını kontrol et
+  let searchKeys = [];
+  if (kalem.birim.toLowerCase() === 'gram') {
+    searchKeys = [
+      `${kalem.urunId}-KG`,  // Önce KG ara
+      `${kalem.urunId}-GR`   // Sonra GR ara
+    ];
+  } else {
+    searchKeys = [`${kalem.urunId}-${kalem.birim}`]; // Adet, Porsiyon vb. için direkt ara
+  }
+
+  let priceObj = null;
+
+  // İlk bulunan fiyatı kullan
+  for (const key of searchKeys) {
+    priceObj = activePricesMap.value[key];
+    if (priceObj) break;
+  }
+
+  if (!priceObj) return null;
+
+  let displayPrice = priceObj.fiyat;
+
+  // Eğer sipariş gram bazındaysa ve fiyat KG/GR bazındaysa, gram fiyatını göster
+  if (kalem.birim.toLowerCase() === 'gram') {
+    if (priceObj.birim === 'KG') {
+      displayPrice = priceObj.fiyat / 1000; // KG fiyatını gram fiyatına çevir
+    } else if (priceObj.birim === 'GR') {
+      displayPrice = priceObj.fiyat; // GR zaten gram bazında
+    }
+  }
+
+  return displayPrice?.toFixed(3); // 3 haneli gösterim
+}
+
+function getBirimFiyatDisplay(kalem) {
+  if (!kalem.birimFiyat || !kalem.birim) return '?';
+
+  let displayPrice = kalem.birimFiyat;
+
+  // Eğer birim 'Gram' ise ve birimFiyat KG bazındaysa (>100), gram fiyatını göster
+  // NOT: GR biriminde kaydedilmiş fiyatlar zaten gram bazındadır
+  if (kalem.birim.toLowerCase() === 'gram' && kalem.birimFiyat > 100) {
+    displayPrice = kalem.birimFiyat / 1000; // KG fiyatını gram fiyatına çevir
+    return displayPrice.toFixed(3); // Gram fiyatı için 3 haneli
+  }
+
+  return displayPrice.toFixed(2); // Normal fiyat için 2 haneli
+}
+
+// Recipe maliyeti gösterimi için yardımcı fonksiyon
+function getRecipeCost(kalem) {
+  if (!kalem.urun?.recipes || kalem.urun.recipes.length === 0) return null;
+  const recipeId = kalem.urun.recipes[0].id;
+  const key = `${recipeId}-${kalem.miktar}`;
+  return recipeCostsMap.value[key];
+}
+
+function showRecipeDetails(kalem) {
+  const recipeCost = getRecipeCost(kalem);
+  if (recipeCost) {
+    selectedRecipe.value = recipeCost;
+    recipeDialog.value = true;
+  }
 }
 
 </script>
@@ -471,5 +700,34 @@ function getActivePrice(kalem) {
 
 .v-data-table {
   border-radius: 12px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-pointer:hover {
+  text-decoration: underline;
+}
+
+/* Reçete Dialog Stilleri */
+.v-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.v-table th {
+  background-color: #f5f5f5 !important;
+  color: rgba(0, 0, 0, 0.87) !important;
+  font-weight: 600 !important;
+}
+
+.v-table td {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.v-table tfoot td {
+  background-color: #fafafa;
+  border-top: 2px solid #e0e0e0;
 }
 </style>

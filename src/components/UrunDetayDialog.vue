@@ -68,32 +68,36 @@
                             </v-card-text>
                         </v-card>
 
-                        <!-- Güncel Fiyat -->
-                        <v-card v-if="urun.guncelFiyat" class="mb-4" color="primary" variant="tonal">
-                            <v-card-text class="pa-3">
-                                <div class="text-subtitle-2 text-grey-600 mb-1">Güncel Fiyat</div>
-                                <div class="text-h6 font-weight-bold">
-                                    {{ formatFiyat(urun.guncelFiyat.fiyat) }} / {{ urun.guncelFiyat.birim }}
-                                </div>
-                                <v-chip v-if="urun.guncelFiyat.fiyatTipi !== 'normal'" size="x-small" color="orange"
-                                    class="mt-1">
-                                    {{ urun.guncelFiyat.fiyatTipi }}
-                                </v-chip>
-                            </v-card-text>
-                        </v-card>
-
                         <!-- Maliyet Özeti -->
                         <v-card v-if="maliyetAnalizi" class="mb-4" color="success" variant="tonal">
                             <v-card-text class="pa-3">
-                                <div class="text-subtitle-2 text-grey-600 mb-1">Maliyet Analizi</div>
+                                <!-- Gramaj Seçici -->
+                                <v-select v-model="selectedGramaj" :items="gramajSecenekleri" label="Gramaj Seçin"
+                                    @update:model-value="receteMaliyetYukle" class="mb-3" density="compact"
+                                    prepend-icon="mdi-scale" variant="outlined"></v-select>
+
+                                <div class="text-subtitle-2 text-grey-600 mb-1">Maliyet Analizi ({{ selectedGramaj }}g)
+                                </div>
                                 <div class="text-h6 font-weight-bold">
                                     {{ formatFiyat(maliyetAnalizi.toplamMaliyet) }}
                                 </div>
                                 <div class="text-caption">
-                                    {{ maliyetAnalizi.gramMaliyeti.toFixed(2) }} kr/gram
+                                    {{ maliyetAnalizi.kgMaliyeti?.toFixed(2) || '0.00' }}₺/KG
                                 </div>
+
+                                <!-- Kar Bilgisi -->
+                                <div class="mt-2">
+                                    <div class="text-caption">
+                                        Satış: {{ formatFiyat(maliyetAnalizi.araGramajSatisFiyati || 0) }} •
+                                        Kar: {{ formatFiyat(maliyetAnalizi.karMiktari || 0) }}
+                                        <span :class="maliyetAnalizi.karMarji >= 0 ? 'text-success' : 'text-error'">
+                                            (%{{ maliyetAnalizi.karMarji?.toFixed(1) || '0.0' }})
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <v-chip size="x-small" color="info" class="mt-1">
-                                    {{ maliyetAnalizi.receteSayisi }} reçete
+                                    {{ maliyetAnalizi.receteSayisi || 0 }} reçete
                                 </v-chip>
                             </v-card-text>
                         </v-card>
@@ -286,60 +290,61 @@
                                                             <div class="text-h6 font-weight-bold">
                                                                 {{ formatFiyat(maliyetAnalizi.toplamMaliyet) }}
                                                             </div>
-                                                            <div class="text-caption">Toplam Maliyet</div>
+                                                            <div class="text-caption">Toplam Maliyet ({{ selectedGramaj
+                                                                }}g)</div>
                                                         </v-card>
                                                     </v-col>
                                                     <v-col cols="12" md="3">
                                                         <v-card color="success" variant="tonal"
                                                             class="text-center pa-3">
                                                             <div class="text-h6 font-weight-bold">
-                                                                {{ maliyetAnalizi.gramMaliyeti.toFixed(2) }} kr
+                                                                {{ maliyetAnalizi.kgMaliyeti?.toFixed(2) || '0.00' }}₺
                                                             </div>
-                                                            <div class="text-caption">Gram Maliyeti</div>
+                                                            <div class="text-caption">KG Maliyeti</div>
                                                         </v-card>
                                                     </v-col>
                                                     <v-col cols="12" md="3">
                                                         <v-card color="info" variant="tonal" class="text-center pa-3">
                                                             <div class="text-h6 font-weight-bold">
-                                                                {{ maliyetAnalizi.receteSayisi }}
+                                                                {{ formatFiyat(maliyetAnalizi.karMiktari || 0) }}
                                                             </div>
-                                                            <div class="text-caption">Reçete Sayısı</div>
+                                                            <div class="text-caption">Kar ({{ selectedGramaj }}g)</div>
                                                         </v-card>
                                                     </v-col>
                                                     <v-col cols="12" md="3">
                                                         <v-card color="warning" variant="tonal"
                                                             class="text-center pa-3">
-                                                            <div class="text-h6 font-weight-bold">
-                                                                {{ maliyetAnalizi.malzemeSayisi }}
+                                                            <div class="text-h6 font-weight-bold"
+                                                                :class="maliyetAnalizi.karMarji >= 0 ? 'text-success' : 'text-error'">
+                                                                %{{ maliyetAnalizi.karMarji?.toFixed(1) || '0.0' }}
                                                             </div>
-                                                            <div class="text-caption">Toplam Malzeme</div>
+                                                            <div class="text-caption">Kar Marjı</div>
                                                         </v-card>
                                                     </v-col>
                                                 </v-row>
 
                                                 <!-- Karlılık Analizi -->
-                                                <v-row v-if="maliyetAnalizi.karlilik" class="mt-2">
+                                                <v-row class="mt-2">
                                                     <v-col cols="12">
                                                         <v-alert type="info" variant="tonal">
-                                                            <div class="text-subtitle-2 mb-2">Karlılık Analizi</div>
+                                                            <div class="text-subtitle-2 mb-2">Fiyat Analizi ({{
+                                                                selectedGramaj }}g)</div>
                                                             <div class="d-flex justify-space-between">
-                                                                <span>Hesaplanan Maliyet:</span>
+                                                                <span>Satış Fiyatı:</span>
                                                                 <strong>{{
-                                                                    formatFiyat(maliyetAnalizi.karlilik.hesaplananMaliyet)
-                                                                    }}</strong>
+                                                                    formatFiyat(maliyetAnalizi.araGramajSatisFiyati ||
+                                                                        0) }}</strong>
                                                             </div>
                                                             <div class="d-flex justify-space-between">
-                                                                <span>Tanımlı Maliyet:</span>
-                                                                <strong>{{
-                                                                    formatFiyat(maliyetAnalizi.karlilik.maliyetFiyati)
-                                                                    }}</strong>
+                                                                <span>Maliyet:</span>
+                                                                <strong>{{ formatFiyat(maliyetAnalizi.toplamMaliyet ||
+                                                                    0) }}</strong>
                                                             </div>
                                                             <div class="d-flex justify-space-between">
-                                                                <span>Fark:</span>
+                                                                <span>Kar:</span>
                                                                 <strong
-                                                                    :class="maliyetAnalizi.karlilik.farkYuzdesi >= 0 ? 'text-success' : 'text-error'">
-                                                                    %{{ maliyetAnalizi.karlilik.farkYuzdesi.toFixed(1)
-                                                                    }}
+                                                                    :class="maliyetAnalizi.karMiktari >= 0 ? 'text-success' : 'text-error'">
+                                                                    {{ formatFiyat(maliyetAnalizi.karMiktari || 0) }}
                                                                 </strong>
                                                             </div>
                                                         </v-alert>
@@ -360,14 +365,14 @@
                                                                 <div class="text-subtitle-1 font-weight-medium">{{
                                                                     recete.name }}</div>
                                                                 <div class="text-caption text-grey-600">
-                                                                    {{ recete.ozet.malzemeSayisi }} malzeme •
-                                                                    {{ recete.ozet.toplamGram }}g •
-                                                                    {{ formatFiyat(recete.ozet.toplamMaliyet) }}
+                                                                    {{ recete.malzemeler?.length || 0 }} malzeme •
+                                                                    {{ recete.toplamGram }}g •
+                                                                    {{ formatFiyat(recete.toplamMaliyet) }}
                                                                 </div>
                                                             </div>
-                                                            <v-chip size="small"
-                                                                :color="recete.ozet.eksikMalzeme > 0 ? 'warning' : 'success'">
-                                                                {{ recete.ozet.gramMaliyeti.toFixed(2) }} kr/g
+                                                            <v-chip size="small" color="success">
+                                                                {{ formatFiyat(recete.araGramajMaliyeti || 0) }} ({{
+                                                                    selectedGramaj }}g)
                                                             </v-chip>
                                                         </div>
                                                     </v-expansion-panel-title>
@@ -375,35 +380,20 @@
                                                         <v-data-table :headers="malzemeHeaders"
                                                             :items="recete.malzemeler" density="compact"
                                                             hide-default-footer>
-                                                            <template v-slot:item.malzemeAdi="{ item }">
-                                                                <div class="d-flex align-center">
-                                                                    <v-icon :color="item.mevcut ? 'success' : 'error'"
-                                                                        size="16" class="mr-2">
-                                                                        {{ item.mevcut ? 'mdi-check-circle' :
-                                                                        'mdi-alert-circle' }}
-                                                                    </v-icon>
-                                                                    <div>
-                                                                        <div>{{ item.malzemeAdi || 'Bilinmeyen Malzeme'
-                                                                            }}</div>
-                                                                        <div class="text-caption text-grey-600">{{
-                                                                            item.stokKod }}</div>
-                                                                    </div>
-                                                                </div>
-                                                            </template>
-                                                            <template v-slot:item.malzemeTipi="{ item }">
-                                                                <v-chip size="x-small"
-                                                                    :color="item.malzemeTipi === 'Hammadde' ? 'blue' : 'purple'">
-                                                                    {{ item.malzemeTipi }}
-                                                                </v-chip>
+                                                            <template v-slot:item.stokKod="{ item }">
+                                                                <div class="font-weight-medium">{{ item.stokKod }}</div>
                                                             </template>
                                                             <template v-slot:item.miktarGram="{ item }">
                                                                 {{ item.miktarGram }}g
                                                             </template>
                                                             <template v-slot:item.birimMaliyet="{ item }">
-                                                                {{ item.birimMaliyet.toFixed(3) }} kr/g
+                                                                {{ item.birimMaliyet }}₺/KG
                                                             </template>
                                                             <template v-slot:item.toplamMaliyet="{ item }">
                                                                 <strong>{{ formatFiyat(item.toplamMaliyet) }}</strong>
+                                                            </template>
+                                                            <template v-slot:item.yuzde="{ item }">
+                                                                %{{ item.yuzde || 0 }}
                                                             </template>
                                                         </v-data-table>
                                                     </v-expansion-panel-text>
@@ -502,13 +492,25 @@ export default {
         const receteler = ref([])
         const maliyetAnalizi = ref(null)
         const acikRecete = ref([])
+        const selectedGramaj = ref(1000)
+        const gramajSecenekleri = [
+            { title: '250g', value: 250 },
+            { title: '500g', value: 500 },
+            { title: '750g', value: 750 },
+            { title: '1000g (1KG)', value: 1000 },
+            { title: '1250g', value: 1250 },
+            { title: '1500g', value: 1500 },
+            { title: '2000g (2KG)', value: 2000 },
+            { title: '2500g', value: 2500 },
+            { title: '3000g (3KG)', value: 3000 }
+        ]
 
         const malzemeHeaders = [
-            { title: 'Malzeme', key: 'malzemeAdi', sortable: false },
-            { title: 'Tip', key: 'malzemeTipi', sortable: false },
+            { title: 'Stok Kodu', key: 'stokKod', sortable: false },
             { title: 'Miktar', key: 'miktarGram', sortable: false },
             { title: 'Birim Maliyet', key: 'birimMaliyet', sortable: false },
-            { title: 'Toplam Maliyet', key: 'toplamMaliyet', sortable: false }
+            { title: 'Toplam Maliyet', key: 'toplamMaliyet', sortable: false },
+            { title: 'Yüzde', key: 'yuzde', sortable: false }
         ]
 
         const formatFiyat = (fiyat) => {
@@ -534,22 +536,40 @@ export default {
 
             receteYukleniyor.value = true
             try {
-                const response = await apiCall(`/urunler/${props.urun.id}/recete-maliyet`)
-                receteler.value = response.receteler || []
-                maliyetAnalizi.value = response.maliyetAnalizi || null
+                const response = await apiCall(`/urunler/${props.urun.id}/recete-maliyet?gramaj=${selectedGramaj.value}`)
+
+                // Yeni API yapısına göre verileri ayarla
+                if (response.receteler) {
+                    receteler.value = response.receteler
+                }
+
+                if (response.maliyet) {
+                    maliyetAnalizi.value = {
+                        toplamMaliyet: response.maliyet.toplamMaliyet,
+                        kgMaliyeti: response.maliyet.kgMaliyeti,
+                        gramMaliyeti: response.maliyet.gramMaliyeti,
+                        karMiktari: response.maliyet.karMiktari,
+                        karMarji: response.maliyet.karMarji,
+                        araGramajSatisFiyati: response.urun.araGramajSatisFiyati,
+                        receteSayisi: response.receteler?.length || 0,
+                        malzemeSayisi: response.receteler?.reduce((total, recete) => total + (recete.malzemeler?.length || 0), 0) || 0
+                    }
+                }
+
+                console.log('Reçete maliyet analizi yüklendi:', { receteler: receteler.value, maliyet: maliyetAnalizi.value })
             } catch (error) {
-                console.error('Reçete maliyet yükleme hatası:', error)
+                console.error('Reçete maliyet analizi yüklenirken hata:', error)
             } finally {
                 receteYukleniyor.value = false
             }
         }
 
-        // Dialog açıldığında reçete bilgilerini yükle
-        watch(() => props.modelValue, (newVal) => {
-            if (newVal && props.urun?.id) {
+        // Ürün değiştiğinde reçete maliyetini yükle
+        watch(() => props.urun?.id, (newId) => {
+            if (newId) {
                 receteMaliyetYukle()
             }
-        })
+        }, { immediate: true })
 
         return {
             activeTab,
@@ -557,6 +577,8 @@ export default {
             receteler,
             maliyetAnalizi,
             acikRecete,
+            selectedGramaj,
+            gramajSecenekleri,
             malzemeHeaders,
             formatFiyat,
             formatTarih,
@@ -567,7 +589,27 @@ export default {
 </script>
 
 <style scoped>
-.fill-height {
-    height: 100%;
+.v-card {
+    border-radius: 12px;
+}
+
+.v-chip {
+    border-radius: 8px;
+}
+
+.v-btn {
+    border-radius: 8px;
+}
+
+.v-alert {
+    border-radius: 8px;
+}
+
+.v-expansion-panel {
+    border-radius: 8px !important;
+}
+
+.v-expansion-panel-title {
+    border-radius: 8px !important;
 }
 </style>
