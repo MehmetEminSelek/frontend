@@ -118,7 +118,7 @@
 </template>
 <script setup>
 import { ref, onMounted, provide, watch } from 'vue';
-import axios from 'axios';
+import { apiClient } from '@/utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 
@@ -189,34 +189,34 @@ async function fetchKargoSiparisler() {
     try {
         // Tüm siparişleri çek (kargo durumu filtresiz)
         const [allOrdersRes, subeRes, dropdownRes] = await Promise.all([
-            axios.get('http://localhost:3000/api/siparis'),
-            axios.get('http://localhost:3000/api/siparis', { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
-            axios.get('http://localhost:3000/api/dropdown'),
+            apiClient.get('/siparis'),
+            apiClient.get('/siparis', { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
+            apiClient.get('/dropdown'),
         ]);
-        
+
         console.log('🚚 Tüm Siparişler API Yanıtı:', allOrdersRes.data?.length);
-        
+
         // Kargo için uygun teslimat türü kodları
         const kargoTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
-        
+
         // Teslimat türüne göre filtrele ve kargo durumu kontrol et
         let filtered = (allOrdersRes.data || []).filter(siparis => {
             const teslimatKodu = siparis.teslimatTuru?.kodu;
             const isKargoTeslimati = kargoTeslimatKodlari.includes(teslimatKodu);
-            const kargoCompatible = siparis.kargoDurumu === 'Kargoya Verilecek' || 
-                                  siparis.kargoDurumu === null || 
-                                  siparis.kargoDurumu === '';
+            const kargoCompatible = siparis.kargoDurumu === 'Kargoya Verilecek' ||
+                siparis.kargoDurumu === null ||
+                siparis.kargoDurumu === '';
             return isKargoTeslimati && kargoCompatible;
         });
-        
+
         console.log('🚚 Teslimat Türüne Göre Filtrelenmiş:', filtered.length);
-        
+
         // Sadece hazırlandı filtresi
         if (showOnlyHazirlandi.value) {
             filtered = filtered.filter(siparis => siparis.hazirlanmaDurumu === 'Hazırlandı');
             console.log('🚚 Sadece Hazırlandı Olanlar:', filtered.length);
         }
-        
+
         console.log('🚚 Final Kargo Listesi:', filtered.length);
         kargoyaVerilecek.value = filtered;
         subeyeGonderilecek.value = subeRes.data;
@@ -244,7 +244,7 @@ async function saveKargoDialog() {
     if (!selectedSiparis.value) return;
     kargoDialogLoading.value = true;
     try {
-        await axios.patch(`http://localhost:3000/api/siparis/${selectedSiparis.value.id}/kargo`, {
+        await apiClient.patch(`/siparis/${selectedSiparis.value.id}/kargo`, {
             kargoSirketi: kargoForm.value.kargoSirketi,
             kargoTakipNo: kargoForm.value.kargoTakipNo,
             kargoNotu: kargoForm.value.kargoNotu,
@@ -277,7 +277,7 @@ async function saveTransferDialog() {
     }
     transferDialogLoading.value = true;
     try {
-        await axios.patch(`http://localhost:3000/api/siparis/${selectedSiparis.value.id}/transfer`, {
+        await apiClient.patch(`/siparis/${selectedSiparis.value.id}/transfer`, {
             hedefSubeId: transferForm.value.hedefSubeId,
             kargoNotu: transferForm.value.kargoNotu,
             kargoDurumu: 'Şubede Teslim',

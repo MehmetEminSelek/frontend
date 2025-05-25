@@ -42,7 +42,7 @@
                         <span class="text-h6">₺{{ ortalamaSepetTutari.toLocaleString('tr-TR', {
                             minimumFractionDigits: 2
                         })
-                            }}</span>
+                        }}</span>
                     </v-sheet>
                 </v-col>
             </v-row>
@@ -193,6 +193,7 @@ import {
 } from 'chart.js';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { apiCall } from '@/utils/api'
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const startDate = ref(new Date().toISOString().slice(0, 10));
@@ -352,10 +353,10 @@ function rowClass(item) {
 async function fetchReport() {
     loading.value = true;
     try {
-        const res = await fetch('http://localhost:3000/api/satis-raporu', {
+        const payload = { startDate: startDate.value, endDate: endDate.value };
+        const res = await apiCall('/satis-raporu', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ startDate: startDate.value, endDate: endDate.value })
+            body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error((await res.json()).message || 'API hatası');
         const data = await res.json();

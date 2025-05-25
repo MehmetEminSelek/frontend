@@ -54,6 +54,7 @@ import {
     LineElement
 } from 'chart.js';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { apiCall } from '@/utils/api'
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement);
 
 const startDate = ref(new Date().toISOString().slice(0, 10));
@@ -133,10 +134,10 @@ provide('vuetify', uretimPlaniVuetify);
 async function fetchReport() {
     loading.value = true;
     try {
-        const res = await fetch('http://localhost:3000/api/uretim-plani', {
+        const payload = { startDate: startDate.value, endDate: endDate.value };
+        const res = await apiCall('/uretim-plani', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ startDate: startDate.value, endDate: endDate.value })
+            body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error((await res.json()).message || 'API hatası');
         const data = await res.json();

@@ -112,7 +112,7 @@
         loading-text="Hareketler yükleniyor...">
         <template v-slot:item.stok="{ item }">
           <span>{{ item.stok.hammadde?.ad || item.stok.yariMamul?.ad }}<br><small>{{ item.stok.operasyonBirimi?.ad
-          }}</small></span>
+              }}</small></span>
         </template>
         <template v-slot:item.tip="{ item }">
           <span>{{ hareketTipLabel(item.tip) }}</span>
@@ -208,7 +208,7 @@
 </template>
 <script setup>
 import { ref, reactive, computed, onMounted, watch, provide } from 'vue';
-import axios from 'axios';
+import { apiClient } from '@/utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 
@@ -254,7 +254,7 @@ async function fetchStoklar() {
   loading.value = true; error.value = null;
   try {
     const params = selectedOp.value ? { operasyonBirimiKod: selectedOp.value } : {};
-    const response = await axios.get('http://localhost:3000/api/stok', { params });
+    const response = await apiClient.get('/stok', { params });
     stoklar.value = response.data.map(s => ({
       ...s,
       ad: s.hammadde?.ad || s.yariMamul?.ad || '-',
@@ -277,7 +277,7 @@ onMounted(() => {
   }
   const token = localStorage.getItem('token');
   if (token) {
-    axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+    apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + token;
   }
   fetchStoklar();
   fetchTransferHistory();
@@ -306,7 +306,7 @@ async function saveStokDialog() {
   if (!stokDialogItem.value || stokDialogMiktar.value <= 0) return;
   stokDialogLoading.value = true;
   try {
-    await axios.post('http://localhost:3000/api/stok', {
+    await apiClient.post('/stok', {
       stokId: stokDialogItem.value.id,
       miktar: stokDialogMiktar.value,
       tip: stokDialogType.value,
@@ -355,7 +355,7 @@ async function saveTransferDialog() {
   if (!transferForm.value.kaynakStokId || !transferForm.value.hedefStokId || transferForm.value.miktarGram <= 0) return;
   transferDialogLoading.value = true;
   try {
-    await axios.post('http://localhost:3000/api/stok/transfer', transferForm.value);
+    await apiClient.post('/stok/transfer', transferForm.value);
     showSnackbar('Transfer başarıyla tamamlandı!', 'success');
     closeTransferDialog();
     fetchStoklar();
@@ -369,7 +369,7 @@ async function saveTransferDialog() {
 async function fetchTransferHistory() {
   transferHistoryLoading.value = true;
   try {
-    const res = await axios.get('http://localhost:3000/api/stok/transfer');
+    const res = await apiClient.get('/stok/transfer');
     transferHistory.value = res.data;
   } catch (err) {
     transferHistory.value = [];
@@ -400,7 +400,7 @@ async function fetchHareketler() {
   hareketlerLoading.value = true;
   try {
     const params = hareketFilterStokId.value ? { stokId: hareketFilterStokId.value } : {};
-    const res = await axios.get('http://localhost:3000/api/stok/hareket', { params });
+    const res = await apiClient.get('/stok/hareket', { params });
     hareketler.value = res.data;
   } catch (err) {
     hareketler.value = [];
@@ -428,7 +428,7 @@ async function saveMinStokDialog() {
   if (!minStokDialogItem.value) return;
   minStokDialogLoading.value = true;
   try {
-    await axios.patch('http://localhost:3000/api/stok', { stokId: minStokDialogItem.value.id, minimumMiktarGram: minStokDialogValue.value });
+    await apiClient.patch('/stok', { stokId: minStokDialogItem.value.id, minimumMiktarGram: minStokDialogValue.value });
     showSnackbar('Minimum stok başarıyla güncellendi!', 'success');
     closeMinStokDialog();
     fetchStoklar();
@@ -450,7 +450,7 @@ const raporStokHeaders = [
 async function fetchRapor() {
   raporLoading.value = true;
   try {
-    const res = await axios.get('http://localhost:3000/api/stok/rapor', { params: { start: raporStart.value, end: raporEnd.value } });
+    const res = await apiClient.get('/stok/rapor', { params: { start: raporStart.value, end: raporEnd.value } });
     rapor.value = res.data;
   } catch (err) {
     rapor.value = {};
@@ -461,7 +461,7 @@ async function fetchRapor() {
 // Siparişe göre stoktan otomatik düşüm fonksiyonu (örnek buton ve fonksiyon)
 async function consumeOrderStok(siparisId) {
   try {
-    await axios.post('http://localhost:3000/api/stok/consume-order', { siparisId });
+    await apiClient.post('/stok/consume-order', { siparisId });
     showSnackbar('Sipariş stoktan başarıyla düşüldü!', 'success');
     fetchStoklar();
     fetchHareketler(); // HAREKETLERİ GÜNCELLE

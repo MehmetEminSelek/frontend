@@ -85,7 +85,7 @@
         <v-dialog v-model="dialog" max-width="600px">
             <v-card class="rounded-xl">
                 <v-card-title class="text-h6 font-weight-bold">{{ editMode ? 'Reçeteyi Düzenle' : 'Yeni Reçete Ekle'
-                }}</v-card-title>
+                    }}</v-card-title>
                 <v-card-text>
                     <v-form @submit.prevent="saveRecete">
                         <v-text-field v-model="form.name" label="Reçete Adı" required color="success"></v-text-field>
@@ -130,7 +130,7 @@
 
 <script setup>
 import { ref, onMounted, computed, provide } from 'vue';
-import axios from 'axios';
+import { apiClient } from '@/utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 
 const receteler = ref([]);
@@ -167,7 +167,7 @@ provide('vuetify', receteVuetify);
 async function fetchReceteler() {
     loading.value = true;
     try {
-        const response = await axios.get('http://localhost:3000/api/receteler');
+        const response = await apiClient.get('/receteler');
         receteler.value = response.data;
     } catch (err) {
         receteler.value = [];
@@ -177,7 +177,7 @@ async function fetchReceteler() {
 }
 async function fetchDropdowns() {
     try {
-        const res = await axios.get('http://localhost:3000/api/dropdown');
+        const res = await apiClient.get('/dropdown');
         urunler.value = res.data.urunler;
         stokOptions.value = [
             ...res.data.hammaddeler.map(x => ({ kod: x.kod, label: x.ad + ' (Hammadde)' })),
@@ -219,10 +219,10 @@ async function saveRecete() {
     }
     try {
         if (editMode.value) {
-            await axios.put('http://localhost:3000/api/receteler', form.value);
+            await apiClient.put('/receteler', form.value);
             snackbar.value = { show: true, text: 'Reçete güncellendi.', color: 'success' };
         } else {
-            await axios.post('http://localhost:3000/api/receteler', form.value);
+            await apiClient.post('/receteler', form.value);
             snackbar.value = { show: true, text: 'Reçete eklendi.', color: 'success' };
         }
         dialog.value = false;
@@ -237,7 +237,7 @@ function confirmDelete(recete) {
 }
 async function deleteRecete() {
     try {
-        await axios.delete('http://localhost:3000/api/receteler', { data: { id: deleteId.value } });
+        await apiClient.delete('/receteler', { data: { id: deleteId.value } });
         snackbar.value = { show: true, text: 'Reçete silindi.', color: 'success' };
         deleteDialog.value = false;
         fetchReceteler();

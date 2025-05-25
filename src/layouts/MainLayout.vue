@@ -12,8 +12,8 @@
 
           <v-list-group value="Siparisler">
             <template v-slot:activator="{ props }">
-              <v-list-item v-bind="props" prepend-icon="mdi-layers-outline" title="Sipariş Yönetimi" class="main-nav-item"
-                @click="onMenuClick"></v-list-item>
+              <v-list-item v-bind="props" prepend-icon="mdi-layers-outline" title="Sipariş Yönetimi"
+                class="main-nav-item" @click="onMenuClick"></v-list-item>
             </template>
 
             <v-list-item to="/main/orders" title="Onay Bekleyenler" link prepend-icon="mdi-clock-outline"
@@ -29,11 +29,14 @@
 
           <v-list-item to="/main/stok-yonetimi" title="Stok Yönetimi" link prepend-icon="mdi-archive-outline"
             :active="isActive('/main/stok-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item v-if="isAdmin" to="/main/urun-yonetimi" title="Ürün Yönetimi" link
+            prepend-icon="mdi-package-variant" :active="isActive('/main/urun-yonetimi')" class="main-nav-item"
+            @click="onMenuClick"></v-list-item>
           <v-list-item to="/main/kargo-yonetimi" title="Kargo Yönetimi" link prepend-icon="mdi-truck-outline"
             :active="isActive('/main/kargo-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/kullanici-yonetimi" title="Kullanıcı Yönetimi" link
-            prepend-icon="mdi-account-group-outline" :active="isActive('/main/kullanici-yonetimi')" class="main-nav-item"
-            @click="onMenuClick"></v-list-item>
+            prepend-icon="mdi-account-group-outline" :active="isActive('/main/kullanici-yonetimi')"
+            class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item to="/main/fiyatyonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-currency-usd"
             :active="isActive('/main/fiyatlar')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/recete-yonetimi" title="Reçete Yönetimi" link
@@ -50,7 +53,7 @@
       <!-- Top App Bar -->
       <v-app-bar v-if="currentUser" app color="white" elevation="1" height="64">
         <v-app-bar-nav-icon class="d-md-none" @click="drawer = !drawer"></v-app-bar-nav-icon>
-        
+
         <v-toolbar-title class="d-none d-md-flex align-center">
           <img src="../logos/omergullulogo.png" height="40" class="mr-3" alt="Logo" />
           <span class="text-h6 font-weight-medium">Ömer Güllü Sistemi</span>
@@ -61,12 +64,7 @@
         <!-- Real-time Status & Notifications -->
         <div class="d-flex align-center">
           <!-- Real-time Connection Status -->
-          <v-chip 
-            :color="realtimeStore.isConnected ? 'success' : 'error'"
-            size="small"
-            class="mr-3"
-            variant="flat"
-          >
+          <v-chip :color="realtimeStore.isConnected ? 'success' : 'error'" size="small" class="mr-3" variant="flat">
             <v-icon start size="16">
               {{ realtimeStore.isConnected ? 'mdi-wifi' : 'mdi-wifi-off' }}
             </v-icon>
@@ -87,7 +85,7 @@
                 <v-icon class="ml-1">mdi-chevron-down</v-icon>
               </v-btn>
             </template>
-            
+
             <v-list>
               <v-list-item>
                 <v-list-item-title>{{ currentUser.ad }}</v-list-item-title>
@@ -108,12 +106,9 @@
       <v-main class="bg-grey-lighten-4">
         <v-container fluid class="pa-4">
           <!-- Mobile drawer trigger (only when no app bar) -->
-          <v-app-bar-nav-icon 
-            v-if="!currentUser && isMobile" 
-            class="d-md-none mb-2" 
-            @click="drawer = !drawer"
-          ></v-app-bar-nav-icon>
-          
+          <v-app-bar-nav-icon v-if="!currentUser && isMobile" class="d-md-none mb-2"
+            @click="drawer = !drawer"></v-app-bar-nav-icon>
+
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in" appear>
               <component :is="Component" />
@@ -207,10 +202,10 @@ async function handleLogin() {
       localStorage.setItem('token', res.data.token);
       currentUser.value = res.data.user;
       loginDialog.value = false;
-      
+
       // Socket.IO temporarily disabled
       // socketService.connect();
-      
+
       window.location.reload();
     } else {
       loginError.value = 'Giriş başarısız.';
@@ -225,7 +220,7 @@ async function handleLogin() {
 function handleLogout() {
   // Socket.IO temporarily disabled
   // socketService.disconnect();
-  
+
   localStorage.removeItem('user');
   localStorage.removeItem('token');
   currentUser.value = null;
@@ -235,7 +230,7 @@ function handleLogout() {
 onMounted(() => {
   updateScreen();
   window.addEventListener('resize', updateScreen);
-  
+
   // Socket.IO temporarily disabled
   // if (currentUser.value) {
   //   socketService.connect();
@@ -304,11 +299,13 @@ onBeforeUnmount(() => {
 }
 
 .v-list-item--active .v-icon {
-  color: #F5F5DC !important; /* Cream color for active items */
+  color: #F5F5DC !important;
+  /* Cream color for active items */
 }
 
 .v-list-item--active {
-  background: rgba(245, 245, 220, 0.15) !important; /* Cream background */
+  background: rgba(245, 245, 220, 0.15) !important;
+  /* Cream background */
   border-radius: 8px !important;
   margin: 2px 8px !important;
 }

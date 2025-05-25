@@ -23,6 +23,22 @@ const getToast = () => {
     return toast
 }
 
+// Socket URL'ini environment'a göre belirle
+const getSocketUrl = () => {
+    // Production build'de environment variable'ı kullan
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+    }
+
+    // Development ortamında localhost kullan
+    if (import.meta.env.DEV) {
+        return 'http://localhost:3000';
+    }
+
+    // Fallback: current origin
+    return window.location.origin;
+};
+
 export function useSocket() {
     const isConnecting = ref(false)
     const reconnectAttempts = ref(0)
@@ -34,27 +50,23 @@ export function useSocket() {
             return socket
         }
 
-        const token = localStorage.getItem('token')
-        if (!token) {
-            console.warn('No authentication token found')
-            return null
-        }
+        const socketUrl = getSocketUrl()
+        console.log('🔌 Socket bağlantısı kuruluyor:', socketUrl)
 
         isConnecting.value = true
 
-        socket = io('http://localhost:3000', {
-            auth: {
-                token: token
-            },
+        socket = io(socketUrl, {
             transports: ['websocket', 'polling'],
             timeout: 20000,
-            retryDelayMax: 10000,
-            maxReconnectAttempts: maxReconnectAttempts
+            forceNew: true,
+            reconnection: true,
+            reconnectionAttempts: maxReconnectAttempts,
+            reconnectionDelay: 1000,
         })
 
         // Connection events
         socket.on('connect', () => {
-            console.log('✅ Socket connected:', socket.id)
+            console.log('✅ Socket bağlantısı kuruldu:', socket.id)
             isConnecting.value = false
             reconnectAttempts.value = 0
             try {
@@ -68,7 +80,7 @@ export function useSocket() {
         })
 
         socket.on('disconnect', (reason) => {
-            console.log('❌ Socket disconnected:', reason)
+            console.log('❌ Socket bağlantısı kesildi:', reason)
             try {
                 getRealtimeStore().setConnectionStatus(false)
             } catch (e) {
@@ -87,7 +99,7 @@ export function useSocket() {
         })
 
         socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error)
+            console.error('🔥 Socket bağlantı hatası:', error)
             isConnecting.value = false
             try {
                 getRealtimeStore().setConnectionStatus(false)
@@ -258,6 +270,7 @@ export function useSocket() {
 
     const disconnect = () => {
         if (socket) {
+            console.log('🔌 Socket bağlantısı kapatılıyor...')
             socket.disconnect()
             socket = null
             try {
@@ -273,7 +286,7 @@ export function useSocket() {
         if (socket?.connected) {
             socket.emit(event, data)
         } else {
-            console.warn('Socket not connected, cannot emit:', event)
+            console.warn('⚠️ Socket bağlı değil, event gönderilemedi:', event)
         }
     }
 

@@ -33,7 +33,7 @@
                             class="modern-table">
                             <template #item.ad="{ item }">
                                 <v-avatar color="primary" size="32" class="mr-2">{{ item.ad.charAt(0).toUpperCase()
-                                }}</v-avatar>
+                                    }}</v-avatar>
                                 <span>{{ item.ad }}</span>
                             </template>
                             <template #item.musteriKodu="{ item }">
@@ -286,6 +286,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDate } from '../utils/date';
 import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
+import { apiClient } from '@/utils/api'
 
 const cariler = ref([]);
 const search = ref('');
@@ -425,7 +426,7 @@ async function fetchHareketler(cariId) {
         // Hem cari hareketlerini hem de sipariş ödemelerini çek
         const [cariHareketRes, siparislerRes] = await Promise.all([
             axios.get('/api/cari/hareket?cariId=' + cariId),
-            axios.get('http://localhost:3000/api/siparis') // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
+            apiClient.get('/siparis') // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
         ]);
 
         const cariHareketler = cariHareketRes.data || [];

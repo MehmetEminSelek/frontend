@@ -21,7 +21,7 @@
                             <v-col cols="12" sm="4"> <strong>Tarih:</strong> {{ formatDate(order.tarih, true) }}
                             </v-col>
                             <v-col cols="12" sm="5"> <strong>Müşteri:</strong> {{ order.gorunecekAd || order.gonderenAdi
-                            }} </v-col>
+                                }} </v-col>
                         </v-row>
                     </v-expansion-panel-title>
 
@@ -76,7 +76,7 @@
 </template>
 <script setup>
 import { ref, onMounted, reactive, provide } from 'vue';
-import axios from 'axios';
+import { apiClient } from '@/utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 
@@ -118,7 +118,7 @@ async function fetchOrdersToPrepare() {
     loading.value = true; error.value = null; orders.value = [];
     console.log('Fetching orders to prepare...');
     try {
-        const response = await axios.get('http://localhost:3000/api/hazirlanacak');
+        const response = await apiClient.get('/hazirlanacak');
         // Gelen veriyi doğrudan kullanıyoruz, miktar alanları düzenlenebilir olacak
         orders.value = response.data;
         console.log('Fetched orders for preparation:', orders.value);
@@ -158,7 +158,7 @@ async function saveAndMarkAsPrepared(order, index) {
 
     try {
         // PUT isteği ile hem kalem miktarlarını hem de durumu güncelle
-        await axios.put(`http://localhost:3000/api/siparis/${orderId}`, payload);
+        await apiClient.put(`/siparis/${orderId}`, payload);
 
         showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
 

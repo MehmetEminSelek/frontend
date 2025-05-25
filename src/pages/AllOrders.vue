@@ -17,7 +17,7 @@
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-        }})</span> </template>
+            }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
           <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
@@ -211,6 +211,7 @@ import { ref, computed, onMounted, provide, reactive } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { apiClient } from '@/utils/api'
 
 // Tüm Siparişler modülüne özel tema ile Vuetify instance'ı oluştur
 const allOrdersTheme = {
@@ -270,7 +271,7 @@ const activePricesMap = ref({});
 // Fetch active prices (latest for each product/unit)
 async function fetchActivePrices() {
   try {
-    const response = await axios.get('http://localhost:3000/api/fiyatlar');
+    const response = await apiClient.get('/fiyatlar');
     const allPrices = response.data;
     const latestMap = {};
     allPrices.forEach(price => {
@@ -290,7 +291,7 @@ async function fetchActivePrices() {
 async function fetchOrders() {
   loading.value = true; error.value = null; console.log('Fetching all orders...');
   try {
-    const response = await axios.get('http://localhost:3000/api/orders'); // Ödemeleri de içermeli
+    const response = await apiClient.get('/orders'); // Ödemeleri de içermeli
     allOrders.value = response.data;
     console.log('All orders loaded:', JSON.parse(JSON.stringify(allOrders.value)));
   } catch (err) { console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err); error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`; allOrders.value = []; }
@@ -347,7 +348,7 @@ async function savePayment() {
   console.log(`POST /api/siparis/${orderId}/odemeler gönderiliyor:`, payload);
 
   try {
-    const response = await axios.post(`http://localhost:3000/api/siparis/${orderId}/odemeler`, payload);
+    const response = await apiClient.post(`/siparis/${orderId}/odemeler`, payload);
     const yeniOdeme = response.data;
     const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
     if (orderIndex > -1) {
@@ -370,7 +371,7 @@ async function deleteOrder(id) {
   // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
-    await axios.delete(`http://localhost:3000/api/siparis/${id}`);
+    await apiClient.delete(`/siparis/${id}`);
     showSnackbar('Sipariş başarıyla silindi.', 'success'); // Snackbar kullanıldı
     if (itemIndex > -1) { allOrders.value.splice(itemIndex, 1); }
   } catch (err) {

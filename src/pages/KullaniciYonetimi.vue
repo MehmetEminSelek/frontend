@@ -64,17 +64,13 @@
           @click="snackbar = false">Kapat</v-btn>
       </template>
     </v-snackbar>
-    <ExcelLoadingScreen 
-      :show="loadingExcel"
-      title="Kullanıcılar Yükleniyor"
-      subtitle="Excel dosyasından kullanıcılar okunuyor ve sisteme ekleniyor..."
-      :stats="excelLoadingStats"
-    />
+    <ExcelLoadingScreen :show="loadingExcel" title="Kullanıcılar Yükleniyor"
+      subtitle="Excel dosyasından kullanıcılar okunuyor ve sisteme ekleniyor..." :stats="excelLoadingStats" />
   </v-container>
 </template>
 <script setup>
 import { ref, onMounted, provide } from 'vue';
-import axios from 'axios';
+import { apiClient } from '@/utils/api';
 import { useRouter } from 'vue-router';
 import { createCustomVuetify } from '../plugins/vuetify';
 import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
@@ -144,7 +140,7 @@ async function fetchUsers() {
   loading.value = true; error.value = null;
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/auth/users', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await apiClient.get('/auth/users', { headers: { Authorization: 'Bearer ' + token } });
     users.value = res.data;
   } catch (err) {
     error.value = 'Kullanıcılar yüklenirken hata oluştu.';
@@ -168,10 +164,10 @@ async function saveUserDialog() {
   try {
     const token = localStorage.getItem('token');
     if (editingUser.value) {
-      await axios.patch('http://localhost:3000/api/auth/users', { id: editingUser.value.id, ...userForm.value }, { headers: { Authorization: 'Bearer ' + token } });
+      await apiClient.patch('/auth/users', { id: editingUser.value.id, ...userForm.value }, { headers: { Authorization: 'Bearer ' + token } });
       showSnackbar('Kullanıcı güncellendi!', 'success');
     } else {
-      await axios.post('http://localhost:3000/api/auth/users', userForm.value, { headers: { Authorization: 'Bearer ' + token } });
+      await apiClient.post('/auth/users', userForm.value, { headers: { Authorization: 'Bearer ' + token } });
       showSnackbar('Kullanıcı eklendi!', 'success');
     }
     closeUserDialog();
@@ -187,7 +183,7 @@ async function deleteUser(user) {
   // TODO: Vue dialog ile onay alınmalı!
   try {
     const token = localStorage.getItem('token');
-    await axios.delete('http://localhost:3000/api/auth/users', { data: { id: user.id }, headers: { Authorization: 'Bearer ' + token } });
+    await apiClient.delete('/auth/users', { data: { id: user.id }, headers: { Authorization: 'Bearer ' + token } });
     showSnackbar('Kullanıcı silindi!', 'success');
     fetchUsers();
   } catch (err) {
@@ -199,7 +195,7 @@ function triggerExcelInput() {
 }
 async function downloadExcelTemplate() {
   try {
-    const res = await axios.get('/api/excel/template/kullanici', { responseType: 'blob' });
+    const res = await apiClient.get('/excel/template/kullanici', { responseType: 'blob' });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -214,24 +210,24 @@ async function downloadExcelTemplate() {
 async function onExcelFileChange(e) {
   const file = e.target.files[0];
   if (!file) return;
-  
+
   const formData = new FormData();
   formData.append('file', file);
-  
+
   loadingExcel.value = true;
   excelLoadingStats.value = null;
-  
+
   try {
     // Simulate file reading delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const res = await axios.post('/api/excel/upload/kullanici', formData, { 
-      headers: { 'Content-Type': 'multipart/form-data' } 
+
+    const res = await apiClient.post('/excel/upload/kullanici', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
-    
+
     const results = res.data.results || [];
     excelResults.value = results;
-    
+
     // Calculate stats for loading screen
     const stats = {
       success: results.filter(r => r.status === 'ok').length,
@@ -239,15 +235,15 @@ async function onExcelFileChange(e) {
       errors: results.filter(r => r.status === 'error').length
     };
     excelLoadingStats.value = stats;
-    
+
     // Show stats for a moment before closing
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     showSnackbar(
-      `Excel yükleme tamamlandı! ${stats.success} başarılı, ${stats.skipped} atlandı, ${stats.errors} hata`, 
+      `Excel yükleme tamamlandı! ${stats.success} başarılı, ${stats.skipped} atlandı, ${stats.errors} hata`,
       stats.errors > 0 ? 'warning' : 'success'
     );
-    
+
     fetchUsers();
   } catch (err) {
     showSnackbar('Excel yüklenemedi: ' + (err.response?.data?.error || err.message), 'error');
@@ -271,7 +267,7 @@ async function deleteSelectedUsers() {
   if (!confirm('Seçili kullanıcılar silinsin mi?')) return;
   try {
     const token = localStorage.getItem('token');
-    await axios.delete('http://localhost:3000/api/auth/users', { data: { ids: idsToDelete }, headers: { Authorization: 'Bearer ' + token } });
+    await apiClient.delete('/auth/users', { data: { ids: idsToDelete }, headers: { Authorization: 'Bearer ' + token } });
     showSnackbar('Seçili kullanıcılar silindi!', 'success');
     selectedUsers.value = [];
     fetchUsers();

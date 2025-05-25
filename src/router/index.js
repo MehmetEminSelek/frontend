@@ -13,6 +13,7 @@ import KullaniciYonetimi from '../pages/KullaniciYonetimi.vue'
 import UretimPlani from '../pages/UretimPlani.vue'
 import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
+import UrunYonetimi from '../pages/UrunYonetimi.vue'
 
 // ROUTER SETUP
 
@@ -61,6 +62,12 @@ const routes = [
         name: 'StokYonetimi',
         component: StokYonetimi,
         meta: { requiresAuth: true }
+      },
+      {
+        path: 'urun-yonetimi',
+        name: 'UrunYonetimi',
+        component: UrunYonetimi,
+        meta: { requiresAuth: true, adminOnly: true }
       },
       {
         path: 'kullanici-yonetimi',
