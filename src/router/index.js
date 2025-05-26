@@ -13,6 +13,7 @@ import KullaniciYonetimi from '../pages/KullaniciYonetimi.vue'
 import UretimPlani from '../pages/UretimPlani.vue'
 import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
+import UrunYonetimi from '../pages/UrunYonetimi.vue'
 
 // ROUTER SETUP
 
@@ -57,6 +58,18 @@ const routes = [
         component: Hazirlanacaklar // Yeni oluşturulan bileşeni bağla
       },
       {
+        path: 'cari-yonetimi',
+        name: 'CariYonetimi',
+        component: CariYonetimi,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'urun-yonetimi',
+        name: 'UrunYonetimi',
+        component: UrunYonetimi,
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'stok-yonetimi',
         name: 'StokYonetimi',
         component: StokYonetimi,
@@ -85,12 +98,6 @@ const routes = [
         name: 'SatisRaporu',
         component: () => import('../pages/SatisRaporu.vue'),
         meta: { requiresAuth: true, adminOnly: true }
-      },
-      {
-        path: 'cari-yonetimi',
-        name: 'CariYonetimi',
-        component: CariYonetimi,
-        meta: { requiresAuth: true }
       },
       {
         path: 'kargo-yonetimi',

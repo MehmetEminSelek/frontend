@@ -17,7 +17,7 @@
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-        }})</span> </template>
+            }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
           <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
@@ -300,10 +300,27 @@ async function fetchOrders() {
 onMounted(() => { fetchOrders(); fetchActivePrices(); });
 
 // --- Hesaplama Fonksiyonları ---
-function calculateItemTotal(kalem) { if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0; let unitPrice = kalem.birimFiyat; if (kalem.birim.toLowerCase() === 'gram' && unitPrice > 0) { unitPrice = unitPrice / 1000; } return kalem.miktar * unitPrice; }
-function calculatePackageProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
-function calculateProductTotal(kalemler) { if (!kalemler || !Array.isArray(kalemler)) return 0; return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0); }
-function calculateTotalPaid(odemeler) { if (!odemeler || !Array.isArray(odemeler)) return 0; return odemeler.reduce((total, odeme) => total + (odeme.tutar || 0), 0); }
+function calculateItemTotal(kalem) {
+  if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0;
+  let unitPrice = kalem.birimFiyat;
+  // Gram birimli ürünler için 1000'e bölme işlemi kaldırıldı - fiyat zaten gram başına
+  return kalem.miktar * unitPrice;
+}
+
+function calculatePackageProductTotal(kalemler) {
+  if (!kalemler || !Array.isArray(kalemler)) return 0;
+  return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0);
+}
+
+function calculateProductTotal(kalemler) {
+  if (!kalemler || !Array.isArray(kalemler)) return 0;
+  return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0);
+}
+
+function calculateTotalPaid(odemeler) {
+  if (!odemeler || !Array.isArray(odemeler)) return 0;
+  return odemeler.reduce((total, odeme) => total + (odeme.tutar || 0), 0);
+}
 // --- Hesaplama Fonksiyonları Sonu ---
 
 // --- Ödeme Durumu Hesaplama ---
@@ -314,9 +331,15 @@ function getPaymentStatus(order) {
   const remaining = grandTotal - totalPaid;
   const epsilon = 0.01;
 
-  if (totalPaid <= epsilon && grandTotal > epsilon) { return { text: 'Ödenmedi', color: 'error', icon: 'mdi-credit-card-off-outline', textColor: 'text-error' }; }
-  else if (remaining > epsilon) { return { text: 'Kısmen Ödendi', color: 'warning', icon: 'mdi-alert-circle-outline', textColor: 'text-warning' }; }
-  else { return { text: 'Ödeme Alındı', color: 'success', icon: 'mdi-check-decagram-outline', textColor: 'text-success' }; }
+  if (totalPaid <= epsilon && grandTotal > epsilon) {
+    return { text: 'Ödenmedi', color: 'error', icon: 'mdi-credit-card-off-outline', textColor: 'text-error' };
+  }
+  else if (remaining > epsilon) {
+    return { text: 'Kısmen Ödendi', color: 'warning', icon: 'mdi-alert-circle-outline', textColor: 'text-warning' };
+  }
+  else {
+    return { text: 'Ödeme Alındı', color: 'success', icon: 'mdi-check-decagram-outline', textColor: 'text-success' };
+  }
 }
 // --- Ödeme Durumu Sonu ---
 
@@ -335,7 +358,10 @@ function openPaymentDialog(order) {
   paymentDialog.value = true;
 }
 
-function closePaymentDialog() { paymentDialog.value = false; orderForPayment.value = null; }
+function closePaymentDialog() {
+  paymentDialog.value = false;
+  orderForPayment.value = null;
+}
 async function savePayment() {
   if (!orderForPayment.value) return;
   const { valid: paymentFormIsValid } = await paymentFormRef.value.validate();
@@ -364,7 +390,10 @@ async function savePayment() {
 // --- Ödeme Dialogu Fonksiyonları Sonu ---
 
 // <<< YARDIMCI FONKSİYONLAR GERİ EKLENDİ >>>
-function editOrder(id) { console.log('Düzenle ID:', id); showSnackbar(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`, 'info'); }
+function editOrder(id) {
+  console.log('Düzenle ID:', id);
+  showSnackbar(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`, 'info');
+}
 async function deleteOrder(id) {
   console.log('Sil ID:', id); /* Vue dialog ile onay alınmalı! */
   // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
@@ -384,6 +413,7 @@ function getAmbalajIcon(ambalajAdi) {
   if (ambalajAdi === 'Özel') return 'mdi-star-outline';
   return 'mdi-help-box-outline';
 }
+
 function getUrunIcon(urunAdi) {
   if (!urunAdi) return 'mdi-help-circle-outline';
   if (urunAdi.toLowerCase().includes('baklava')) return 'mdi-diamond-stone';
@@ -411,6 +441,7 @@ function groupItemsByPackage(kalemler) {
   });
   return Object.values(grouped);
 }
+
 // --- KDV Hesaplama Fonksiyonu ---
 function getKdvOrani(order) {
   // Oturma alanı var mı bilgisi yoksa varsayılan %10, yoksa %1
@@ -418,6 +449,7 @@ function getKdvOrani(order) {
   // Şimdilik sabit %10 (gerekirse %1 yap)
   return 0.10;
 }
+
 function calculateKdv(order) {
   const productTotal = calculateProductTotal(order.kalemler);
   const tepsiTotal = order.toplamTepsiMaliyeti || 0;
@@ -428,6 +460,7 @@ function calculateKdv(order) {
   const matrah = productTotal + tepsiTotal + kargoTotal + digerTotal;
   return matrah * kdvOrani;
 }
+
 // --- Grand Total KDV dahil ---
 function calculateGrandTotal(order) {
   if (!order) return 0;
@@ -438,7 +471,6 @@ function calculateGrandTotal(order) {
   const kdv = calculateKdv(order);
   return productTotal + tepsiTotal + kargoTotal + digerTotal + kdv;
 }
-// --- Gruplama Fonksiyonu (DÜZELTİLDİ) Sonu ---
 
 function getActivePrice(kalem) {
   if (!kalem.urunId || !kalem.birim) return null;
