@@ -1,6 +1,7 @@
 // composables/useSocket.js - Socket.IO Client Composable
 import { ref, onMounted, onUnmounted } from 'vue'
 import { io } from 'socket.io-client'
+import { SOCKET_URL } from '../config'
 
 let socket = null
 let realtimeStore = null
@@ -29,88 +30,22 @@ export function useSocket() {
     const maxReconnectAttempts = 5
 
     const connect = () => {
-        if (socket?.connected) {
-            console.log('Socket already connected')
-            return socket
+        if (!socket) {
+            socket = io(SOCKET_URL, {
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            })
         }
-
-        const token = localStorage.getItem('token')
-        if (!token) {
-            console.warn('No authentication token found')
-            return null
-        }
-
-        isConnecting.value = true
-
-        socket = io('http://localhost:3000', {
-            auth: {
-                token: token
-            },
-            transports: ['websocket', 'polling'],
-            timeout: 20000,
-            retryDelayMax: 10000,
-            maxReconnectAttempts: maxReconnectAttempts
-        })
-
-        // Connection events
-        socket.on('connect', () => {
-            console.log('✅ Socket connected:', socket.id)
-            isConnecting.value = false
-            reconnectAttempts.value = 0
-            try {
-                getRealtimeStore().setConnectionStatus(true)
-            } catch (e) {
-                console.warn('Store not available for connection status update')
-            }
-
-            // Join relevant rooms
-            joinRooms()
-        })
-
-        socket.on('disconnect', (reason) => {
-            console.log('❌ Socket disconnected:', reason)
-            try {
-                getRealtimeStore().setConnectionStatus(false)
-            } catch (e) {
-                console.warn('Store not available for connection status update')
-            }
-
-            if (reason === 'io server disconnect') {
-                // Server initiated disconnect, try to reconnect
-                setTimeout(() => {
-                    if (reconnectAttempts.value < maxReconnectAttempts) {
-                        reconnectAttempts.value++
-                        connect()
-                    }
-                }, 3000)
-            }
-        })
-
-        socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error)
-            isConnecting.value = false
-            try {
-                getRealtimeStore().setConnectionStatus(false)
-            } catch (e) {
-                console.warn('Store not available for connection status update')
-            }
-
-            if (error.message === 'Authentication required' || error.message === 'Invalid token') {
-                try {
-                    getToast().error('Oturum süresi doldu, lütfen tekrar giriş yapın')
-                } catch (e) {
-                    console.warn('Toast not available')
-                }
-                // Redirect to login or refresh token
-                localStorage.removeItem('token')
-                window.location.href = '/login'
-            }
-        })
-
-        // Real-time event listeners
-        setupEventListeners()
-
         return socket
+    }
+
+    const disconnect = () => {
+        if (socket) {
+            socket.disconnect()
+            socket = null
+        }
     }
 
     const joinRooms = () => {
@@ -254,19 +189,6 @@ export function useSocket() {
                 console.warn('Store not available for system notification')
             }
         })
-    }
-
-    const disconnect = () => {
-        if (socket) {
-            socket.disconnect()
-            socket = null
-            try {
-                getRealtimeStore().setConnectionStatus(false)
-            } catch (e) {
-                console.warn('Store not available for connection status update')
-            }
-            console.log('Socket manually disconnected')
-        }
     }
 
     const emit = (event, data) => {
