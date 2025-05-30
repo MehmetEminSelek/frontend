@@ -205,9 +205,9 @@ const rules = { required: value => !!value || 'Bu alan zorunludur.', positiveNum
 async function fetchFiyatlar() {
   loading.value = true; error.value = null;
   try {
-    const response = await axios.get('http://localhost:3000/api/fiyatlar'); // API endpoint'i
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/fiyatlar`);
     // Filter to only keep the latest price for each product/unit
-    const allPrices = response.data;
+    const allPrices = response.data.fiyatlar || response.data || [];
     const latestMap = {};
     allPrices.forEach(price => {
       const key = `${price.urunId}-${price.birim}`;
@@ -225,7 +225,7 @@ async function fetchFiyatlar() {
 // Ürün listesini çek (Dialog için)
 async function fetchUrunler() {
   try {
-    const response = await axios.get('http://localhost:3000/api/dropdown'); // lookups endpoint'i
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/dropdown`);
     urunListesi.value = response.data.urunler || [];
   } catch (err) { console.error('❌ Ürün listesi çekilemedi:', err); showSnackbar('Ürün listesi yüklenemedi.', 'error'); }
 }
@@ -253,8 +253,8 @@ function closePriceDialog() { priceDialog.value = false; editingFiyat.value = nu
 async function fetchPriceHistory(urunId, birim) {
   if (!urunId || !birim) { priceHistory.value = []; return; }
   try {
-    const response = await axios.get(`http://localhost:3000/api/fiyatlar?all=true&urunId=${urunId}&birim=${birim}`);
-    priceHistory.value = response.data;
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/fiyatlar?all=true&urunId=${urunId}&birim=${birim}`);
+    priceHistory.value = response.data.fiyatlar || response.data || [];
   } catch (err) {
     priceHistory.value = [];
   }
@@ -264,7 +264,7 @@ async function fetchOrderCountsForHistory() {
   priceOrderCounts.value = {};
   await Promise.all(priceHistory.value.map(async (f) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/fiyatlar/${f.id}?orders=true`);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/fiyatlar/${f.id}?orders=true`);
       priceOrderCounts.value[f.id] = res.data;
     } catch (e) {
       priceOrderCounts.value[f.id] = { count: 0, orders: [] };
@@ -286,7 +286,7 @@ async function saveFiyat() {
         fiyat: priceForm.fiyat,
         gecerliTarih: priceForm.gecerliTarih ? new Date(priceForm.gecerliTarih) : null
       };
-      await axios.put(`http://localhost:3000/api/fiyatlar/${editingFiyat.value.id}`, updatePayload);
+      await axios.put(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/fiyatlar/${editingFiyat.value.id}`, updatePayload);
       showSnackbar('Fiyat başarıyla güncellendi!', 'success');
     } else {
       // Yeni fiyat ekleme
@@ -297,7 +297,7 @@ async function saveFiyat() {
         gecerliTarih: priceForm.gecerliTarih ? new Date(priceForm.gecerliTarih) : null, // Tarih objesi
         bitisTarihi: priceForm.bitisTarihi ? new Date(priceForm.bitisTarihi) : null,
       };
-      await axios.post('http://localhost:3000/api/fiyatlar', payload);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/fiyatlar`, payload);
       showSnackbar('Yeni fiyat başarıyla eklendi!', 'success');
     }
     closePriceDialog();

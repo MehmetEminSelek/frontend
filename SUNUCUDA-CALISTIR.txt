@@ -1,0 +1,50 @@
+## SUNUCUDA ÇALIŞTIRIN (SSH'a bağlandıktan sonra)
+
+### Adım 1: Frontend dizinine gidin
+```
+cd /home/ogsiparis.com/public_html/assets
+```
+
+### Adım 2: JavaScript dosyalarında localhost'u değiştirin
+```
+sed -i 's/localhost:3000/ogsiparis.com:3000/g' *.js
+```
+
+### Adım 3: Browser'da test edin
+- https://ogsiparis.com adresine gidin
+- Ctrl+Shift+R yaparak sayfayı yenileyin
+- Fiyat Yönetimi sayfasını açın
+
+NOT: Eğer hala çalışmazsa, tarayıcınızın önbelleğini tamamen temizleyin veya gizli/özel pencerede deneyin.
+
+### Alternatif Çözüm (Eğer yukarıdaki çalışmazsa):
+Backend'i eski response formatını destekleyecek şekilde güncelleyin:
+
+```
+cd /home/ogsiparis.com/ogBackend
+nano pages/api/fiyatlar/index.js
+```
+
+Satır 110 civarında şunu bulun:
+```javascript
+return res.status(200).json({
+    fiyatlar,
+    pagination: {
+```
+
+Şununla değiştirin:
+```javascript
+// Frontend eski formatı bekliyorsa direkt array döndür
+if (!req.query.page || req.query.all === 'true') {
+    return res.status(200).json(fiyatlar);
+}
+
+return res.status(200).json({
+    fiyatlar,
+    pagination: {
+```
+
+Sonra:
+```
+pm2 restart og-backend
+``` 

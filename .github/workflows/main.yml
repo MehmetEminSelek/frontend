@@ -3,8 +3,7 @@ name: Deploy Frontend to Production
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -27,14 +26,32 @@ jobs:
       env:
         VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-    - name: Deploy to Hostinger
+    - name: Test SSH Connection
+      run: |
+        echo "Testing SSH connection..."
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ${{ secrets.HOSTINGER_USERNAME }}@${{ secrets.HOSTINGER_HOST }} -p ${{ secrets.HOSTINGER_PORT }} "echo 'SSH connection successful!'"
+
+    - name: Upload Build Files
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT }}
+        source: "dist/*"
+        target: "${{ secrets.HOSTINGER_FRONTEND_PATH }}"
+        strip_components: 1
+
+    - name: Update Permissions
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOSTINGER_HOST }}
         username: ${{ secrets.HOSTINGER_USERNAME }}
-        password: ${{ secrets.HOSTINGER_PASSWORD }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.HOSTINGER_PORT }}
         script: |
           cd ${{ secrets.HOSTINGER_FRONTEND_PATH }}
-          rm -rf dist/*
-          mkdir -p dist 
+          chmod -R 755 . 
