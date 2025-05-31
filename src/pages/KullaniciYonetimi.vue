@@ -144,7 +144,7 @@ async function fetchUsers() {
   loading.value = true; error.value = null;
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/auth/users', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/users`, { headers: { Authorization: 'Bearer ' + token } });
     users.value = res.data;
   } catch (err) {
     error.value = 'Kullanıcılar yüklenirken hata oluştu.';
@@ -168,10 +168,10 @@ async function saveUserDialog() {
   try {
     const token = localStorage.getItem('token');
     if (editingUser.value) {
-      await axios.patch('http://localhost:3000/api/auth/users', { id: editingUser.value.id, ...userForm.value }, { headers: { Authorization: 'Bearer ' + token } });
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/auth/users`, { id: editingUser.value.id, ...userForm.value }, { headers: { Authorization: 'Bearer ' + token } });
       showSnackbar('Kullanıcı güncellendi!', 'success');
     } else {
-      await axios.post('http://localhost:3000/api/auth/users', userForm.value, { headers: { Authorization: 'Bearer ' + token } });
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/users`, userForm.value, { headers: { Authorization: 'Bearer ' + token } });
       showSnackbar('Kullanıcı eklendi!', 'success');
     }
     closeUserDialog();
@@ -187,7 +187,7 @@ async function deleteUser(user) {
   // TODO: Vue dialog ile onay alınmalı!
   try {
     const token = localStorage.getItem('token');
-    await axios.delete('http://localhost:3000/api/auth/users', { data: { id: user.id }, headers: { Authorization: 'Bearer ' + token } });
+    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/auth/users`, { data: { id: user.id }, headers: { Authorization: 'Bearer ' + token } });
     showSnackbar('Kullanıcı silindi!', 'success');
     fetchUsers();
   } catch (err) {
@@ -271,7 +271,7 @@ async function deleteSelectedUsers() {
   if (!confirm('Seçili kullanıcılar silinsin mi?')) return;
   try {
     const token = localStorage.getItem('token');
-    await axios.delete('http://localhost:3000/api/auth/users', { data: { ids: idsToDelete }, headers: { Authorization: 'Bearer ' + token } });
+    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/auth/users`, { data: { ids: idsToDelete }, headers: { Authorization: 'Bearer ' + token } });
     showSnackbar('Seçili kullanıcılar silindi!', 'success');
     selectedUsers.value = [];
     fetchUsers();

@@ -270,7 +270,7 @@ const activePricesMap = ref({});
 // Fetch active prices (latest for each product/unit)
 async function fetchActivePrices() {
   try {
-    const response = await axios.get('http://localhost:3000/api/fiyatlar');
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/fiyatlar`);
     const allPrices = response.data;
     const latestMap = {};
     allPrices.forEach(price => {
@@ -290,7 +290,7 @@ async function fetchActivePrices() {
 async function fetchOrders() {
   loading.value = true; error.value = null; console.log('Fetching all orders...');
   try {
-    const response = await axios.get('http://localhost:3000/api/orders'); // Ödemeleri de içermeli
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`); // Ödemeleri de içermeli
     allOrders.value = response.data;
     console.log('All orders loaded:', JSON.parse(JSON.stringify(allOrders.value)));
   } catch (err) { console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err); error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`; allOrders.value = []; }
@@ -373,7 +373,7 @@ async function savePayment() {
   console.log(`POST /api/siparis/${orderId}/odemeler gönderiliyor:`, payload);
 
   try {
-    const response = await axios.post(`http://localhost:3000/api/siparis/${orderId}/odemeler`, payload);
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}/odemeler`, payload);
     const yeniOdeme = response.data;
     const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
     if (orderIndex > -1) {
@@ -399,7 +399,7 @@ async function deleteOrder(id) {
   // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
-    await axios.delete(`http://localhost:3000/api/siparis/${id}`);
+    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/siparis/${id}`);
     showSnackbar('Sipariş başarıyla silindi.', 'success'); // Snackbar kullanıldı
     if (itemIndex > -1) { allOrders.value.splice(itemIndex, 1); }
   } catch (err) {

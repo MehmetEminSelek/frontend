@@ -189,9 +189,9 @@ async function fetchKargoSiparisler() {
     try {
         // Tüm siparişleri çek (kargo durumu filtresiz)
         const [allOrdersRes, subeRes, dropdownRes] = await Promise.all([
-            axios.get('http://localhost:3000/api/siparis'),
-            axios.get('http://localhost:3000/api/siparis', { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
-            axios.get('http://localhost:3000/api/dropdown'),
+            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`),
+            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`, { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
+            axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`),
         ]);
         
         console.log('🚚 Tüm Siparişler API Yanıtı:', allOrdersRes.data?.length);
@@ -244,7 +244,7 @@ async function saveKargoDialog() {
     if (!selectedSiparis.value) return;
     kargoDialogLoading.value = true;
     try {
-        await axios.patch(`http://localhost:3000/api/siparis/${selectedSiparis.value.id}/kargo`, {
+        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/siparis/${selectedSiparis.value.id}/kargo`, {
             kargoSirketi: kargoForm.value.kargoSirketi,
             kargoTakipNo: kargoForm.value.kargoTakipNo,
             kargoNotu: kargoForm.value.kargoNotu,
@@ -277,7 +277,7 @@ async function saveTransferDialog() {
     }
     transferDialogLoading.value = true;
     try {
-        await axios.patch(`http://localhost:3000/api/siparis/${selectedSiparis.value.id}/transfer`, {
+        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/siparis/${selectedSiparis.value.id}/transfer`, {
             hedefSubeId: transferForm.value.hedefSubeId,
             kargoNotu: transferForm.value.kargoNotu,
             kargoDurumu: 'Şubede Teslim',

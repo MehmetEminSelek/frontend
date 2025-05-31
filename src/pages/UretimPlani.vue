@@ -133,7 +133,7 @@ provide('vuetify', uretimPlaniVuetify);
 async function fetchReport() {
     loading.value = true;
     try {
-        const res = await fetch('http://localhost:3000/api/uretim-plani', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/uretim-plani`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ startDate: startDate.value, endDate: endDate.value })

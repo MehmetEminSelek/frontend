@@ -167,7 +167,7 @@ provide('vuetify', receteVuetify);
 async function fetchReceteler() {
     loading.value = true;
     try {
-        const response = await axios.get('http://localhost:3000/api/receteler');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/receteler`);
         receteler.value = response.data;
     } catch (err) {
         receteler.value = [];
@@ -177,7 +177,7 @@ async function fetchReceteler() {
 }
 async function fetchDropdowns() {
     try {
-        const res = await axios.get('http://localhost:3000/api/dropdown');
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`);
         urunler.value = res.data.urunler;
         stokOptions.value = [
             ...res.data.hammaddeler.map(x => ({ kod: x.kod, label: x.ad + ' (Hammadde)' })),
@@ -219,10 +219,10 @@ async function saveRecete() {
     }
     try {
         if (editMode.value) {
-            await axios.put('http://localhost:3000/api/receteler', form.value);
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/receteler`, form.value);
             snackbar.value = { show: true, text: 'Reçete güncellendi.', color: 'success' };
         } else {
-            await axios.post('http://localhost:3000/api/receteler', form.value);
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/receteler`, form.value);
             snackbar.value = { show: true, text: 'Reçete eklendi.', color: 'success' };
         }
         dialog.value = false;
@@ -237,7 +237,7 @@ function confirmDelete(recete) {
 }
 async function deleteRecete() {
     try {
-        await axios.delete('http://localhost:3000/api/receteler', { data: { id: deleteId.value } });
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/receteler`, { data: { id: deleteId.value } });
         snackbar.value = { show: true, text: 'Reçete silindi.', color: 'success' };
         deleteDialog.value = false;
         fetchReceteler();

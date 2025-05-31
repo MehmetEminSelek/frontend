@@ -254,7 +254,7 @@ async function fetchStoklar() {
   loading.value = true; error.value = null;
   try {
     const params = selectedOp.value ? { operasyonBirimiKod: selectedOp.value } : {};
-    const response = await axios.get('http://localhost:3000/api/stok', { params });
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok`, { params });
     stoklar.value = response.data.map(s => ({
       ...s,
       ad: s.hammadde?.ad || s.yariMamul?.ad || '-',
@@ -306,7 +306,7 @@ async function saveStokDialog() {
   if (!stokDialogItem.value || stokDialogMiktar.value <= 0) return;
   stokDialogLoading.value = true;
   try {
-    await axios.post('http://localhost:3000/api/stok', {
+    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/stok`, {
       stokId: stokDialogItem.value.id,
       miktar: stokDialogMiktar.value,
       tip: stokDialogType.value,
@@ -355,7 +355,7 @@ async function saveTransferDialog() {
   if (!transferForm.value.kaynakStokId || !transferForm.value.hedefStokId || transferForm.value.miktarGram <= 0) return;
   transferDialogLoading.value = true;
   try {
-    await axios.post('http://localhost:3000/api/stok/transfer', transferForm.value);
+    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/stok/transfer`, transferForm.value);
     showSnackbar('Transfer başarıyla tamamlandı!', 'success');
     closeTransferDialog();
     fetchStoklar();
@@ -369,7 +369,7 @@ async function saveTransferDialog() {
 async function fetchTransferHistory() {
   transferHistoryLoading.value = true;
   try {
-    const res = await axios.get('http://localhost:3000/api/stok/transfer');
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok/transfer`);
     transferHistory.value = res.data;
   } catch (err) {
     transferHistory.value = [];
@@ -400,7 +400,7 @@ async function fetchHareketler() {
   hareketlerLoading.value = true;
   try {
     const params = hareketFilterStokId.value ? { stokId: hareketFilterStokId.value } : {};
-    const res = await axios.get('http://localhost:3000/api/stok/hareket', { params });
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok/hareket`, { params });
     hareketler.value = res.data;
   } catch (err) {
     hareketler.value = [];
@@ -428,7 +428,7 @@ async function saveMinStokDialog() {
   if (!minStokDialogItem.value) return;
   minStokDialogLoading.value = true;
   try {
-    await axios.patch('http://localhost:3000/api/stok', { stokId: minStokDialogItem.value.id, minimumMiktarGram: minStokDialogValue.value });
+    await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/stok`, { stokId: minStokDialogItem.value.id, minimumMiktarGram: minStokDialogValue.value });
     showSnackbar('Minimum stok başarıyla güncellendi!', 'success');
     closeMinStokDialog();
     fetchStoklar();
@@ -450,7 +450,7 @@ const raporStokHeaders = [
 async function fetchRapor() {
   raporLoading.value = true;
   try {
-    const res = await axios.get('http://localhost:3000/api/stok/rapor', { params: { start: raporStart.value, end: raporEnd.value } });
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok/rapor`, { params: { start: raporStart.value, end: raporEnd.value } });
     rapor.value = res.data;
   } catch (err) {
     rapor.value = {};
@@ -461,7 +461,7 @@ async function fetchRapor() {
 // Siparişe göre stoktan otomatik düşüm fonksiyonu (örnek buton ve fonksiyon)
 async function consumeOrderStok(siparisId) {
   try {
-    await axios.post('http://localhost:3000/api/stok/consume-order', { siparisId });
+    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/stok/consume-order`, { siparisId });
     showSnackbar('Sipariş stoktan başarıyla düşüldü!', 'success');
     fetchStoklar();
     fetchHareketler(); // HAREKETLERİ GÜNCELLE

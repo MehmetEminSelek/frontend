@@ -425,7 +425,7 @@ async function fetchHareketler(cariId) {
         // Hem cari hareketlerini hem de sipariş ödemelerini çek
         const [cariHareketRes, siparislerRes] = await Promise.all([
             axios.get('/api/cari/hareket?cariId=' + cariId),
-            axios.get('http://localhost:3000/api/siparis') // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
+            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`) // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
         ]);
 
         const cariHareketler = cariHareketRes.data || [];

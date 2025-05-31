@@ -306,7 +306,7 @@ const successDialog = ref(false);
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get('http://localhost:3000/api/dropdown');
+    const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`);
     console.log('Dropdown Response:', data);
     if (data && typeof data === 'object') {
       Object.assign(dropdowns, data);
@@ -473,7 +473,7 @@ async function onCariBlur() {
   if (!mevcutCari) {
     // Yeni müşteri oluştur
     try {
-      const { data } = await axios.post('http://localhost:3000/api/cari', { ad: girilenAd });
+      const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`, { ad: girilenAd });
       if (data && data.id) {
         dropdowns.cariler.push(data);
         selectedCari.value = data.id;
@@ -548,7 +548,7 @@ async function submitForm() {
   };
   console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
   try {
-    const { data } = await axios.post('http://localhost:3000/api/siparis', payload);
+    const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload);
     console.log('✅ Sipariş kaydedildi:', data);
     successDialog.value = true;
   } catch (err) {

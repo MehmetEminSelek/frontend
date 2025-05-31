@@ -116,7 +116,7 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 async function fetchPendingOrders() {
   loading.value = true; error.value = null; orders.value = [];
   try {
-    const response = await axios.get('http://localhost:3000/api/orders', { params: { status: 'pending' } });
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`, { params: { status: 'pending' } });
     // Gelen veriyi doğrudan kullanıyoruz, miktar alanları template içinde düzenlenebilir olacak
     orders.value = response.data;
     console.log('Onay bekleyen siparişler:', orders.value);
@@ -161,11 +161,11 @@ async function saveChangesAndApprove(order, index) {
     }
   }
 
-  console.log(`PUT /api/siparis/${orderId} gönderiliyor (Kaydet ve Onayla):`, payload);
+  console.log(`PUT ${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId} gönderiliyor (Kaydet ve Onayla):`, payload);
 
   try {
     // PUT isteği ile hem kalem miktarlarını hem de onay durumunu güncelle
-    await axios.put(`http://localhost:3000/api/siparis/${orderId}`, payload);
+    await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
 
     showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve onaylandı!`, 'success');
 

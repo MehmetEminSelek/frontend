@@ -352,7 +352,7 @@ function rowClass(item) {
 async function fetchReport() {
     loading.value = true;
     try {
-        const res = await fetch('http://localhost:3000/api/satis-raporu', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/satis-raporu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ startDate: startDate.value, endDate: endDate.value })
