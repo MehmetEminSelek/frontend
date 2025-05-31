@@ -13,7 +13,7 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'https://ogsiparis.com:3000',
+                target: 'https://ogsiparis.com',
                 changeOrigin: true,
                 secure: false
             }
