@@ -14,6 +14,9 @@ import UretimPlani from '../pages/UretimPlani.vue'
 import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
 import UrunYonetimi from '../pages/UrunYonetimi.vue'
+import SatisRaporu from '../pages/SatisRaporu.vue'
+import MalzemeFiyatlari from '../pages/MalzemeFiyatlari.vue'
+import CrmRaporlama from '../pages/CrmRaporlama.vue'
 
 // ROUTER SETUP
 
@@ -41,6 +44,12 @@ const routes = [
         path: 'FiyatYonetimi',
         name: 'FiyatYönetimi',
         component: FiyatYönetimi // /main/form
+      },
+      {
+        path: 'MalzemeFiyatlari',
+        name: 'MalzemeFiyatlari',
+        component: MalzemeFiyatlari,
+        meta: { requiresAuth: true, adminOnly: true }
       },
       {
         path: 'orders', // /main/orders - Onay Bekleyenler
@@ -96,12 +105,18 @@ const routes = [
       {
         path: 'satis-raporu',
         name: 'SatisRaporu',
-        component: () => import('../pages/SatisRaporu.vue'),
+        component: SatisRaporu,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'crm-raporlama',
+        name: 'CrmRaporlama',
+        component: CrmRaporlama,
         meta: { requiresAuth: true, adminOnly: true }
       },
       {
-        path: 'kargo-yonetimi',
-        name: 'KargoYonetimi',
+        path: 'kargo-operasyon',
+        name: 'KargoOperasyon',
         component: KargoOperasyon,
         meta: { requiresAuth: true }
       },
@@ -115,24 +130,41 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL || '/'),
+  routes,
+  // ogsiparis.com için scroll behavior
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  }
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return next({ name: 'Login' });
-    }
-    if (to.meta.adminOnly) {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
-        return next({ name: 'StokYonetimi' });
-      }
-    }
+  const token = localStorage.getItem('token')
+  const userRole = localStorage.getItem('userRole')
+
+  // Login sayfasına erişim kontrolü
+  if (to.name === 'Login' && token) {
+    next('/main/form')
+    return
   }
-  next();
-});
+
+  // Auth gerektiren sayfalar için kontrol
+  if (to.meta.requiresAuth && !token) {
+    next('/login')
+    return
+  }
+
+  // Admin only sayfalar için kontrol
+  if (to.meta.adminOnly && userRole !== 'admin') {
+    next('/main/form')
+    return
+  }
+
+  next()
+})
 
 export default router

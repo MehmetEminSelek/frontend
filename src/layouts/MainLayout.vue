@@ -32,13 +32,15 @@
 
           <v-list-item to="/main/stok-yonetimi" title="Stok Yönetimi" link prepend-icon="mdi-archive-outline"
             :active="isActive('/main/stok-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
-          <v-list-item to="/main/kargo-yonetimi" title="Kargo Yönetimi" link prepend-icon="mdi-truck-outline"
-            :active="isActive('/main/kargo-yonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item to="/main/kargo-operasyon" title="Kargo Operasyon" link prepend-icon="mdi-truck-outline"
+            :active="isActive('/main/kargo-operasyon')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/kullanici-yonetimi" title="Kullanıcı Yönetimi" link
             prepend-icon="mdi-account-group-outline" :active="isActive('/main/kullanici-yonetimi')"
             class="main-nav-item" @click="onMenuClick"></v-list-item>
-          <v-list-item to="/main/fiyatyonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-currency-usd"
-            :active="isActive('/main/fiyatlar')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item to="/main/FiyatYonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-currency-usd"
+            :active="isActive('/main/FiyatYonetimi')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item v-if="isAdmin" to="/main/MalzemeFiyatlari" title="Malzeme Fiyatları" link prepend-icon="mdi-package-variant-closed"
+            :active="isActive('/main/MalzemeFiyatlari')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/recete-yonetimi" title="Reçete Yönetimi" link
             prepend-icon="mdi-receipt-text-outline" :active="isActive('/main/recete-yonetimi')" class="main-nav-item"
             @click="onMenuClick"></v-list-item>
@@ -46,6 +48,8 @@
             :active="isActive('/main/uretim-plani')" class="main-nav-item" @click="onMenuClick"></v-list-item>
           <v-list-item v-if="isAdmin" to="/main/satis-raporu" title="Satış Raporu" link prepend-icon="mdi-chart-line"
             :active="isActive('/main/satis-raporu')" class="main-nav-item" @click="onMenuClick"></v-list-item>
+          <v-list-item v-if="isAdmin" to="/main/crm-raporlama" title="CRM Raporlama" link prepend-icon="mdi-chart-box"
+            :active="isActive('/main/crm-raporlama')" class="main-nav-item" @click="onMenuClick"></v-list-item>
 
         </v-list>
       </v-navigation-drawer>

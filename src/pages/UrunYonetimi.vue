@@ -168,6 +168,17 @@
                     <span v-else class="text-grey-500">Fiyat yok</span>
                 </template>
 
+                <!-- Reçete -->
+                <template v-slot:item.recete="{ item }">
+                    <div v-if="item.receteAdedi > 0" class="d-flex align-center">
+                        <v-icon size="small" color="success" class="mr-1">mdi-food-variant</v-icon>
+                        <span class="text-body-2">{{ item.receteAdedi }} reçete</span>
+                        <v-btn icon="mdi-eye" size="x-small" variant="text" color="info" 
+                               @click="receteDetayGoster(item)" class="ml-1" title="Reçete Detayı"></v-btn>
+                    </div>
+                    <span v-else class="text-grey-500">Reçete yok</span>
+                </template>
+
                 <!-- Durum -->
                 <template v-slot:item.durum="{ item }">
                     <div class="d-flex flex-column gap-1">
@@ -284,6 +295,82 @@
         <!-- Ürün Detay Dialog -->
         <UrunDetayDialog v-model="detayDialog" :urun="seciliUrun" />
 
+        <!-- Reçete Detay Dialog -->
+        <v-dialog v-model="receteDialog" max-width="800">
+            <v-card>
+                <v-card-title class="text-h6">
+                    <v-icon color="success" class="mr-2">mdi-food-variant</v-icon>
+                    {{ seciliUrun?.ad }} - Reçete Detayları
+                </v-card-title>
+                <v-card-text>
+                    <div v-if="seciliRecete && seciliRecete.length > 0">
+                        <v-list>
+                            <v-list-item v-for="recete in seciliRecete" :key="recete.id">
+                                <template v-slot:prepend>
+                                    <v-icon color="success">mdi-clipboard-list-outline</v-icon>
+                                </template>
+                                <v-list-item-title>{{ recete.name }}</v-list-item-title>
+                                <v-list-item-subtitle>
+                                    {{ recete.ingredients?.length || 0 }} malzeme
+                                </v-list-item-subtitle>
+                                <template v-slot:append>
+                                    <v-btn icon="mdi-eye" size="small" variant="text" color="info"
+                                           @click="receteMalzemeGoster(recete)" title="Malzemeleri Göster"></v-btn>
+                                </template>
+                            </v-list-item>
+                        </v-list>
+                    </div>
+                    <div v-else class="text-center py-4">
+                        <v-icon size="64" color="grey-lighten-2">mdi-food-variant-off</v-icon>
+                        <div class="text-h6 text-grey-500 mt-2">Reçete bulunamadı</div>
+                    </div>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn @click="receteDialog = false">Kapat</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Malzeme Detay Dialog -->
+        <v-dialog v-model="malzemeDialog" max-width="600">
+            <v-card>
+                <v-card-title class="text-h6">
+                    <v-icon color="info" class="mr-2">mdi-clipboard-list</v-icon>
+                    Reçete Malzemeleri
+                </v-card-title>
+                <v-card-text>
+                    <v-table>
+                        <thead>
+                            <tr>
+                                <th>Malzeme</th>
+                                <th>Tip</th>
+                                <th class="text-end">Miktar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="malzeme in seciliMalzemeler" :key="malzeme.id">
+                                <td>{{ malzeme.stokAd || malzeme.stokKod }}</td>
+                                <td>
+                                    <v-chip :color="malzeme.stokTip === 'Hammadde' ? 'success' : 'warning'"
+                                           size="x-small" variant="tonal">
+                                        {{ malzeme.stokTip }}
+                                    </v-chip>
+                                </td>
+                                <td class="text-end font-weight-bold">
+                                    {{ malzeme.miktarGram?.toLocaleString() }} gr
+                                </td>
+                            </tr>
+                        </tbody>
+                    </v-table>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn @click="malzemeDialog = false">Kapat</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Kategori Yönetimi Dialog -->
         <KategoriYonetimDialog v-model="kategoriDialog" @guncelle="kategorileriYukle" />
 
@@ -328,7 +415,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import UrunFormDialog from '../components/UrunFormDialog.vue'
 import UrunDetayDialog from '../components/UrunDetayDialog.vue'
 import KategoriYonetimDialog from '../components/KategoriYonetimDialog.vue'
-import { apiCall, API_BASE_URL } from '../utils/api'
+import { apiCall } from '../utils/api'
 
 export default {
     name: 'UrunYonetimi',
@@ -351,8 +438,12 @@ export default {
         const detayDialog = ref(false)
         const kategoriDialog = ref(false)
         const silmeDialog = ref(false)
+        const receteDialog = ref(false)
+        const malzemeDialog = ref(false)
 
         const seciliUrun = ref(null)
+        const seciliRecete = ref(null)
+        const seciliMalzemeler = ref([])
 
         // Filtreler
         const filtreler = reactive({
@@ -473,6 +564,24 @@ export default {
             detayDialog.value = true
         }
 
+        const receteDetayGoster = async (urun) => {
+            try {
+                // Ürünün reçetelerini getir
+                const response = await apiCall(`/receteler?urunId=${urun.id}`)
+                seciliRecete.value = response
+                seciliUrun.value = urun
+                receteDialog.value = true
+            } catch (error) {
+                console.error('Reçete detayları yüklenirken hata:', error)
+                snackbarGoster('Reçete detayları yüklenirken hata oluştu', 'error')
+            }
+        }
+
+        const receteMalzemeGoster = (recete) => {
+            seciliMalzemeler.value = recete.ingredients || []
+            malzemeDialog.value = true
+        }
+
         const urunDuzenle = (urun) => {
             seciliUrun.value = { ...urun }
             duzenleDialog.value = true
@@ -579,6 +688,8 @@ export default {
             detayDialog,
             kategoriDialog,
             silmeDialog,
+            receteDialog,
+            malzemeDialog,
 
             // Computed
             kategoriSecenekleri,
@@ -595,7 +706,9 @@ export default {
             urunSil,
             urunKaydet,
             urunGuncelle,
-            urunSilOnayla
+            urunSilOnayla,
+            receteDetayGoster,
+            receteMalzemeGoster
         }
     }
 }

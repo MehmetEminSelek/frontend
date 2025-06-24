@@ -40,6 +40,8 @@
                                 <span>{{ recete.urunAd || recete.name }}</span>
                             </span>
                             <span>
+                                <v-btn icon="mdi-calculator" size="small" variant="text" color="info"
+                                    @click="hesaplaMaliyet(recete)" title="Maliyet Hesapla"></v-btn>
                                 <v-btn icon="mdi-content-copy" size="small" variant="text" color="primary"
                                     @click="copyRecete(recete)" title="Kopyala"></v-btn>
                                 <v-btn icon="mdi-pencil" size="small" variant="text" color="warning"
@@ -124,6 +126,68 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <v-dialog v-model="maliyetDialog" max-width="700px">
+            <v-card class="rounded-xl">
+                <v-card-title class="text-h6">
+                    <v-icon color="info" class="mr-2">mdi-calculator</v-icon>
+                    {{ seciliMaliyet?.recete?.name }} - Maliyet Analizi
+                </v-card-title>
+                <v-card-text>
+                    <div v-if="seciliMaliyet?.maliyet">
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-card variant="tonal" color="info" class="pa-3">
+                                    <div class="text-h6 font-weight-bold text-center">
+                                        {{ seciliMaliyet.maliyet.toplamMaliyet?.toFixed(2) }} ₺
+                                    </div>
+                                    <div class="text-center text-caption">Toplam Maliyet</div>
+                                </v-card>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-card variant="tonal" color="success" class="pa-3">
+                                    <div class="text-h6 font-weight-bold text-center">
+                                        {{ seciliMaliyet.maliyet.toplamAgirlik?.toFixed(0) }} gr
+                                    </div>
+                                    <div class="text-center text-caption">Toplam Ağırlık</div>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+
+                        <v-divider class="my-4"></v-divider>
+
+                        <h4 class="text-subtitle-1 font-weight-bold mb-3">Malzeme Detayları</h4>
+                        <v-table>
+                            <thead>
+                                <tr>
+                                    <th>Malzeme</th>
+                                    <th>Miktar</th>
+                                    <th>Birim Fiyat</th>
+                                    <th class="text-end">Toplam</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in seciliMaliyet.maliyet.detaylar" :key="item.stokKod">
+                                    <td>{{ item.stokAd }}</td>
+                                    <td>{{ item.miktarGram?.toFixed(0) }} gr</td>
+                                    <td>{{ item.birimFiyat?.toFixed(2) }} ₺/KG</td>
+                                    <td class="text-end font-weight-bold">
+                                        {{ item.toplamFiyat?.toFixed(2) }} ₺
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-table>
+                    </div>
+                    <div v-else class="text-center py-4">
+                        <v-icon size="64" color="grey-lighten-2">mdi-calculator-off</v-icon>
+                        <div class="text-h6 text-grey-500 mt-2">Maliyet hesaplanamadı</div>
+                    </div>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="maliyetDialog = false">Kapat</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">{{ snackbar.text }}</v-snackbar>
     </v-container>
 </template>
@@ -139,9 +203,11 @@ const urunler = ref([]);
 const stokOptions = ref([]);
 const dialog = ref(false);
 const deleteDialog = ref(false);
+const maliyetDialog = ref(false);
 const editMode = ref(false);
 const form = ref({ id: null, name: '', urunId: null, ingredients: [] });
 const deleteId = ref(null);
+const seciliMaliyet = ref(null);
 const snackbar = ref({ show: false, text: '', color: 'success' });
 const search = ref('');
 const filterUrunId = ref(null);
@@ -254,6 +320,20 @@ function copyRecete(recete) {
         ingredients: recete.ingredients.map(ing => ({ stokKod: ing.stokKod, miktarGram: ing.miktarGram }))
     };
     dialog.value = true;
+}
+async function hesaplaMaliyet(recete) {
+    try {
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/receteler/maliyet`, {
+            ingredients: recete.ingredients
+        });
+        seciliMaliyet.value = {
+            recete: recete,
+            maliyet: response.data
+        };
+        maliyetDialog.value = true;
+    } catch (err) {
+        snackbar.value = { show: true, text: 'Maliyet hesaplanırken hata oluştu.', color: 'error' };
+    }
 }
 const filteredReceteler = computed(() => {
     let list = receteler.value;

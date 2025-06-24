@@ -3,9 +3,12 @@
     <v-card class="pa-4 rounded-lg" elevation="2">
       <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
         <span>📚 Tüm Siparişler</span>
-        <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
-          density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
-        <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
+        <div class="d-flex align-center gap-2">
+          <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
+            density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
+          <v-btn icon="mdi-currency-try" variant="text" @click="refreshPrices" title="Fiyatları Yenile" color="blue"></v-btn>
+          <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
+        </div>
       </v-card-title>
 
       <v-alert type="error" v-if="error" class="mb-4" closable>{{ error }}</v-alert>
@@ -85,10 +88,15 @@
                                 <div class="d-flex flex-column align-end">
                                   <span class="text-body-2">{{ kalem.miktar }} {{ kalem.birim }}</span>
                                   <span class="text-caption text-grey">
-                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' :
-                                      kalem.birim }}
-                                    <span v-if="getActivePrice(kalem) !== null"> | Güncel: {{ getActivePrice(kalem) }}
-                                      ₺</span>
+                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' : kalem.birim }}
+                                    <span v-if="getActivePrice(kalem) !== null" 
+                                          :class="getPriceDifferenceClass(kalem)"
+                                          class="font-weight-medium">
+                                      | Güncel: {{ getActivePrice(kalem) }} ₺
+                                      <span v-if="hasPriceDifference(kalem)" class="text-caption">
+                                        ({{ getPriceDifferenceText(kalem) }})
+                                      </span>
+                                    </span>
                                     = {{ calculateItemTotal(kalem).toFixed(2) }} ₺
                                   </span>
                                 </div>
@@ -270,7 +278,7 @@ const activePricesMap = ref({});
 // Fetch active prices (latest for each product/unit)
 async function fetchActivePrices() {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/fiyatlar`);
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/malzeme-fiyatlari`);
     const allPrices = response.data;
     const latestMap = {};
     allPrices.forEach(price => {
@@ -280,6 +288,7 @@ async function fetchActivePrices() {
       }
     });
     activePricesMap.value = latestMap;
+    console.log('✅ Aktif fiyatlar yüklendi:', Object.keys(latestMap).length, 'ürün');
   } catch (err) {
     console.error('❌ Aktif fiyatlar çekilemedi:', err);
     activePricesMap.value = {};
@@ -298,6 +307,16 @@ async function fetchOrders() {
 }
 
 onMounted(() => { fetchOrders(); fetchActivePrices(); });
+
+// Fiyatları yenileme fonksiyonu
+async function refreshPrices() {
+  try {
+    await fetchActivePrices();
+    showSnackbar('Fiyatlar başarıyla yenilendi!', 'success');
+  } catch (err) {
+    showSnackbar('Fiyatlar yenilenirken hata oluştu!', 'error');
+  }
+}
 
 // --- Hesaplama Fonksiyonları ---
 function calculateItemTotal(kalem) {
@@ -477,6 +496,36 @@ function getActivePrice(kalem) {
   const key = `${kalem.urunId}-${kalem.birim}`;
   const priceObj = activePricesMap.value[key];
   return priceObj ? priceObj.fiyat?.toFixed(2) : null;
+}
+
+function getPriceDifferenceClass(kalem) {
+  if (!kalem.birimFiyat || !getActivePrice(kalem)) return 'text-blue-darken-2';
+  const currentPrice = parseFloat(getActivePrice(kalem));
+  const oldPrice = parseFloat(kalem.birimFiyat);
+  const difference = currentPrice - oldPrice;
+  if (Math.abs(difference) < 0.01) return 'text-blue-darken-2';
+  if (difference > 0) return 'text-success';
+  if (difference < 0) return 'text-error';
+  return 'text-blue-darken-2';
+}
+
+function getPriceDifferenceText(kalem) {
+  if (!kalem.birimFiyat || !getActivePrice(kalem)) return '';
+  const currentPrice = parseFloat(getActivePrice(kalem));
+  const oldPrice = parseFloat(kalem.birimFiyat);
+  const difference = currentPrice - oldPrice;
+  if (Math.abs(difference) < 0.01) return '';
+  if (difference > 0) return `+${difference.toFixed(2)} ₺`;
+  if (difference < 0) return `-${Math.abs(difference).toFixed(2)} ₺`;
+  return '';
+}
+
+function hasPriceDifference(kalem) {
+  if (!kalem.birimFiyat || !getActivePrice(kalem)) return false;
+  const currentPrice = parseFloat(getActivePrice(kalem));
+  const oldPrice = parseFloat(kalem.birimFiyat);
+  const difference = currentPrice - oldPrice;
+  return Math.abs(difference) > 0.01;
 }
 
 </script>
