@@ -1,88 +1,148 @@
 <template>
-    <v-container class="py-6 px-4" fluid>
-        <v-card class="pa-4 rounded-lg" elevation="2">
-            <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
-                <span>🚚 Kargo Operasyonları</span>
-                <div class="d-flex align-center">
-                    <v-select v-model="selectedKargoDurumu" :items="kargoDurumlari" item-title="ad" item-value="kodu"
-                        label="Kargo Durumu" density="compact" hide-details class="mr-4" style="min-width: 200px;" />
-                    <v-checkbox v-model="showOnlyHazirlandi" label="Sadece Hazırlandı" density="compact"
-                        hide-details class="mr-4" />
-                    <v-btn icon="mdi-refresh" variant="text" @click="fetchKargoSiparisler" title="Yenile"></v-btn>
+    <v-container class="py-6 px-2 px-md-8" fluid>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-4" 
+                style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%); color: #0D47A1; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
+                    <v-icon size="120">mdi-truck</v-icon>
                 </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="#1565C0">mdi-truck-outline</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #0D47A1;">Kargo Operasyonları</h1>
+                                <p class="text-h6 mb-0" style="color: #1565C0; opacity: 0.8;">Sevkiyat yönetimi ve kargo takip</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-center">
+                            <v-chip color="rgba(13, 71, 161, 0.15)" size="small" class="mr-2" style="color: #0D47A1;">
+                                <v-icon start size="16" color="#1565C0">mdi-package-variant</v-icon>
+                                Otomatik Etiket
+                            </v-chip>
+                            <v-chip color="rgba(13, 71, 161, 0.15)" size="small" style="color: #0D47A1;">
+                                <v-icon start size="16" color="#1565C0">mdi-map-marker</v-icon>
+                                Takip Sistemi
+                            </v-chip>
+                        </div>
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center">
+                        <div class="mb-3">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <v-select v-model="selectedKargoDurumu" :items="kargoDurumlari" item-title="ad" item-value="kodu"
+                                    label="Durum Filtresi" density="compact" variant="solo" 
+                                    style="background: rgba(255,255,255,0.9); border-radius: 8px; max-width: 140px;" />
+                                <v-checkbox v-model="showOnlyHazirlandi" label="Sadece Hazırlandı" density="compact"
+                                    style="color: white;" />
+                            </div>
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
+
+        <!-- Statistics Cards -->
+        <v-row class="mb-6">
+            <v-col cols="12" md="3">
+                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white; border: 1px solid #BBDEFB;">
+                    <v-icon size="40" class="mb-2">mdi-package-variant</v-icon>
+                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoyaVerilecek }}</div>
+                    <div class="text-body-2">Kargoya Verilecek</div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="3">
+                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%); color: white; border: 1px solid #C8E6C9;">
+                    <v-icon size="40" class="mb-2">mdi-truck-fast</v-icon>
+                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoda }}</div>
+                    <div class="text-body-2">Kargoda</div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="3">
+                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white; border: 1px solid #E8F5E9;">
+                    <v-icon size="40" class="mb-2">mdi-check-circle</v-icon>
+                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.teslimEdildi }}</div>
+                    <div class="text-body-2">Teslim Edildi</div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="3">
+                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%); color: white; border: 1px solid #FFE0B2;">
+                    <v-icon size="40" class="mb-2">mdi-store</v-icon>
+                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.subeyeGonderilecek }}</div>
+                    <div class="text-body-2">Şubeye Gönderilecek</div>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Main Content Card -->
+        <v-card class="rounded-xl" elevation="2" style="border: 1px solid #E3F2FD;">
+            <v-card-title class="pa-4 d-flex justify-space-between align-center" 
+                style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white;">
+                <div class="d-flex align-center">
+                    <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                        <v-icon color="white">mdi-table</v-icon>
+                    </v-avatar>
+                    <div>
+                        <h3 class="text-h6 font-weight-bold">Kargo İşlemleri</h3>
+                        <p class="text-body-2 opacity-80 ma-0">Sevkiyat ve transfer yönetimi</p>
+                    </div>
+                </div>
+                <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchKargoSiparisler" title="Yenile"></v-btn>
             </v-card-title>
-            <v-alert v-if="error" type="error" class="mb-4" closable>{{ error }}</v-alert>
-            
-            <!-- Kargo İstatistikleri -->
-            <v-row class="mb-4">
-                <v-col cols="12" md="3">
-                    <v-card class="text-center pa-3" color="primary" dark>
-                        <div class="text-h6">{{ kargoIstatistikleri.kargoyaVerilecek }}</div>
-                        <div class="text-caption">Kargoya Verilecek</div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="3">
-                    <v-card class="text-center pa-3" color="info" dark>
-                        <div class="text-h6">{{ kargoIstatistikleri.kargoda }}</div>
-                        <div class="text-caption">Kargoda</div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="3">
-                    <v-card class="text-center pa-3" color="success" dark>
-                        <div class="text-h6">{{ kargoIstatistikleri.teslimEdildi }}</div>
-                        <div class="text-caption">Teslim Edildi</div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="3">
-                    <v-card class="text-center pa-3" color="secondary" dark>
-                        <div class="text-h6">{{ kargoIstatistikleri.subeyeGonderilecek }}</div>
-                        <div class="text-caption">Şubeye Gönderilecek</div>
-                    </v-card>
-                </v-col>
-            </v-row>
-            
-            <v-tabs v-model="tab" grow>
-                <v-tab value="kargoyaVerilecek">Kargoya Verilecek</v-tab>
-                <v-tab value="subeyeGonderilecek">Şubeye Gönderilecek</v-tab>
-            </v-tabs>
-            <v-window v-model="tab">
-                <v-window-item value="kargoyaVerilecek">
-                    <v-data-table :headers="headers" :items="kargoyaVerilecek" :loading="loading" item-value="id"
-                        class="elevation-1" hover density="comfortable" items-per-page="20"
-                        no-data-text="Kargoya verilecek sipariş yok." loading-text="Yükleniyor...">
-                        <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
-                        <template v-slot:item.kargoDurumu="{ item }">
-                            <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
-                                {{ item.kargoDurumu || 'Bekliyor' }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.actions="{ item }">
-                            <v-btn color="primary" size="small" @click="openKargoDialog(item)">Kargo İşlemi</v-btn>
-                            <v-btn color="secondary" size="small" class="ml-2" @click="openEtiketDialog(item)">Etiket
-                                Yazdır</v-btn>
-                        </template>
-                    </v-data-table>
-                </v-window-item>
-                <v-window-item value="subeyeGonderilecek">
-                    <v-data-table :headers="headers" :items="subeyeGonderilecek" :loading="loading" item-value="id"
-                        class="elevation-1" hover density="comfortable" items-per-page="20"
-                        no-data-text="Şubeye gönderilecek sipariş yok." loading-text="Yükleniyor...">
-                        <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
-                        <template v-slot:item.kargoDurumu="{ item }">
-                            <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
-                                {{ item.kargoDurumu || 'Bekliyor' }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.actions="{ item }">
-                            <v-btn color="primary" size="small" @click="openTransferDialog(item)">Transfer
-                                İşlemi</v-btn>
-                            <v-btn color="secondary" size="small" class="ml-2" @click="openEtiketDialog(item)">Etiket
-                                Yazdır</v-btn>
-                        </template>
-                    </v-data-table>
-                </v-window-item>
-            </v-window>
+
+            <v-card-text class="pa-4">
+                <v-alert v-if="error" type="error" class="mb-4" closable style="border-radius: 8px;">{{ error }}</v-alert>
+                
+                <v-tabs v-model="tab" grow style="border-radius: 8px;">
+                    <v-tab value="kargoyaVerilecek" style="color: #1565C0;">Kargoya Verilecek</v-tab>
+                    <v-tab value="subeyeGonderilecek" style="color: #1565C0;">Şubeye Gönderilecek</v-tab>
+                </v-tabs>
+                
+                <v-window v-model="tab" class="mt-4">
+                    <v-window-item value="kargoyaVerilecek">
+                        <v-data-table :headers="headers" :items="kargoyaVerilecek" :loading="loading" item-value="id"
+                            class="cargo-table rounded-lg" hover density="comfortable" items-per-page="20"
+                            no-data-text="Kargoya verilecek sipariş yok." loading-text="Yükleniyor...">
+                            <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
+                            <template v-slot:item.kargoDurumu="{ item }">
+                                <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
+                                    {{ item.kargoDurumu || 'Bekliyor' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.actions="{ item }">
+                                <v-btn color="#42A5F5" size="small" @click="openKargoDialog(item)" variant="outlined">Kargo İşlemi</v-btn>
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)" variant="outlined">Etiket
+                                    Yazdır</v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-window-item>
+                    
+                    <v-window-item value="subeyeGonderilecek">
+                        <v-data-table :headers="headers" :items="subeyeGonderilecek" :loading="loading" item-value="id"
+                            class="cargo-table rounded-lg" hover density="comfortable" items-per-page="20"
+                            no-data-text="Şubeye gönderilecek sipariş yok." loading-text="Yükleniyor...">
+                            <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
+                            <template v-slot:item.kargoDurumu="{ item }">
+                                <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
+                                    {{ item.kargoDurumu || 'Bekliyor' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.actions="{ item }">
+                                <v-btn color="#FFB74D" size="small" @click="openTransferDialog(item)" variant="outlined">Transfer
+                                    İşlemi</v-btn>
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)" variant="outlined">Etiket
+                                    Yazdır</v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-window-item>
+                </v-window>
+            </v-card-text>
         </v-card>
+
         <!-- Kargo Dialog -->
         <v-dialog v-model="kargoDialog" persistent max-width="400px">
             <v-card>
@@ -519,85 +579,37 @@ function hesaplaKargoIstatistikleri(siparisler) {
 onMounted(fetchKargoSiparisler);
 </script>
 <style scoped>
+.hero-section {
+    position: relative;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(13,71,161,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    pointer-events: none;
+}
+
+.cargo-table th {
+    background: #E3F2FD !important;
+    color: #1565C0 !important;
+    font-weight: 600 !important;
+}
+
+.cargo-table tbody tr:hover {
+    background: rgba(21, 101, 192, 0.03) !important;
+}
+
 .v-card {
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
-    background: #fff;
-    transition: box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .v-card:hover {
-    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
-}
-
-.v-btn {
-    transition: background 0.2s, box-shadow 0.2s;
-}
-
-.v-btn:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
-}
-
-.v-avatar {
-    font-weight: bold;
-    font-size: 1.2em;
-}
-
-.v-data-table {
-    border-radius: 12px;
-    background: #fff;
-}
-
-.v-data-table th {
-    background: #90A4AE !important;
-    color: #1976D2 !important;
-    font-weight: bold;
-}
-
-.v-chip {
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.v-card-title.bg-primary {
-    background: #1976D2 !important;
-    color: #fff !important;
-    border-radius: 12px 12px 0 0;
-}
-
-.etiket-yazdir {
-    background: #fff;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 16px;
-    min-width: 320px;
-    max-width: 380px;
-    font-size: 15px;
-    margin: 0 auto;
-}
-
-.etiket-header {
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.etiket-content {
-    margin-bottom: 15px;
-}
-
-.etiket-row {
-    margin-bottom: 10px;
-}
-
-.tracking-number {
-    font-weight: bold;
-}
-
-.etiket-footer {
-    text-align: center;
-    padding-top: 10px;
-    border-top: 2px solid #333;
-    margin-top: 15px;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
 }
 </style>

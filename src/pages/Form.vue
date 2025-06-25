@@ -1,153 +1,243 @@
 <template>
-  <v-container class="py-6 px-4" fluid>
-    <v-card class="pa-6 rounded-lg" elevation="3">
-      <v-card-title class="text-h5 font-weight-bold mb-5" color="primary">
-        📋 Sipariş Formu
-      </v-card-title>
-      <v-form ref="formRef" v-model="valid">
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field v-model="form.tarih" label="Sipariş Tarihi" type="date" :rules="[rules.required]"
-              @change="onDateChange" />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field v-model="form.fullTarih" label="Gün" readonly placeholder="Tarih seçiniz..." />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-select v-model="form.teslimatTuruId" :items="dropdowns.teslimatTurleri" item-title="ad" item-value="id"
-              label="Teslimat Türü" :rules="[rules.required]" @update:modelValue="handleTeslimatChange" />
-          </v-col>
-          <v-col cols="12" md="6" v-if="showSube">
-            <v-select v-model="form.subeId" :items="dropdowns.subeler" item-title="ad" item-value="id" label="Şube"
-              :rules="[rules.required]" />
-          </v-col>
-          <v-col cols="12" v-if="selectedTeslimatTuru?.ad === 'Şubeden Şubeye'">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-select v-model="form.subeNeredenId" :items="dropdowns.subeler" item-title="ad" item-value="id"
-                  label="Nereden Şube" :rules="[rules.required]" />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select v-model="form.subeNereyeId" :items="dropdowns.subeler" item-title="ad" item-value="id"
-                  label="Nereye Şube" :rules="[rules.required]" />
-              </v-col>
-            </v-row>
-          </v-col>
-          <v-col cols="12">
-            <v-select v-model="form.gonderenTipiId" :items="dropdowns.aliciTipleri" item-title="ad" item-value="id"
-              label="Gönderen Tipi" @update:modelValue="handleGonderenChange" />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11" :rules="[rules.phone]"
-              placeholder="5xxxxxxxxx" />
-          </v-col>
-          <template v-if="showAliciFields">
-            <v-col cols="12" md="6">
-              <v-autocomplete v-model="selectedCari" :items="dropdowns.cariler" item-title="ad" item-value="id"
-                label="Alıcı Adı" :search-input.sync="aliciSearch" :filter="customCariFilter" clearable hide-no-data
-                @update:modelValue="onCariSelected" @blur="onCariBlur" />
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-text-field ref="aliciTelRef" :key="selectedCari" :value="form.aliciTel"
-                @update:modelValue="onAliciTelInput" label="Alıcı Tel" maxlength="11" :rules="[rules.optionalPhone]"
-                persistent-placeholder variant="outlined" color="primary" placeholder="5xxxxxxxxx" />
-            </v-col>
-          </template>
-          <v-col cols="12">
-            <template v-if="cariAdresler.length > 1">
-              <div class="adresler-row-group">
-                <v-row dense>
-                  <v-col v-for="(adres, i) in cariAdresler" :key="i" cols="12" md="6" lg="4">
-                    <v-card :elevation="selectedAdres === adres.adres ? 8 : 2"
-                      :class="['adres-row-card', { 'adres-row-selected': selectedAdres === adres.adres }]"
-                      @click="selectAdres(adres.adres)">
-                      <div class="d-flex align-center justify-space-between">
-                        <div>
-                          <div class="adres-row-baslik">{{ adres.tip }}</div>
-                          <div class="adres-row-tip">{{ adres.adres }}</div>
-                        </div>
-                        <v-radio :model-value="selectedAdres" :value="adres.adres" color="primary" />
-                      </div>
-                    </v-card>
-                  </v-col>
-                </v-row>
+  <v-container class="py-6 px-2 px-md-8" fluid>
+    <!-- Hero Section -->
+    <div class="hero-section mb-6">
+      <v-card class="pa-6 rounded-xl elevation-4" 
+        style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%); color: #1B5E20; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
+          <v-icon size="120">mdi-clipboard-check</v-icon>
+        </div>
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center mb-3">
+              <v-icon size="48" class="mr-3" color="#2E7D32">mdi-clipboard-text-outline</v-icon>
+              <div>
+                <h1 class="text-h3 font-weight-bold mb-1" style="color: #1B5E20;">Sipariş Formu</h1>
+                <p class="text-h6 mb-0" style="color: #2E7D32; opacity: 0.8;">Yeni sipariş oluşturma ve paket yönetimi</p>
               </div>
-            </template>
-            <template v-else-if="cariAdresler.length === 1">
-              <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                :disabled="!adresEnabled" rows="2" />
-            </template>
-            <template v-else>
-              <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                :disabled="!adresEnabled" rows="2" />
-            </template>
+            </div>
+            <div class="d-flex align-center">
+              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" class="mr-2" style="color: #1B5E20;">
+                <v-icon start size="16" color="#2E7D32">mdi-speedometer</v-icon>
+                Hızlı İşlem
+              </v-chip>
+              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" style="color: #1B5E20;">
+                <v-icon start size="16" color="#2E7D32">mdi-package-variant</v-icon>
+                Paket Yönetimi
+              </v-chip>
+            </div>
           </v-col>
-          <v-col cols="12">
-            <v-textarea v-model="form.aciklama" label="Açıklama" rows="2" />
-          </v-col>
-
-
-          <v-col cols="12"> <v-divider class="my-4"></v-divider> </v-col>
-
-          <v-col cols="12">
-            <h3 class="text-subtitle-1 font-weight-medium mb-3">📦 Paket Ekle</h3>
-            <v-item-group mandatory>
-              <v-chip-group mandatory v-model="selectedAmbalajId" column>
-                <v-chip v-for="ambalaj in dropdowns.ambalajlar" :key="ambalaj.id" :value="ambalaj.id"
-                  @click="openPackageDialog(ambalaj)" color="primary" size="large" class="ma-1" label>
-                  <v-icon start :icon="getAmbalajIcon(ambalaj.ad)"></v-icon>
-                  {{ ambalaj.ad }} Ekle
-                </v-chip>
-              </v-chip-group>
-            </v-item-group>
-          </v-col>
-
-          <v-col cols="12" v-if="orderPackages.length > 0" class="mt-5">
-            <v-divider class="mb-4"></v-divider>
-            <h3 class="text-subtitle-1 font-weight-medium mb-3">📝 Eklenen Paketler</h3>
-            <v-row dense>
-              <v-col v-for="(pkg, index) in orderPackages" :key="index" cols="12" md="6" lg="4">
-                <v-card class="mb-3 fill-height">
-                  <v-card-title class="d-flex justify-space-between text-body-1 font-weight-medium">
-                    <span>{{ pkg.ambalajAdi }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : ''
-                    }}</span>
-                    <v-btn icon="mdi-delete" color="error" size="x-small" variant="text"
-                      @click="removeOrderPackage(index)"></v-btn>
-                  </v-card-title>
-                  <v-divider></v-divider>
-                  <v-list density="compact" lines="one" class="pa-0">
-                    <v-list-item v-for="(item, itemIndex) in pkg.urunler" :key="itemIndex" :title="item.urunAdi"
-                      class="px-3">
-                      <template v-slot:prepend>
-                        <v-icon size="x-small" class="mr-2">{{ getUrunIcon(item.urunAdi) }}</v-icon>
-                      </template>
-                      <template v-slot:append>
-                        <span class="text-body-2">{{ item.miktar }} {{ item.birim }}</span>
-                      </template>
-                    </v-list-item>
-                    <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
-                      <v-list-item-title class="text-caption text-grey">Paket boş.</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-col>
-
-          <v-col cols="12"> <v-divider class="my-4"></v-divider> </v-col>
-
-          <v-col cols="12" class="text-end mt-4">
-            <v-btn color="success" @click="submitForm" :disabled="orderPackages.length === 0" size="large"
-              prepend-icon="mdi-check-circle-outline">
-              Siparişi Kaydet
+          <v-col cols="12" md="4" class="text-center">
+            <v-btn size="x-large" color="white" variant="elevated" @click="() => {}" class="font-weight-bold" 
+              style="color: #2E7D32 !important; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);">
+              <v-icon left size="20">mdi-plus-circle</v-icon>
+              Hızlı Sipariş
             </v-btn>
           </v-col>
         </v-row>
-      </v-form>
+      </v-card>
+    </div>
+
+    <!-- Form Card -->
+    <v-card class="rounded-xl" elevation="2" style="border: 1px solid #E8F5E9;">
+      <v-card-title class="pa-4" style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white;">
+        <div class="d-flex align-center">
+          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+            <v-icon color="white">mdi-form-select</v-icon>
+          </v-avatar>
+          <div>
+            <h3 class="text-h6 font-weight-bold">Sipariş Bilgileri</h3>
+            <p class="text-body-2 opacity-80 ma-0">Müşteri ve teslimat detayları</p>
+          </div>
+        </div>
+      </v-card-title>
+
+      <v-card-text class="pa-6">
+        <v-form ref="formRef" v-model="valid">
+          <v-row dense>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.tarih" label="Sipariş Tarihi" type="date" :rules="[rules.required]"
+                @change="onDateChange" variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.fullTarih" label="Gün" readonly placeholder="Tarih seçiniz..." 
+                variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select v-model="form.teslimatTuruId" :items="dropdowns.teslimatTurleri" item-title="ad" item-value="id"
+                label="Teslimat Türü" :rules="[rules.required]" @update:modelValue="handleTeslimatChange" 
+                variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" md="6" v-if="showSube">
+              <v-select v-model="form.subeId" :items="dropdowns.subeler" item-title="ad" item-value="id" label="Şube"
+                :rules="[rules.required]" variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" v-if="selectedTeslimatTuru?.ad === 'Şubeden Şubeye'">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-select v-model="form.subeNeredenId" :items="dropdowns.subeler" item-title="ad" item-value="id"
+                    label="Nereden Şube" :rules="[rules.required]" variant="outlined" color="#388E3C" />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select v-model="form.subeNereyeId" :items="dropdowns.subeler" item-title="ad" item-value="id"
+                    label="Nereye Şube" :rules="[rules.required]" variant="outlined" color="#388E3C" />
+                </v-col>
+              </v-row>
+            </v-col>
+            <v-col cols="12">
+              <v-select v-model="form.gonderenTipiId" :items="dropdowns.aliciTipleri" item-title="ad" item-value="id"
+                label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" 
+                variant="outlined" color="#388E3C" />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11" :rules="[rules.phone]"
+                placeholder="5xxxxxxxxx" variant="outlined" color="#388E3C" />
+            </v-col>
+            <template v-if="showAliciFields">
+              <v-col cols="12" md="6">
+                <v-autocomplete v-model="selectedCari" :items="dropdowns.cariler" item-title="ad" item-value="id"
+                  label="Alıcı Adı" :search-input.sync="aliciSearch" :filter="customCariFilter" clearable hide-no-data
+                  @update:modelValue="onCariSelected" @blur="onCariBlur" variant="outlined" color="#388E3C" />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field ref="aliciTelRef" :key="selectedCari" :value="form.aliciTel"
+                  @update:modelValue="onAliciTelInput" label="Alıcı Tel" maxlength="11" :rules="[rules.optionalPhone]"
+                  persistent-placeholder variant="outlined" color="#388E3C" placeholder="5xxxxxxxxx" />
+              </v-col>
+            </template>
+            <v-col cols="12">
+              <template v-if="cariAdresler.length > 1">
+                <div class="adresler-row-group">
+                  <v-row dense>
+                    <v-col v-for="(adres, i) in cariAdresler" :key="i" cols="12" md="6" lg="4">
+                      <v-card :elevation="selectedAdres === adres.adres ? 8 : 2"
+                        :class="['adres-row-card', { 'adres-row-selected': selectedAdres === adres.adres }]"
+                        @click="selectAdres(adres.adres)" 
+                        :style="selectedAdres === adres.adres ? 'border: 2px solid #388E3C; background: #E8F5E9;' : 'border: 1px solid #E0E0E0;'">
+                        <div class="d-flex align-center justify-space-between pa-3">
+                          <div>
+                            <div class="font-weight-bold" style="color: #2E7D32;">{{ adres.tip }}</div>
+                            <div class="text-body-2" style="color: #4CAF50;">{{ adres.adres }}</div>
+                          </div>
+                          <v-radio :model-value="selectedAdres" :value="adres.adres" color="#388E3C" />
+                        </div>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </div>
+              </template>
+              <template v-else-if="cariAdresler.length === 1">
+                <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
+                  :disabled="!adresEnabled" rows="2" variant="outlined" color="#388E3C" />
+              </template>
+              <template v-else>
+                <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
+                  :disabled="!adresEnabled" rows="2" variant="outlined" color="#388E3C" />
+              </template>
+            </v-col>
+            <v-col cols="12">
+              <v-textarea v-model="form.aciklama" label="Açıklama" rows="2" variant="outlined" color="#388E3C" />
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
     </v-card>
+
+    <!-- Package Selection Section -->
+    <v-card class="mt-6 rounded-xl" elevation="2" style="border: 1px solid #FFF3E0;">
+      <v-card-title class="pa-4" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
+        <div class="d-flex align-center">
+          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+            <v-icon color="white">mdi-package-variant</v-icon>
+          </v-avatar>
+          <div>
+            <h3 class="text-h6 font-weight-bold">Paket Yönetimi</h3>
+            <p class="text-body-2 opacity-80 ma-0">Ambalaj türlerini seçin ve içeriklerini düzenleyin</p>
+          </div>
+        </div>
+      </v-card-title>
+
+      <v-card-text class="pa-6">
+        <v-row>
+          <v-col v-for="ambalaj in dropdowns.ambalajlar" :key="ambalaj.id" cols="6" md="3">
+            <v-card class="package-card pa-4 text-center" elevation="2" @click="openPackageDialog(ambalaj)"
+              style="cursor: pointer; border: 1px solid #FFE0B2; transition: all 0.3s ease; border-radius: 12px;"
+              :style="selectedAmbalajId === ambalaj.id ? 'background: #FFF3E0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);' : 'background: white;'">
+              <v-icon size="48" :color="selectedAmbalajId === ambalaj.id ? '#E65100' : '#FF9800'" class="mb-3">
+                {{ getAmbalajIcon(ambalaj.ad) }}
+              </v-icon>
+              <h4 class="text-h6 font-weight-bold mb-2" :style="{ color: selectedAmbalajId === ambalaj.id ? '#E65100' : '#FF9800' }">
+                {{ ambalaj.ad }}
+              </h4>
+              <p class="text-body-2" style="color: #757575;">Paketi düzenlemek için tıklayın</p>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <!-- Added Packages -->
+    <v-card v-if="orderPackages.length > 0" class="mt-6 rounded-xl" elevation="2" style="border: 1px solid #F3E5F5;">
+      <v-card-title class="pa-4" style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-clipboard-list</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Eklenen Paketler</h3>
+              <p class="text-body-2 opacity-80 ma-0">Sipariş özeti ve detayları</p>
+            </div>
+          </div>
+          <v-chip color="rgba(255,255,255,0.2)" size="small">
+            {{ orderPackages.length }} paket
+          </v-chip>
+        </div>
+      </v-card-title>
+
+      <v-card-text class="pa-6">
+        <v-row dense>
+          <v-col v-for="(pkg, index) in orderPackages" :key="index" cols="12" md="6" lg="4">
+            <v-card class="package-summary-card h-100" elevation="1" style="border: 1px solid #E1BEE7; border-radius: 12px;">
+              <v-card-title class="d-flex justify-space-between text-body-1 font-weight-medium pa-3"
+                style="background: #F3E5F5; color: #4A148C; border-radius: 12px 12px 0 0;">
+                <span>{{ pkg.ambalajAdi }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : '' }}</span>
+                <v-btn icon="mdi-delete" color="#7B1FA2" size="x-small" variant="text"
+                  @click="removeOrderPackage(index)"></v-btn>
+              </v-card-title>
+              <v-divider></v-divider>
+              <v-list density="compact" lines="one" class="pa-0">
+                <v-list-item v-for="(item, itemIndex) in pkg.urunler" :key="itemIndex" :title="item.urunAdi"
+                  class="px-3">
+                  <template v-slot:prepend>
+                    <v-icon size="x-small" class="mr-2" color="#7B1FA2">{{ getUrunIcon(item.urunAdi) }}</v-icon>
+                  </template>
+                  <template v-slot:append>
+                    <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim }}</span>
+                  </template>
+                </v-list-item>
+                <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
+                  <v-list-item-title class="text-caption" style="color: #9E9E9E;">Paket boş.</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <!-- Submit Section -->
+    <div class="text-center mt-8">
+      <v-btn size="x-large" @click="submitForm" :disabled="orderPackages.length === 0" 
+        prepend-icon="mdi-check-circle-outline" class="font-weight-bold px-8"
+        style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
+        Siparişi Kaydet
+      </v-btn>
+    </div>
+
     <v-dialog v-model="isPackageDialogOpen" persistent max-width="700px" transition="dialog-bottom-transition">
       <v-card>
         <v-card-title class="bg-primary">
@@ -589,79 +679,47 @@ function resetForm() {
 </script>
 
 <style scoped>
-.v-chip-group .v-chip {
-  margin: 4px !important;
-  transition: transform 0.1s ease-in-out;
+.hero-section {
+  position: relative;
 }
 
-.v-chip-group .v-chip:hover {
-  transform: translateY(-2px);
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(27,94,32,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
 }
 
-.v-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
-  background: #fff;
-  transition: box-shadow 0.2s;
+.package-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(255, 152, 0, 0.2) !important;
 }
 
-.v-card:hover {
-  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+.package-summary-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.v-btn {
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.v-btn:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
-}
-
-.v-avatar {
-  font-weight: bold;
-  font-size: 1.2em;
-}
-
-.v-list-item:not(:last-child) {
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.v-card-title.bg-primary {
-  background: #1976D2 !important;
-  color: #fff !important;
-  border-radius: 12px 12px 0 0;
-}
-
-.adresler-row-group {
-  margin-bottom: 12px;
+.package-summary-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(116, 39, 116, 0.15) !important;
 }
 
 .adres-row-card {
+  transition: all 0.3s ease;
   cursor: pointer;
   border-radius: 12px;
-  transition: box-shadow 0.2s, border 0.2s;
-  border: 2px solid #e0e0e0;
-  padding: 18px 20px;
-  margin-bottom: 8px;
 }
 
-.adres-row-selected {
-  border: 2px solid #1976d2;
-  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.12);
+.adres-row-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(56, 142, 60, 0.15) !important;
 }
 
-.adres-row-baslik {
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #263238;
-  margin-bottom: 2px;
-  word-break: break-word;
-}
-
-.adres-row-tip {
-  font-size: 0.98em;
-  color: #607d8b;
-  font-weight: 500;
+.v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

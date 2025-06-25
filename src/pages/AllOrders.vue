@@ -4,10 +4,10 @@
       <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
         <span>📚 Tüm Siparişler</span>
         <div class="d-flex align-center gap-2">
-          <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
-            density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
+        <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
+          density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
           <v-btn icon="mdi-currency-try" variant="text" @click="refreshPrices" title="Fiyatları Yenile" color="blue"></v-btn>
-          <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
+        <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
         </div>
       </v-card-title>
 

@@ -1,89 +1,208 @@
 <template>
     <v-container class="py-6 px-2 px-md-8" fluid>
-        <v-card class="pa-4 rounded-xl" elevation="2"
-            style="background: linear-gradient(135deg, #e8f5e9 60%, #fffde7 100%);">
-            <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
-                <span class="d-flex align-center">
-                    <v-icon color="success" class="mr-2">mdi-food-variant</v-icon>
-                    Reçete Yönetimi
-                </span>
-                <div class="d-flex align-center flex-wrap">
-                    <v-text-field v-model="search" label="Ara..." dense hide-details clearable class="mr-2 mb-2 mb-md-0"
-                        style="max-width:180px" @keyup.enter="fetchReceteler" color="success" />
-                    <v-select v-model="filterUrunId" :items="urunler" item-title="ad" item-value="id"
-                        label="Ürün Filtrele" dense hide-details clearable class="mr-2 mb-2 mb-md-0"
-                        style="max-width:180px" color="success" />
-                    <v-btn color="success" class="mr-2 mb-2 mb-md-0" @click="openAddDialog"
-                        prepend-icon="mdi-plus-circle-outline">Yeni Reçete</v-btn>
-                    <v-btn icon="mdi-refresh" variant="text" @click="fetchReceteler" title="Yenile"
-                        color="success"></v-btn>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-4" 
+                style="background: linear-gradient(135deg, #FFE0B2 0%, #FFCC80 50%, #FFB74D 100%); color: #5D4037; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
+                    <v-icon size="120">mdi-chef-hat</v-icon>
                 </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="#8D6E63">mdi-food-variant</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #5D4037;">Reçete Yönetimi</h1>
+                                <p class="text-h6 mb-0" style="color: #6D4C41; opacity: 0.8;">Yemek tariflerinizi ve malzemelerinizi kolayca yönetin</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-center">
+                            <v-chip color="rgba(93, 64, 55, 0.15)" size="small" class="mr-2" style="color: #5D4037;">
+                                <v-icon start size="16" color="#8D6E63">mdi-clipboard-check</v-icon>
+                                {{ filteredReceteler.length }} Reçete
+                            </v-chip>
+                            <v-chip color="rgba(93, 64, 55, 0.15)" size="small" style="color: #5D4037;">
+                                <v-icon start size="16" color="#8D6E63">mdi-package-variant</v-icon>
+                                Otomatik Maliyet
+                            </v-chip>
+                        </div>
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center">
+                        <v-btn size="x-large" color="white" variant="elevated" @click="openAddDialog" 
+                            class="font-weight-bold" style="color: #8D6E63 !important; box-shadow: 0 4px 12px rgba(141, 110, 99, 0.2);">
+                            <v-icon left size="20">mdi-plus-circle</v-icon>
+                            Yeni Reçete Ekle
+                        </v-btn>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
+
+        <!-- Filters Section -->
+        <v-card class="mb-6 rounded-xl" elevation="1" style="border: 1px solid #EFEBE9;">
+            <v-card-title class="d-flex align-center py-4">
+                <v-icon color="#8D6E63" class="mr-2">mdi-filter-variant</v-icon>
+                <span class="text-h6 font-weight-bold" style="color: #5D4037;">Filtreler & Arama</span>
             </v-card-title>
-            <v-divider class="mb-4"></v-divider>
-            <v-row dense class="recete-grid">
-                <v-col cols="12" v-if="loading">
-                    <v-skeleton-loader type="card@3" class="my-4" />
+            <v-card-text class="pt-0">
+                <v-row>
+                    <v-col cols="12" md="4">
+                        <v-text-field 
+                            v-model="search" 
+                            label="Reçete ara..." 
+                            prepend-inner-icon="mdi-magnify"
+                            variant="outlined" 
+                            density="comfortable"
+                            clearable 
+                            @keyup.enter="fetchReceteler" 
+                            color="#A1887F"
+                            hide-details />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-select 
+                            v-model="filterUrunId" 
+                            :items="urunler" 
+                            item-title="ad" 
+                            item-value="id"
+                            label="Ürüne göre filtrele" 
+                            prepend-inner-icon="mdi-package-variant"
+                            variant="outlined"
+                            density="comfortable"
+                            clearable 
+                            @update:model-value="fetchReceteler"
+                            color="#A1887F"
+                            hide-details />
                 </v-col>
-                <v-col cols="12" v-if="!loading && filteredReceteler.length === 0">
-                    <v-alert type="info" color="success" variant="tonal" class="my-8 text-center">
-                        <v-icon size="large" color="success">mdi-emoticon-sad-outline</v-icon>
-                        <div class="mt-2">Hiç reçete bulunamadı. Yeni bir reçete ekleyin!</div>
-                    </v-alert>
+                    <v-col cols="12" md="4" class="d-flex align-center gap-2">
+                        <v-btn color="#A1887F" variant="outlined" @click="fetchReceteler" 
+                            prepend-icon="mdi-refresh" class="flex-grow-1">
+                            Yenile
+                        </v-btn>
+                        <v-btn color="#81C784" variant="outlined" prepend-icon="mdi-download">
+                            Dışa Aktar
+                        </v-btn>
                 </v-col>
-                <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" md="6" lg="4" class="d-flex">
-                    <v-card class="mb-4 pa-0 rounded-lg flex-grow-1 recipe-card" elevation="1"
-                        style="background: linear-gradient(120deg, #f1f8e9 80%, #fffde7 100%); min-height: 340px; display: flex; flex-direction: column; justify-content: space-between;">
-                        <v-card-title class="text-body-1 font-weight-bold d-flex justify-space-between align-center"
-                            style="background:rgba(76,175,80,0.08); min-height: 48px;">
-                            <span class="d-flex align-center">
-                                <v-icon color="success" class="mr-1">mdi-clipboard-list-outline</v-icon>
-                                <span>{{ recete.urunAd || recete.name }}</span>
-                            </span>
-                            <span>
-                                <v-btn icon="mdi-calculator" size="small" variant="text" color="info"
-                                    @click="hesaplaMaliyet(recete)" title="Maliyet Hesapla"></v-btn>
-                                <v-btn icon="mdi-content-copy" size="small" variant="text" color="primary"
-                                    @click="copyRecete(recete)" title="Kopyala"></v-btn>
-                                <v-btn icon="mdi-pencil" size="small" variant="text" color="warning"
-                                    @click="openEditDialog(recete)"></v-btn>
-                                <v-btn icon="mdi-delete" size="small" variant="text" color="error"
-                                    @click="confirmDelete(recete)"></v-btn>
-                            </span>
+                </v-row>
+            </v-card-text>
+        </v-card>
+
+        <!-- Recipe Grid -->
+        <div v-if="loading" class="text-center my-8">
+            <v-progress-circular size="64" color="#A1887F" indeterminate></v-progress-circular>
+            <p class="text-h6 mt-4 text-grey-600">Reçeteler yükleniyor...</p>
+        </div>
+
+        <div v-else-if="filteredReceteler.length === 0" class="text-center my-12">
+            <v-icon size="80" color="grey-lighten-2">mdi-chef-hat-outline</v-icon>
+            <h3 class="text-h5 mt-4 text-grey-600">Henüz reçete eklenmemiş</h3>
+            <p class="text-body-1 text-grey-500 mb-4">İlk reçetenizi ekleyerek başlayın!</p>
+            <v-btn color="#A1887F" size="large" @click="openAddDialog" prepend-icon="mdi-plus">
+                İlk Reçetemi Ekle
+            </v-btn>
+        </div>
+
+        <v-row v-else>
+            <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" sm="6" lg="4" xl="3">
+                <v-card class="recipe-card rounded-xl h-100" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #FFF8E1 100%); border: 1px solid #EFEBE9; transition: all 0.3s ease;">
+                    
+                    <!-- Card Header -->
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #BCAAA4 0%, #A1887F 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="32" class="mr-3">
+                                    <v-icon color="white">mdi-clipboard-list</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h4 class="text-subtitle-1 font-weight-bold">{{ recete.urunAd || recete.name }}</h4>
+                                    <p class="text-caption opacity-80 ma-0">{{ recete.ingredients?.length || 0 }} malzeme</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-flex">
+                                <v-btn icon size="small" variant="text" @click="hesaplaMaliyet(recete)" 
+                                    title="Maliyet Hesapla" style="color: rgba(255,255,255,0.9);">
+                                    <v-icon size="18">mdi-calculator</v-icon>
+                                </v-btn>
+                                <v-btn icon size="small" variant="text" @click="copyRecete(recete)" 
+                                    title="Kopyala" style="color: rgba(255,255,255,0.9);">
+                                    <v-icon size="18">mdi-content-copy</v-icon>
+                                </v-btn>
+                            </div>
+                        </div>
                         </v-card-title>
-                        <v-divider></v-divider>
-                        <v-table density="compact" class="rounded-b-lg" style="flex:1;">
-                            <thead style="background:#f9fbe7;">
+
+                    <!-- Ingredients Table -->
+                    <div class="pa-0">
+                        <v-table density="compact" class="ingredients-table">
+                            <thead style="background: #F3E5F5;">
                                 <tr>
-                                    <th>Stok Adı</th>
-                                    <th>Tip</th>
-                                    <th class="text-end">Miktar (gr)</th>
-                                    <th>Kod</th>
+                                    <th class="text-caption font-weight-bold">Malzeme</th>
+                                    <th class="text-caption font-weight-bold text-center">Tip</th>
+                                    <th class="text-caption font-weight-bold text-end">Miktar</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="ing in recete.ingredients" :key="ing.id">
-                                    <td>{{ ing.stokAd || ing.stokKod || '-' }}</td>
-                                    <td>
-                                        <v-chip :color="ing.stokTip === 'Hammadde' ? 'success' : 'warning'"
-                                            size="x-small" label>{{ ing.stokTip || '-' }}</v-chip>
+                                <tr v-for="ing in recete.ingredients?.slice(0, 4)" :key="ing.id" class="ingredient-row">
+                                    <td class="py-2">
+                                        <div class="d-flex align-center">
+                                            <v-avatar size="20" class="mr-2" :color="ing.stokTip === 'Hammadde' ? '#C8E6C9' : '#FFE0B2'">
+                                                <v-icon size="12" :color="ing.stokTip === 'Hammadde' ? '#388E3C' : '#F57C00'">
+                                                    {{ ing.stokTip === 'Hammadde' ? 'mdi-leaf' : 'mdi-cog' }}
+                                                </v-icon>
+                                            </v-avatar>
+                                            <span class="text-body-2">{{ ing.stokAd || ing.stokKod || '-' }}</span>
+                                        </div>
                                     </td>
-                                    <td class="text-end font-weight-bold">{{ ing.miktarGram ?
-                                        ing.miktarGram.toLocaleString() + ' gr' : '-' }}</td>
-                                    <td>{{ ing.stokKod || '-' }}</td>
+                                    <td class="text-center py-2">
+                                        <v-chip size="x-small" variant="flat" 
+                                            :color="ing.stokTip === 'Hammadde' ? '#E8F5E9' : '#FFF3E0'"
+                                            :style="{ color: ing.stokTip === 'Hammadde' ? '#2E7D32' : '#E65100' }">
+                                            {{ ing.stokTip === 'Hammadde' ? 'HM' : 'YM' }}
+                                        </v-chip>
+                                    </td>
+                                    <td class="text-end py-2">
+                                        <span class="text-body-2 font-weight-medium">
+                                            {{ ing.miktarGram ? ing.miktarGram.toLocaleString() + 'g' : '-' }}
+                                        </span>
+                                    </td>
                                 </tr>
+                                
+                                <!-- Show more indicator -->
+                                <tr v-if="recete.ingredients?.length > 4">
+                                    <td colspan="3" class="text-center py-2">
+                                        <v-chip size="small" color="#F5F5F5" variant="flat" style="color: #616161;">
+                                            +{{ recete.ingredients.length - 4 }} daha fazla
+                                        </v-chip>
+                                    </td>
+                                </tr>
+
+                                <!-- Empty state -->
                                 <tr v-if="!recete.ingredients || recete.ingredients.length === 0">
-                                    <td colspan="4" class="text-center text-grey">Malzeme eklenmemiş</td>
-                                </tr>
-                                <tr v-for="n in (5 - (recete.ingredients?.length || 0))"
-                                    v-if="recete.ingredients && recete.ingredients.length < 5" :key="'empty' + n">
-                                    <td colspan="4" style="height:28px;"></td>
+                                    <td colspan="3" class="text-center py-4 text-grey-500">
+                                        <v-icon size="24" class="mb-1">mdi-package-variant-closed</v-icon>
+                                        <div class="text-caption">Malzeme eklenmemiş</div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </v-table>
+                    </div>
+
+                    <!-- Card Actions -->
+                    <v-card-actions class="pa-3" style="background: rgba(161, 136, 127, 0.05);">
+                        <v-btn variant="outlined" size="small" color="#A1887F" @click="openEditDialog(recete)" 
+                            prepend-icon="mdi-pencil" class="flex-grow-1">
+                            Düzenle
+                        </v-btn>
+                        <v-btn variant="outlined" size="small" color="#E57373" @click="confirmDelete(recete)" 
+                            icon="mdi-delete" class="ml-2">
+                        </v-btn>
+                    </v-card-actions>
                     </v-card>
                 </v-col>
             </v-row>
-        </v-card>
+
         <v-dialog v-model="dialog" max-width="600px">
             <v-card class="rounded-xl">
                 <v-card-title class="text-h6 font-weight-bold">{{ editMode ? 'Reçeteyi Düzenle' : 'Yeni Reçete Ekle'
@@ -354,84 +473,59 @@ onMounted(() => { fetchReceteler(); fetchDropdowns(); });
 </script>
 
 <style scoped>
-.v-card {
-    border-radius: 16px;
-    box-shadow: 0 2px 8px #43a04722;
-}
-
-.v-btn {
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.v-chip {
-    border-radius: 8px;
-}
-
-.v-alert {
-    border-radius: 8px;
-}
-
-.v-data-table {
-    border-radius: 12px;
-}
-
-.v-card[variant="tonal"] {
-    border: 1.5px solid #c8e6c9;
-    box-shadow: 0 2px 8px 0 rgba(76, 175, 80, 0.07);
-}
-
-.v-card .v-card-title {
-    background: none;
-}
-
-.v-table thead th {
-    color: #388e3c;
-    font-weight: 600;
-    background: #f9fbe7;
-}
-
-.v-table tbody tr {
-    transition: background 0.2s;
-}
-
-.v-table tbody tr:hover {
-    background: #e8f5e9;
-}
-
-.v-chip {
-    font-size: 0.85em;
-}
-
-@media (max-width: 960px) {
-
-    .v-card-title,
-    .v-table thead th,
-    .v-table tbody td {
-        font-size: 0.95em !important;
-    }
-}
-
-.recete-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 28px 24px;
-}
-
 .recipe-card {
-    min-height: 340px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #EFEBE9;
 }
 
-@media (max-width: 960px) {
-    .recete-grid {
-        gap: 16px 0;
+.recipe-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(161, 136, 127, 0.12) !important;
+    border-color: rgba(161, 136, 127, 0.25);
+}
+
+.ingredients-table th {
+    background: #F3E5F5 !important;
+    color: #6A1B9A !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+}
+
+.ingredient-row:hover {
+    background: rgba(161, 136, 127, 0.03);
+}
+
+.hero-section {
+    position: relative;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,64,55,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    pointer-events: none;
+}
+
+/* Custom scrollbar */
+.ingredients-table::-webkit-scrollbar {
+    height: 4px;
+}
+
+.ingredients-table::-webkit-scrollbar-track {
+    background: #F5F5F5;
+    border-radius: 2px;
+}
+
+.ingredients-table::-webkit-scrollbar-thumb {
+    background: #BCAAA4;
+    border-radius: 2px;
     }
 
-    .recipe-card {
-        min-height: 260px;
-    }
+.ingredients-table::-webkit-scrollbar-thumb:hover {
+    background: #A1887F;
 }
 </style>

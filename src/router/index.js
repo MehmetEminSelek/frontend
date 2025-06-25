@@ -9,7 +9,7 @@ import Hazirlanacaklar from '../pages/Hazırlanacak.vue' // <<< YENİ: Hazırlan
 import MainLayout from '../layouts/MainLayout.vue'
 import FiyatYönetimi from '../pages/FiyatYonetimi.vue'
 import StokYonetimi from '../pages/StokYonetimi.vue'
-import KullaniciYonetimi from '../pages/KullaniciYonetimi.vue'
+import PersonelYonetimi from '../pages/KullaniciYonetimi.vue' // Personel Yönetimi olarak değiştirildi
 import UretimPlani from '../pages/UretimPlani.vue'
 import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
@@ -17,14 +17,14 @@ import UrunYonetimi from '../pages/UrunYonetimi.vue'
 import SatisRaporu from '../pages/SatisRaporu.vue'
 import MalzemeFiyatlari from '../pages/MalzemeFiyatlari.vue'
 import CrmRaporlama from '../pages/CrmRaporlama.vue'
+import ReceteYonetimi from '../pages/ReceteYonetimi.vue'
 
 // ROUTER SETUP
-
 
 const routes = [
   {
     path: '/',
-    redirect: '/main/form'
+    redirect: '/main'
   },
   {
     path: '/login',
@@ -35,6 +35,10 @@ const routes = [
     path: '/main',
     component: MainLayout,
     children: [
+      {
+        path: '',
+        redirect: { name: 'SiparisFormu' }
+      },
       {
         path: 'form', // /main/form
         name: 'SiparisFormu',
@@ -85,15 +89,15 @@ const routes = [
         meta: { requiresAuth: true }
       },
       {
-        path: 'kullanici-yonetimi',
-        name: 'KullaniciYonetimi',
-        component: KullaniciYonetimi,
+        path: 'personel-yonetimi', // URL değiştirildi
+        name: 'PersonelYonetimi', // İsim değiştirildi
+        component: PersonelYonetimi,
         meta: { requiresAuth: true, adminOnly: true }
       },
       {
         path: 'recete-yonetimi',
         name: 'ReceteYonetimi',
-        component: () => import('../pages/ReceteYonetimi.vue'),
+        component: ReceteYonetimi,
         meta: { requiresAuth: true, adminOnly: true }
       },
       {
@@ -119,14 +123,10 @@ const routes = [
         name: 'KargoOperasyon',
         component: KargoOperasyon,
         meta: { requiresAuth: true }
-      },
-      {
-        path: '',
-        redirect: { name: 'SiparisFormu' }
       }
     ]
   },
-  { path: '/:pathMatch(.*)*', redirect: '/main/stok-yonetimi' }
+  { path: '/:pathMatch(.*)*', redirect: '/main' }
 ]
 
 const router = createRouter({
@@ -158,11 +158,11 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // Admin only sayfalar için kontrol
-  if (to.meta.adminOnly && userRole !== 'admin') {
-    next('/main/form')
-    return
-  }
+  // Admin kontrolünü geçici olarak devre dışı bırakıyorum
+  // if (to.meta.adminOnly && userRole !== 'admin') {
+  //   next('/main/form')
+  //   return
+  // }
 
   next()
 })

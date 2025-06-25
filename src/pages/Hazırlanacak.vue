@@ -118,7 +118,7 @@ async function fetchOrdersToPrepare() {
     loading.value = true; error.value = null; orders.value = [];
     console.log('Fetching orders to prepare...');
     try {
-        const response = await axios.get('http://localhost:3000/api/hazirlanacak');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/hazirlanacak`);
         // Gelen veriyi doğrudan kullanıyoruz, miktar alanları düzenlenebilir olacak
         orders.value = response.data;
         console.log('Fetched orders for preparation:', orders.value);
@@ -158,7 +158,7 @@ async function saveAndMarkAsPrepared(order, index) {
 
     try {
         // PUT isteği ile hem kalem miktarlarını hem de durumu güncelle
-        await axios.put(`http://localhost:3000/api/siparis/${orderId}`, payload);
+        await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
 
         showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
 

@@ -1,34 +1,80 @@
 <template>
-  <v-container class="py-6 px-4" fluid>
-    <v-card class="pa-4 rounded-lg" elevation="2">
-      <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
-        <span>Stok Yönetimi</span>
-        <v-select v-model="selectedOp" :items="opList" item-title="ad" item-value="kod" label="Operasyon Birimi"
-          style="max-width: 250px" density="compact" clearable />
-        <v-btn icon="mdi-refresh" variant="text" @click="fetchStoklar" title="Yenile"></v-btn>
+  <v-container class="py-6 px-2 px-md-8" fluid>
+    <!-- Hero Section -->
+    <div class="hero-section mb-6">
+      <v-card class="pa-6 rounded-xl elevation-4" 
+        style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%); color: #1B5E20; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
+          <v-icon size="120">mdi-archive</v-icon>
+        </div>
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center mb-3">
+              <v-icon size="48" class="mr-3" color="#2E7D32">mdi-archive-outline</v-icon>
+              <div>
+                <h1 class="text-h3 font-weight-bold mb-1" style="color: #1B5E20;">Stok Yönetimi</h1>
+                <p class="text-h6 mb-0" style="color: #2E7D32; opacity: 0.8;">Hammadde ve yarı mamul stok takibi</p>
+              </div>
+            </div>
+            <div class="d-flex align-center">
+              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" class="mr-2" style="color: #1B5E20;">
+                <v-icon start size="16" color="#2E7D32">mdi-eye</v-icon>
+                Gerçek Zamanlı
+              </v-chip>
+              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" style="color: #1B5E20;">
+                <v-icon start size="16" color="#2E7D32">mdi-alert</v-icon>
+                Kritik Seviye Uyarıları
+              </v-chip>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4" class="text-center">
+            <v-select v-model="selectedOp" :items="opList" item-title="ad" item-value="kod" label="Operasyon Birimi"
+              variant="solo" color="white" style="background: rgba(255,255,255,0.9); border-radius: 12px;" />
+          </v-col>
+        </v-row>
+      </v-card>
+    </div>
+
+    <!-- Main Content Card -->
+    <v-card class="rounded-xl" elevation="2" style="border: 1px solid #E8F5E9;">
+      <v-card-title class="pa-4 d-flex justify-space-between align-center" 
+        style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white;">
+        <div class="d-flex align-center">
+          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+            <v-icon color="white">mdi-table</v-icon>
+          </v-avatar>
+          <div>
+            <h3 class="text-h6 font-weight-bold">Stok Listesi</h3>
+            <p class="text-body-2 opacity-80 ma-0">Mevcut stok durumu</p>
+          </div>
+        </div>
+        <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchStoklar" title="Yenile"></v-btn>
       </v-card-title>
-      <v-data-table :headers="headers" :items="stoklar" :loading="loading" item-value="id" class="elevation-1" hover
-        density="comfortable" items-per-page="50" no-data-text="Stok kaydı yok." loading-text="Stoklar yükleniyor..."
-        :item-class="item => item.miktarGram < item.minimumMiktarGram ? 'bg-red-lighten-5' : ''">
-        <template v-slot:item.miktarGram="{ item }">
-          <span :class="item.miktarGram < item.minimumMiktarGram ? 'text-error font-weight-bold' : ''">{{
-            item.miktarGram.toLocaleString() }} gr</span>
-          <v-icon v-if="item.miktarGram < item.minimumMiktarGram" color="error" size="16"
-            class="ml-1">mdi-alert</v-icon>
-        </template>
-        <template v-slot:item.minimumMiktarGram="{ item }">
-          <span @click="openMinStokDialog(item)" style="cursor:pointer; text-decoration:underline; color:#1976d2;">
-            {{ item.minimumMiktarGram?.toLocaleString() || 0 }} gr
-            <v-icon size="16" class="ml-1">mdi-pencil</v-icon>
-          </span>
-        </template>
-        <template v-slot:item.actions="{ item }">
-          <v-btn icon="mdi-plus" size="small" color="success" variant="text" @click="openStokDialog(item, 'giris')"
-            title="Stok Girişi"></v-btn>
-          <v-btn icon="mdi-minus" size="small" color="error" variant="text" @click="openStokDialog(item, 'cikis')"
-            title="Stok Çıkışı"></v-btn>
-        </template>
-      </v-data-table>
+
+      <v-card-text class="pa-4">
+        <v-data-table :headers="headers" :items="filteredStoklar" :loading="loading" item-value="id" class="elevation-1" hover
+          density="comfortable" items-per-page="50" no-data-text="Stok kaydı yok." loading-text="Stoklar yükleniyor..."
+          :item-class="item => item.miktarGram < item.minimumMiktarGram ? 'bg-red-lighten-5' : ''">
+          <template v-slot:item.miktarGram="{ item }">
+            <span :class="item.miktarGram < item.minimumMiktarGram ? 'text-error font-weight-bold' : ''">{{
+              item.miktarGram.toLocaleString() }} gr</span>
+            <v-icon v-if="item.miktarGram < item.minimumMiktarGram" color="error" size="16"
+              class="ml-1">mdi-alert</v-icon>
+          </template>
+          <template v-slot:item.minimumMiktarGram="{ item }">
+            <span @click="openMinStokDialog(item)" style="cursor:pointer; text-decoration:underline; color:#1976d2;">
+              {{ item.minimumMiktarGram?.toLocaleString() || 0 }} gr
+              <v-icon size="16" class="ml-1">mdi-pencil</v-icon>
+            </span>
+          </template>
+          <template v-slot:item.actions="{ item }">
+            <v-btn icon="mdi-plus" size="small" color="success" variant="text" @click="openStokDialog(item, 'giris')"
+              title="Stok Girişi"></v-btn>
+            <v-btn icon="mdi-minus" size="small" color="error" variant="text" @click="openStokDialog(item, 'cikis')"
+              title="Stok Çıkışı"></v-btn>
+          </template>
+        </v-data-table>
+      </v-card-text>
     </v-card>
     <v-dialog v-model="stokDialog" persistent max-width="400px">
       <v-card>
@@ -231,11 +277,14 @@ const stokVuetify = createCustomVuetify({ themeName: 'stokTheme', extraThemes: {
 provide('vuetify', stokVuetify);
 
 const headers = [
-  { title: 'Hammadde/Yarı Mamul', key: 'ad', sortable: true },
+  { title: 'Malzeme Adı', key: 'ad', sortable: true },
   { title: 'Kod', key: 'kod', sortable: true },
-  { title: 'Operasyon Birimi', key: 'operasyonBirimi.ad', sortable: true },
-  { title: 'Stok (gr)', key: 'miktarGram', align: 'end', sortable: true },
-  { title: 'Minimum Stok (gr)', key: 'minimumMiktarGram', align: 'end', sortable: true },
+  { title: 'Tipi', key: 'tipi', sortable: true },
+  { title: 'Birim', key: 'birim', sortable: true },
+  { title: 'Mevcut Stok', key: 'mevcutStok', align: 'end', sortable: true },
+  { title: 'Min. Stok', key: 'minStokSeviye', align: 'end', sortable: true },
+  { title: 'Birim Fiyat', key: 'birimFiyat', align: 'end', sortable: true },
+  { title: 'Tedarikçi', key: 'tedarikci', sortable: true },
   { title: 'Son Güncelleme', key: 'updatedAt', sortable: true },
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ];
@@ -250,23 +299,53 @@ const opList = ref([
   { ad: 'Sevkiyat', kod: 'OP003' },
 ]);
 const selectedOp = ref('OP004');
+const malzemeTipleri = ref([
+  { ad: 'Tümü', kod: '' },
+  { ad: 'Hammadde', kod: 'HAMMADDE' },
+  { ad: 'Yarı Mamul', kod: 'YARI_MAMUL' },
+  { ad: 'Yardımcı Madde', kod: 'YARDIMCI_MADDE' },
+  { ad: 'Ambalaj Malzemesi', kod: 'AMBALAJ_MALZEMESI' },
+]);
+const selectedTip = ref('');
+const searchQuery = ref('');
+
+const filteredStoklar = computed(() => {
+  let filtered = stoklar.value;
+
+  if (selectedTip.value) {
+    filtered = filtered.filter(s => s.tipi === selectedTip.value);
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(s => 
+      s.ad.toLowerCase().includes(query) ||
+      s.kod.toLowerCase().includes(query) ||
+      (s.tedarikci && s.tedarikci.toLowerCase().includes(query))
+    );
+  }
+
+  return filtered;
+});
+
+const kritikStoklar = computed(() => {
+  return stoklar.value.filter(s => s.mevcutStok <= s.kritikSeviye);
+});
+
 async function fetchStoklar() {
-  loading.value = true; error.value = null;
+  loading.value = true; 
+  error.value = null;
   try {
-    const params = selectedOp.value ? { operasyonBirimiKod: selectedOp.value } : {};
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok`, { params });
-    stoklar.value = response.data.map(s => ({
-      ...s,
-      ad: s.hammadde?.ad || s.yariMamul?.ad || '-',
-      kod: s.hammadde?.kod || s.yariMamul?.kod || '-',
-    }));
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/stok`);
+    stoklar.value = response.data;
   } catch (err) {
-    error.value = 'Stoklar yüklenirken hata oluştu.';
+    error.value = 'Malzemeler yüklenirken hata oluştu.';
     stoklar.value = [];
   } finally {
     loading.value = false;
   }
 }
+
 onMounted(() => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user && (user.role === 'admin' || user.role === 'superadmin');
@@ -284,24 +363,28 @@ onMounted(() => {
   fetchHareketler();
   fetchRapor();
 });
+
 watch(selectedOp, fetchStoklar);
-// Stok Giriş/Çıkış Dialog
+
 const stokDialog = ref(false);
 const stokDialogItem = ref(null);
 const stokDialogType = ref('giris');
 const stokDialogMiktar = ref(0);
 const stokDialogLoading = ref(false);
+
 function openStokDialog(item, type) {
   stokDialogItem.value = item;
   stokDialogType.value = type;
   stokDialogMiktar.value = 0;
   stokDialog.value = true;
 }
+
 function closeStokDialog() {
   stokDialog.value = false;
   stokDialogItem.value = null;
   stokDialogMiktar.value = 0;
 }
+
 async function saveStokDialog() {
   if (!stokDialogItem.value || stokDialogMiktar.value <= 0) return;
   stokDialogLoading.value = true;
@@ -320,18 +403,19 @@ async function saveStokDialog() {
     stokDialogLoading.value = false;
   }
 }
-// Snackbar
+
 const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
+
 function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbarText.value = text;
   snackbarColor.value = color;
   snackbarTimeout.value = timeout;
   snackbar.value = true;
 }
-// Stok Transfer Dialog
+
 const transferDialog = ref(false);
 const transferDialogLoading = ref(false);
 const transferForm = ref({ kaynakStokId: null, hedefStokId: null, miktarGram: 0, aciklama: '' });
@@ -344,13 +428,16 @@ const transferHeaders = [
   { title: 'Açıklama', key: 'aciklama', sortable: false },
   { title: 'Tarih', key: 'createdAt', sortable: true },
 ];
+
 function openTransferDialog() {
   transferForm.value = { kaynakStokId: null, hedefStokId: null, miktarGram: 0, aciklama: '' };
   transferDialog.value = true;
 }
+
 function closeTransferDialog() {
   transferDialog.value = false;
 }
+
 async function saveTransferDialog() {
   if (!transferForm.value.kaynakStokId || !transferForm.value.hedefStokId || transferForm.value.miktarGram <= 0) return;
   transferDialogLoading.value = true;
@@ -366,6 +453,7 @@ async function saveTransferDialog() {
     transferDialogLoading.value = false;
   }
 }
+
 async function fetchTransferHistory() {
   transferHistoryLoading.value = true;
   try {
@@ -377,7 +465,7 @@ async function fetchTransferHistory() {
     transferHistoryLoading.value = false;
   }
 }
-// Hareketler
+
 const hareketler = ref([]);
 const hareketlerLoading = ref(false);
 const hareketHeaders = [
@@ -390,12 +478,14 @@ const hareketHeaders = [
   { title: 'Tarih', key: 'createdAt', sortable: true },
 ];
 const hareketFilterStokId = ref(null);
+
 function hareketTipLabel(tip) {
   if (tip === 'giris') return 'Giriş';
   if (tip === 'cikis') return 'Çıkış';
   if (tip === 'transfer') return 'Transfer';
   return tip;
 }
+
 async function fetchHareketler() {
   hareketlerLoading.value = true;
   try {
@@ -408,22 +498,26 @@ async function fetchHareketler() {
     hareketlerLoading.value = false;
   }
 }
+
 watch([hareketFilterStokId, stoklar], fetchHareketler);
-// Minimum Stok Dialog
+
 const minStokDialog = ref(false);
 const minStokDialogItem = ref(null);
 const minStokDialogValue = ref(0);
 const minStokDialogLoading = ref(false);
+
 function openMinStokDialog(item) {
   minStokDialogItem.value = item;
   minStokDialogValue.value = item.minimumMiktarGram || 0;
   minStokDialog.value = true;
 }
+
 function closeMinStokDialog() {
   minStokDialog.value = false;
   minStokDialogItem.value = null;
   minStokDialogValue.value = 0;
 }
+
 async function saveMinStokDialog() {
   if (!minStokDialogItem.value) return;
   minStokDialogLoading.value = true;
@@ -438,7 +532,7 @@ async function saveMinStokDialog() {
     minStokDialogLoading.value = false;
   }
 }
-// Raporlar
+
 const rapor = ref({});
 const raporLoading = ref(false);
 const raporStart = ref('');
@@ -447,6 +541,7 @@ const raporStokHeaders = [
   { title: 'Stok', key: 'stok', sortable: false },
   { title: 'Miktar', key: '_sum.miktarGram', align: 'end', sortable: true },
 ];
+
 async function fetchRapor() {
   raporLoading.value = true;
   try {
@@ -458,13 +553,13 @@ async function fetchRapor() {
     raporLoading.value = false;
   }
 }
-// Siparişe göre stoktan otomatik düşüm fonksiyonu (örnek buton ve fonksiyon)
+
 async function consumeOrderStok(siparisId) {
   try {
     await axios.post(`${import.meta.env.VITE_API_BASE_URL}/stok/consume-order`, { siparisId });
     showSnackbar('Sipariş stoktan başarıyla düşüldü!', 'success');
     fetchStoklar();
-    fetchHareketler(); // HAREKETLERİ GÜNCELLE
+    fetchHareketler();
   } catch (err) {
     showSnackbar('Stok düşümü sırasında hata oluştu.', 'error');
   }
@@ -472,15 +567,28 @@ async function consumeOrderStok(siparisId) {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(27,94,32,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
 .v-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.08);
-  background: #fff;
-  transition: box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .v-card:hover {
-  box-shadow: 0 4px 16px rgba(56, 142, 60, 0.16);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
 }
 
 .v-btn {

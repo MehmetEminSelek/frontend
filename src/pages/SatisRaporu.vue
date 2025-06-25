@@ -1,182 +1,454 @@
 <template>
-    <v-container class="py-6 px-4" fluid>
-        <v-card class="pa-4 rounded-lg" elevation="2">
-            <v-card-title class="text-h5 font-weight-bold mb-4">Satış Raporları & Analiz</v-card-title>
-            <v-row dense align="center" class="mb-4">
-                <v-col cols="auto">
-                    <v-text-field v-model="startDate" label="Başlangıç Tarihi" type="date" density="compact"
-                        hide-details style="min-width:140px" />
-                </v-col>
-                <v-col cols="auto">
-                    <v-text-field v-model="endDate" label="Bitiş Tarihi" type="date" density="compact" hide-details
-                        style="min-width:140px" />
-                </v-col>
-                <v-col cols="auto">
-                    <v-btn color="primary" @click="fetchReport" :loading="loading">Raporu Getir</v-btn>
-                </v-col>
-            </v-row>
-            <v-divider class="mb-4"></v-divider>
-            <v-row dense align="center" class="mb-2">
-                <v-col cols="auto">
-                    <v-select v-model="urunFilter" :items="urunOptions" label="Ürün Filtrele" clearable dense
-                        style="min-width:180px" />
-                </v-col>
-                <v-col cols="auto">
-                    <v-select v-model="subeFilter" :items="subeOptions" label="Şube Filtrele" clearable dense
-                        style="min-width:180px" />
-                </v-col>
-                <v-col cols="auto">
-                    <v-select v-model="musteriFilter" :items="musteriOptions" label="Müşteri Filtrele" clearable dense
-                        style="min-width:180px" />
-                </v-col>
-            </v-row>
-            <v-row class="mb-2">
-                <v-col cols="auto">
-                    <v-btn color="primary" @click="exportCSV" variant="outlined">Tabloyu Excel (CSV) Olarak
-                        İndir</v-btn>
-                </v-col>
-                <v-col cols="auto">
-                    <v-sheet color="green-lighten-5" class="pa-3 rounded-lg d-flex align-center"
-                        style="min-width:220px">
-                        <span class="font-weight-bold mr-2">Ortalama Sepet Tutarı:</span>
-                        <span class="text-h6">₺{{ ortalamaSepetTutari.toLocaleString('tr-TR', {
-                            minimumFractionDigits: 2
-                        })
-                            }}</span>
-                    </v-sheet>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="amber-lighten-5">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="text-h6 font-weight-bold">Aylık Ciro (₺)</div>
-                            <v-select v-model="selectedMonth" :items="monthOptions" label="Ay Seçiniz" item-text="label"
-                                item-value="value" dense style="max-width:180px; min-width:120px;" />
+    <v-container class="py-6 px-2 px-md-8" fluid>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-4" 
+                style="background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%); color: #4A148C; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
+                    <v-icon size="120">mdi-chart-line</v-icon>
+                </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="#6A1B9A">mdi-chart-bar-stacked</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #4A148C;">Satış Raporları</h1>
+                                <p class="text-h6 mb-0" style="color: #6A1B9A; opacity: 0.8;">Detaylı satış analizleri ve performans raporları</p>
+                            </div>
                         </div>
-                        <Line :data="ciroLineData" :options="ciroLineOptions" style="max-height:300px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
-                            X: Gün, Y: Ciro (₺) — Seçili ay: {{ selectedMonthLabel }}
+                        <div class="d-flex align-center">
+                            <v-chip color="rgba(74, 20, 140, 0.15)" size="small" class="mr-2" style="color: #4A148C;">
+                                <v-icon start size="16" color="#6A1B9A">mdi-trending-up</v-icon>
+                                Canlı Veriler
+                            </v-chip>
+                            <v-chip color="rgba(74, 20, 140, 0.15)" size="small" style="color: #4A148C;">
+                                <v-icon start size="16" color="#6A1B9A">mdi-export</v-icon>
+                                Excel Export
+                            </v-chip>
                         </div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="green-lighten-5">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="text-h6 font-weight-bold">En Çok Satış Yapan Ürünler (Adet)</div>
-                            <v-btn size="small" variant="text" @click="exportChartPng('urunAdet')">PNG</v-btn>
-                        </div>
-                        <Bar v-if="Array.isArray(filteredUrunBarDataAdet.labels) && Array.isArray(filteredUrunBarDataAdet.datasets)"
-                            ref="el => chartRefs.urunAdet = el"
-                            :data="filteredUrunBarDataAdet || { labels: [], datasets: [] }"
-                            :options="{ ...urunBarOptions, title: { text: 'En Çok Satılan Ürünler (Adet)' } }"
-                            style="max-height:220px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
-                            X: Satış (adet), Y: Ürün Adı
-                        </div>
-                    </v-card>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="amber-lighten-5">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="text-h6 font-weight-bold">En Çok Ciro Yapan Ürünler (₺)</div>
-                            <v-btn size="small" variant="text" @click="exportChartPng('urunCiro')">PNG</v-btn>
-                        </div>
-                        <Bar v-if="Array.isArray(filteredUrunBarDataCiro.labels) && Array.isArray(filteredUrunBarDataCiro.datasets)"
-                            ref="el => chartRefs.urunCiro = el"
-                            :data="filteredUrunBarDataCiro || { labels: [], datasets: [] }"
-                            :options="{ ...urunBarOptions, title: { text: 'En Çok Ciro Yapan Ürünler (₺)' } }"
-                            style="max-height:220px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
-                            X: Ciro (₺), Y: Ürün Adı
-                        </div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="blue-lighten-5">
-                        <div class="text-h6 font-weight-bold mb-2">En Çok Satış Yapan Şubeler</div>
-                        <Bar :data="subeBarData" :options="subeBarOptions" style="max-height:300px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
-                            X: Satış (adet), Y: Şube Adı
-                        </div>
-                    </v-card>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="blue-lighten-5">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="text-h6 font-weight-bold">En Çok Ciro Yapan Şubeler (₺)</div>
-                            <v-btn size="small" variant="text" @click="exportChartPng('subeCiro')">PNG</v-btn>
-                        </div>
-                        <Bar v-if="Array.isArray(filteredSubeBarDataCiro.labels) && Array.isArray(filteredSubeBarDataCiro.datasets)"
-                            ref="el => chartRefs.subeCiro = el"
-                            :data="filteredSubeBarDataCiro || { labels: [], datasets: [] }"
-                            :options="{ ...subeBarOptions, title: { text: 'En Çok Ciro Yapan Şubeler (₺)' } }"
-                            style="max-height:220px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
-                            X: Ciro (₺), Y: Şube Adı
-                        </div>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="purple-lighten-5">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="text-h6 font-weight-bold">En Çok Sipariş Alan Şubeler (Adet)</div>
-                            <v-btn size="small" variant="text" @click="exportChartPng('subeAdet')">PNG</v-btn>
-                        </div>
-                        <Bar v-if="Array.isArray(filteredSubeBarDataAdet.labels) && Array.isArray(filteredSubeBarDataAdet.datasets)"
-                            ref="el => chartRefs.subeAdet = el"
-                            :data="filteredSubeBarDataAdet || { labels: [], datasets: [] }"
-                            :options="{ ...subeBarOptions, title: { text: 'En Çok Sipariş Alan Şubeler (Adet)' } }"
-                            style="max-height:220px;" />
-                    </v-card>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12" md="6">
-                    <v-card class="pa-3 mb-4" color="grey-lighten-5">
-                        <div class="text-h6 font-weight-bold mb-2">Satış Detay Tablosu</div>
-                        <v-data-table :headers="satisHeaders" :items="filteredSatisDetay" :loading="loading"
-                            class="elevation-0 modern-table" density="compact" hide-default-footer :row-class="rowClass"
-                            item-value="tutar" :footer-props="{ 'items-per-page-options': [10, 20, 50] }">
-                            <template #item.tutar="{ item }">
-                                <span class="font-weight-bold">₺{{ (item.tutar || 0).toLocaleString('tr-TR', {
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center">
+                        <div class="mb-3">
+                            <v-sheet color="rgba(255,255,255,0.9)" class="pa-3 rounded-lg" style="color: #4A148C;">
+                                <div class="text-h5 font-weight-bold">₺{{ ortalamaSepetTutari.toLocaleString('tr-TR', {
                                     minimumFractionDigits: 2
-                                }) }}</span>
+                                }) }}</div>
+                                <div class="text-body-2">Ortalama Sepet Tutarı</div>
+                            </v-sheet>
+                        </div>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
+
+        <!-- Filters Section -->
+        <v-card class="mb-6 rounded-xl" elevation="1" style="border: 1px solid #F3E5F5;">
+            <v-card-title class="d-flex align-center py-4">
+                <v-icon color="#6A1B9A" class="mr-2">mdi-filter-variant</v-icon>
+                <span class="text-h6 font-weight-bold" style="color: #4A148C;">Filtreler ve Tarih Aralığı</span>
+            </v-card-title>
+            <v-card-text class="pt-0">
+                <v-row>
+                    <v-col cols="12" md="3">
+                        <v-text-field 
+                            v-model="startDate" 
+                            label="Başlangıç Tarihi" 
+                            type="date"
+                            prepend-inner-icon="mdi-calendar-start"
+                            variant="outlined" 
+                            density="comfortable"
+                            color="#9C27B0"
+                            hide-details />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                        <v-text-field 
+                            v-model="endDate" 
+                            label="Bitiş Tarihi" 
+                            type="date"
+                            prepend-inner-icon="mdi-calendar-end"
+                            variant="outlined"
+                            density="comfortable"
+                            color="#9C27B0"
+                            hide-details />
+                    </v-col>
+                    <v-col cols="12" md="2">
+                        <v-btn color="#9C27B0" variant="outlined" @click="fetchReport" :loading="loading"
+                            prepend-icon="mdi-refresh" class="w-100">
+                            Raporu Getir
+                        </v-btn>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-btn color="#9C27B0" variant="outlined" @click="exportCSV"
+                            prepend-icon="mdi-file-excel" class="w-100">
+                            Excel (CSV) İndir
+                        </v-btn>
+                    </v-col>
+                </v-row>
+                
+                <v-divider class="my-4"></v-divider>
+                
+                <v-row>
+                    <v-col cols="12" md="4">
+                        <v-select 
+                            v-model="urunFilter" 
+                            :items="urunOptions" 
+                            label="Ürün Filtrele"
+                            prepend-inner-icon="mdi-package-variant"
+                            clearable 
+                            variant="outlined"
+                            density="comfortable"
+                            color="#9C27B0"
+                            hide-details />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-select 
+                            v-model="subeFilter" 
+                            :items="subeOptions" 
+                            label="Şube Filtrele"
+                            prepend-inner-icon="mdi-store"
+                            clearable 
+                            variant="outlined"
+                            density="comfortable"
+                            color="#9C27B0"
+                            hide-details />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-select 
+                            v-model="musteriFilter" 
+                            :items="musteriOptions" 
+                            label="Müşteri Filtrele"
+                            prepend-inner-icon="mdi-account-group"
+                            clearable 
+                            variant="outlined"
+                            density="comfortable"
+                            color="#9C27B0"
+                            hide-details />
+                    </v-col>
+                </v-row>
+            </v-card-text>
+        </v-card>
+
+        <!-- Charts Grid -->
+        <v-row>
+            <!-- Monthly Revenue Chart -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #FFF3E0 100%); border: 1px solid #FFE0B2;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-chart-line</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">Aylık Ciro</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Günlük satış performansı</p>
+                                </div>
+                            </div>
+                            <v-select 
+                                v-model="selectedMonth" 
+                                :items="monthOptions" 
+                                label="Ay Seçiniz" 
+                                item-text="label"
+                                item-value="value" 
+                                density="compact" 
+                                variant="solo"
+                                style="max-width:160px; min-width:120px;"
+                                color="white"
+                                hide-details />
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Line :data="ciroLineData" :options="ciroLineOptions" style="max-height:300px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #E65100;">
+                            Seçili ay: {{ selectedMonthLabel }} - Günlük ciro değişimi
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Top Product Sales -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #E8F5E9 100%); border: 1px solid #E0F2E7;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-trophy</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">En Çok Satılan Ürünler</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Adet bazında satış</p>
+                                </div>
+                            </div>
+                            <v-btn size="small" color="rgba(255,255,255,0.2)" variant="flat" @click="exportChartPng('urunAdet')">
+                                <v-icon size="16">mdi-download</v-icon>
+                            </v-btn>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar v-if="Array.isArray(filteredUrunBarDataAdet.labels) && Array.isArray(filteredUrunBarDataAdet.datasets)"
+                                ref="el => chartRefs.urunAdet = el"
+                                :data="filteredUrunBarDataAdet || { labels: [], datasets: [] }"
+                                :options="{ ...urunBarOptions, title: { text: 'En Çok Satılan Ürünler (Adet)' } }"
+                                style="max-height:220px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #2E7D32;">
+                            Satış performansı - adet bazında sıralama
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Additional Charts Row -->
+        <v-row>
+            <!-- Product Revenue Chart -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #FFF3E0 100%); border: 1px solid #FFE0B2;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-currency-try</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">En Çok Ciro Yapan Ürünler</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Gelir bazında analiz</p>
+                                </div>
+                            </div>
+                            <v-btn size="small" color="rgba(255,255,255,0.2)" variant="flat" @click="exportChartPng('urunCiro')">
+                                <v-icon size="16">mdi-download</v-icon>
+                            </v-btn>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar v-if="Array.isArray(filteredUrunBarDataCiro.labels) && Array.isArray(filteredUrunBarDataCiro.datasets)"
+                                ref="el => chartRefs.urunCiro = el"
+                                :data="filteredUrunBarDataCiro || { labels: [], datasets: [] }"
+                                :options="{ ...urunBarOptions, title: { text: 'En Çok Ciro Yapan Ürünler (₺)' } }"
+                                style="max-height:220px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #E65100;">
+                            Gelir performansı - ciro bazında sıralama
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Branch Sales Chart -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #E3F2FD 100%); border: 1px solid #BBDEFB;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-store</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">Şube Satış Performansı</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Adet bazında karşılaştırma</p>
+                                </div>
+                            </div>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar :data="subeBarData" :options="subeBarOptions" style="max-height:300px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #1565C0;">
+                            Şube performans karşılaştırması
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Branch Revenue and Orders Row -->
+        <v-row>
+            <!-- Branch Revenue -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #E3F2FD 100%); border: 1px solid #BBDEFB;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-currency-try</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">Şube Ciro Analizi</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Gelir bazında performans</p>
+                                </div>
+                            </div>
+                            <v-btn size="small" color="rgba(255,255,255,0.2)" variant="flat" @click="exportChartPng('subeCiro')">
+                                <v-icon size="16">mdi-download</v-icon>
+                            </v-btn>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar v-if="Array.isArray(filteredSubeBarDataCiro.labels) && Array.isArray(filteredSubeBarDataCiro.datasets)"
+                                ref="el => chartRefs.subeCiro = el"
+                                :data="filteredSubeBarDataCiro || { labels: [], datasets: [] }"
+                                :options="{ ...subeBarOptions, title: { text: 'En Çok Ciro Yapan Şubeler (₺)' } }"
+                                style="max-height:220px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #1565C0;">
+                            Şube bazında gelir karşılaştırması
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Branch Orders -->
+            <v-col cols="12" lg="6">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #F3E5F5 100%); border: 1px solid #E8EAF6;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-cart</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">Şube Sipariş Analizi</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Sipariş adedi karşılaştırması</p>
+                                </div>
+                            </div>
+                            <v-btn size="small" color="rgba(255,255,255,0.2)" variant="flat" @click="exportChartPng('subeAdet')">
+                                <v-icon size="16">mdi-download</v-icon>
+                            </v-btn>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar v-if="Array.isArray(filteredSubeBarDataAdet.labels) && Array.isArray(filteredSubeBarDataAdet.datasets)"
+                                ref="el => chartRefs.subeAdet = el"
+                                :data="filteredSubeBarDataAdet || { labels: [], datasets: [] }"
+                                :options="{ ...subeBarOptions, title: { text: 'En Çok Sipariş Alan Şubeler (Adet)' } }"
+                                style="max-height:220px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #6A1B9A;">
+                            Sipariş yoğunluğu analizi
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Sales Details and Inventory -->
+        <v-row>
+            <!-- Sales Details Table -->
+            <v-col cols="12" lg="8">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #FAFAFA 100%); border: 1px solid #EEEEEE;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%); color: white;">
+                        <div class="d-flex align-center justify-space-between w-100">
+                            <div class="d-flex align-center">
+                                <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-table</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <h3 class="text-h6 font-weight-bold">Satış Detay Tablosu</h3>
+                                    <p class="text-body-2 opacity-80 ma-0">Detaylı satış verileri</p>
+                                </div>
+                            </div>
+                            <v-chip color="rgba(255,255,255,0.2)" size="small">
+                                {{ filteredSatisDetay.length }} kayıt
+                            </v-chip>
+                        </div>
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <v-data-table 
+                            :headers="satisHeaders" 
+                            :items="filteredSatisDetay" 
+                            :loading="loading"
+                            class="sales-table rounded-lg"
+                            density="comfortable" 
+                            hide-default-footer 
+                            :row-class="rowClass"
+                            item-value="tutar" 
+                            :footer-props="{ 'items-per-page-options': [10, 20, 50] }">
+                            
+                            <template #item.tutar="{ item }">
+                                <span class="font-weight-bold" style="color: #388E3C;">
+                                    ₺{{ (item.tutar || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) }}
+                                </span>
                             </template>
+                            
                             <template #bottom>
-                                <tr class="font-weight-bold">
-                                    <td colspan="5" class="text-right pr-4">Toplam:</td>
-                                    <td class="text-right">₺{{filteredSatisDetay.reduce((sum, r) => sum + (r.tutar ||
-                                        0), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}}</td>
-                                </tr>
+                                <div class="pa-3" style="background: #F5F5F5; border-radius: 0 0 12px 12px;">
+                                    <div class="d-flex justify-space-between align-center">
+                                        <span class="font-weight-bold">Toplam:</span>
+                                        <span class="text-h6 font-weight-bold" style="color: #388E3C;">
+                                            ₺{{ filteredSatisDetay.reduce((sum, r) => sum + (r.tutar || 0), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </template>
                         </v-data-table>
-                        <div class="mt-2 text-caption text-grey-darken-2">
+                        <p class="text-caption mt-2" style="color: #555;">
                             {{ formattedDateRange }}
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Inventory Distribution -->
+            <v-col cols="12" lg="4">
+                <v-card class="h-100 rounded-xl" elevation="2" 
+                    style="background: linear-gradient(145deg, #FFFFFF 0%, #E3F2FD 100%); border: 1px solid #BBDEFB;">
+                    
+                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white;">
+                        <div class="d-flex align-center">
+                            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                                <v-icon color="white">mdi-warehouse</v-icon>
+                            </v-avatar>
+                            <div>
+                                <h3 class="text-h6 font-weight-bold">Hammadde Dağılımı</h3>
+                                <p class="text-body-2 opacity-80 ma-0">Mevcut stok durumu</p>
+                            </div>
                         </div>
-                    </v-card>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12" md="8">
-                    <v-card class="pa-3 mb-4" color="blue-lighten-4">
-                        <div class="text-h6 font-weight-bold mb-2">Kalan Hammadde Dağılımı (Örnek)</div>
-                        <Bar :data="kalanHammaddeBarData" :options="kalanHammaddeBarOptions"
-                            style="max-height:260px;" />
-                        <div class="mt-2 text-caption text-grey-darken-2">
+                    </v-card-title>
+
+                    <v-card-text class="pa-4">
+                        <div style="background: white; border-radius: 12px; padding: 16px;">
+                            <Bar :data="kalanHammaddeBarData" :options="kalanHammaddeBarOptions" style="max-height:260px;" />
+                        </div>
+                        <p class="text-caption mt-2" style="color: #1565C0;">
                             {{ formattedDateRange }}
-                        </div>
-                    </v-card>
-                </v-col>
-            </v-row>
-        </v-card>
-        <v-snackbar v-model="snackbar" color="error" timeout="4000">{{ snackbarMsg }}</v-snackbar>
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <v-snackbar v-model="snackbar" color="#E57373" timeout="4000">{{ snackbarMsg }}</v-snackbar>
     </v-container>
 </template>
+
 <script setup>
 import { ref, computed, nextTick, provide } from 'vue';
 import { Bar, Line } from 'vue-chartjs';
@@ -497,44 +769,39 @@ const ciroAyVerisi = computed(() => {
 // Sayfa açıldığında bugünün raporunu getir
 fetchReport();
 </script>
+
 <style scoped>
-.highlight-row {
-    background: linear-gradient(90deg, #fffde7 0%, #ffe082 100%) !important;
-    font-weight: bold;
+.hero-section {
+    position: relative;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(74,20,140,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    pointer-events: none;
+}
+
+.sales-table th {
+    background: #FAFAFA !important;
+    color: #555 !important;
+    font-weight: 600 !important;
+}
+
+.sales-table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.02) !important;
 }
 
 .v-card {
-    border-radius: 16px;
-    box-shadow: 0 2px 8px #2196f322;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.v-btn {
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.v-chip {
-    border-radius: 8px;
-}
-
-.v-alert {
-    border-radius: 8px;
-}
-
-.v-data-table {
-    border-radius: 12px;
-}
-
-.modern-table>>>tbody tr:nth-child(even) {
-    background-color: #f5f5f5;
-}
-
-.modern-table>>>tbody tr:hover {
-    background-color: #e3f2fd;
-}
-
-.modern-table>>>thead th {
-    font-weight: bold;
-    background: #e3e3e3;
+.v-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
 }
 </style>
