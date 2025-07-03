@@ -321,6 +321,14 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="snackbar" :timeout="snackbarTimeout" :color="snackbarColor" location="bottom right">
+      {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn color="white" variant="text" @click="snackbar = false">Kapat</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -393,6 +401,19 @@ const cariAdresler = ref([]);
 const selectedAdres = ref('');
 const aliciTelRef = ref(null);
 const successDialog = ref(false);
+
+// Snackbar State
+const snackbar = ref(false);
+const snackbarText = ref('');
+const snackbarColor = ref('info');
+const snackbarTimeout = ref(4000);
+
+function showSnackbar(text, color = 'info', timeout = 4000) {
+  snackbarText.value = text;
+  snackbarColor.value = color;
+  snackbarTimeout.value = timeout;
+  snackbar.value = true;
+}
 
 onMounted(async () => {
   try {

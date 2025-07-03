@@ -1,23 +1,118 @@
 <template>
     <v-container fluid>
-        <v-row>
-            <v-col cols="12">
-                <v-card class="pa-4 elevation-3 rounded-lg" style="background: #fafbfc;">
-                    <v-card-title class="d-flex align-center">
-                        <v-text-field v-model="search" label="Müşteri Ara" prepend-inner-icon="mdi-magnify" dense
-                            hide-details class="mr-4" style="max-width:300px;" />
-                        <v-spacer />
-                        <v-btn color="info" class="elevation-1 mr-2" @click="downloadExcelTemplate">
-                            <v-icon left>mdi-download</v-icon>Excel Şablonunu İndir
+        <!-- Başlık ve Hızlı Eylemler -->
+        <v-row class="mb-4">
+            <v-col cols="12" md="6">
+                <h1 class="text-h4 font-weight-bold">
+                    <v-icon class="mr-2" color="primary">mdi-account-group</v-icon>
+                    Cari Yönetimi
+                </h1>
+                <p class="text-subtitle-1 text-grey-600 mt-2">
+                    Müşterilerinizi yönetin, borç-alacak takibini yapın
+                </p>
+            </v-col>
+            <v-col cols="12" md="6" class="text-right">
+                <v-btn color="primary" size="large" @click="openDialogYeni" class="mr-2">
+                    <v-icon left>mdi-account-plus</v-icon>
+                    Yeni Müşteri
+                </v-btn>
+                <v-btn color="warning" size="large" @click="openVadeTakipDialog">
+                    <v-icon left>mdi-calendar-clock</v-icon>
+                    Vade Takibi
+                </v-btn>
+            </v-col>
+        </v-row>
+
+        <!-- İstatistik Kartları -->
+        <v-row class="mb-6">
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="pa-4" color="primary" dark>
+                    <div class="d-flex align-center">
+                        <v-icon size="40" class="mr-3">mdi-account-group</v-icon>
+                        <div>
+                            <div class="text-h4 font-weight-bold">{{ cariler.length }}</div>
+                            <div class="text-subtitle-2">Toplam Müşteri</div>
+                        </div>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="pa-4" color="success" dark>
+                    <div class="d-flex align-center">
+                        <v-icon size="40" class="mr-3">mdi-currency-try</v-icon>
+                        <div>
+                            <div class="text-h4 font-weight-bold">{{ formatTutar(toplamAlacaklar) }}</div>
+                            <div class="text-subtitle-2">Toplam Alacak</div>
+                        </div>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="pa-4" color="error" dark>
+                    <div class="d-flex align-center">
+                        <v-icon size="40" class="mr-3">mdi-alert-circle</v-icon>
+                        <div>
+                            <div class="text-h4 font-weight-bold">{{ vadesiGecenSayisi }}</div>
+                            <div class="text-subtitle-2">Vadesi Gecen</div>
+                        </div>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="pa-4" color="info" dark>
+                    <div class="d-flex align-center">
+                        <v-icon size="40" class="mr-3">mdi-chart-line</v-icon>
+                        <div>
+                            <div class="text-h4 font-weight-bold">{{ aktifMusteriSayisi }}</div>
+                            <div class="text-subtitle-2">Aktif Müşteri</div>
+                        </div>
+                    </div>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Filtreler ve Arama -->
+        <v-card class="mb-4">
+            <v-card-title>
+                <v-icon class="mr-2">mdi-filter</v-icon>
+                Filtreler ve Arama
+            </v-card-title>
+            <v-card-text>
+                <v-row>
+                    <v-col cols="12" md="4">
+                        <v-text-field v-model="search" label="Müşteri Ara..." prepend-inner-icon="mdi-magnify"
+                            clearable variant="outlined" density="compact" />
+                    </v-col>
+                    <v-col cols="12" md="2">
+                        <v-btn color="info" variant="outlined" @click="downloadExcelTemplate" block>
+                            <v-icon left>mdi-download</v-icon>Excel Şablon
                         </v-btn>
+                    </v-col>
+                    <v-col cols="12" md="2">
                         <input ref="excelInput" type="file" accept=".xlsx" style="display:none"
                             @change="onExcelFileChange" />
-                        <v-btn color="success" class="elevation-1 mr-2" @click="triggerExcelInput">
-                            <v-icon left>mdi-upload</v-icon>Excel'den Yükle
+                        <v-btn color="success" variant="outlined" @click="triggerExcelInput" block>
+                            <v-icon left>mdi-upload</v-icon>Excel Yükle
                         </v-btn>
-                        <v-btn color="primary" class="elevation-1" @click="openDialogYeni"><v-icon
-                                left>mdi-account-plus</v-icon>Yeni Müşteri</v-btn>
-                    </v-card-title>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <v-btn-group divided variant="outlined" class="w-100">
+                            <v-btn @click="exportExcel" prepend-icon="mdi-file-excel">Excel</v-btn>
+                            <v-btn @click="exportPDF" prepend-icon="mdi-file-pdf">PDF</v-btn>
+                        </v-btn-group>
+                    </v-col>
+                </v-row>
+            </v-card-text>
+        </v-card>
+
+        <!-- Müşteri Listesi -->
+        <v-card>
+            <v-card-title class="d-flex justify-space-between align-center">
+                <span>
+                    <v-icon class="mr-2">mdi-view-list</v-icon>
+                    Müşteri Listesi ({{ filteredCariler.length }} müşteri)
+                </span>
+            </v-card-title>
                     <div v-if="excelResults.length > 0" class="my-2">
                         <v-alert type="info" border="left" prominent>
                             <div v-for="(r, i) in excelResults" :key="i">
@@ -28,41 +123,95 @@
                             </div>
                         </v-alert>
                     </div>
-                    <div style="overflow-x:auto">
-                        <v-data-table :headers="headers" :items="filteredCariler" item-key="id" dense
-                            class="modern-table">
-                            <template #item.ad="{ item }">
-                                <v-avatar color="primary" size="32" class="mr-2">{{ item.ad.charAt(0).toUpperCase()
-                                }}</v-avatar>
-                                <span>{{ item.ad }}</span>
-                            </template>
-                            <template #item.musteriKodu="{ item }">
-                                <span>{{ item.musteriKodu }}</span>
-                            </template>
-                            <template #item.telefon="{ item }">
-                                <span>{{ item.telefon }}</span>
-                            </template>
-                            <template #item.bakiye="{ item }">
-                                <span>{{ item.bakiye }}</span>
-                            </template>
-                            <template #item.enYakinVade="{ item }">
-                                <span>{{ item.enYakinVade || '-' }}</span>
-                            </template>
-                            <template #item.actions="{ item }">
-                                <v-btn icon color="secondary" density="compact" class="mr-1"
-                                    @click="openAdresDialog(item)"><v-icon>mdi-home-map-marker</v-icon></v-btn>
-                                <v-btn icon color="info" density="compact" class="mr-1"
-                                    @click="openDialogDetay(item)"><v-icon>mdi-eye</v-icon></v-btn>
-                                <v-btn icon color="primary" density="compact" class="mr-1"
-                                    @click="openDialogFullEdit(item)"><v-icon>mdi-pencil</v-icon></v-btn>
-                                <v-btn icon color="red" density="compact"
-                                    @click="deleteCari(item)"><v-icon>mdi-delete</v-icon></v-btn>
-                            </template>
-                        </v-data-table>
+            <v-data-table :headers="headers" :items="filteredCariler" item-key="id" 
+                class="elevation-0 modern-table">
+                <!-- Müşteri Adı -->
+                <template v-slot:item.ad="{ item }">
+                    <div class="d-flex align-center">
+                        <v-avatar color="primary" size="40" class="mr-3">
+                            {{ item.ad.charAt(0).toUpperCase() }}
+                        </v-avatar>
+                        <div>
+                            <div class="font-weight-medium">{{ item.ad }}</div>
+                            <div class="text-caption text-grey-600">{{ item.soyad || '' }}</div>
+                        </div>
                     </div>
-                </v-card>
-            </v-col>
-        </v-row>
+                </template>
+
+                <!-- Müşteri Kodu -->
+                <template v-slot:item.musteriKodu="{ item }">
+                    <v-chip size="small" variant="tonal" color="primary">
+                        {{ item.musteriKodu }}
+                    </v-chip>
+                </template>
+
+                <!-- İletişim -->
+                <template v-slot:item.telefon="{ item }">
+                    <div v-if="item.telefon || item.email">
+                        <div v-if="item.telefon" class="d-flex align-center mb-1">
+                            <v-icon size="16" class="mr-1">mdi-phone</v-icon>
+                            <span>{{ item.telefon }}</span>
+                        </div>
+                        <div v-if="item.email" class="d-flex align-center">
+                            <v-icon size="16" class="mr-1">mdi-email</v-icon>
+                            <span class="text-caption">{{ item.email }}</span>
+                        </div>
+                    </div>
+                    <span v-else class="text-grey-500">-</span>
+                </template>
+
+                <!-- Bakiye -->
+                <template v-slot:item.bakiye="{ item }">
+                    <div class="text-right">
+                        <div class="font-weight-medium" :class="bakiyeRengi(item.bakiye)">
+                            {{ formatTutar(item.bakiye) }}
+                        </div>
+                        <div class="text-caption text-grey-600">TL</div>
+                    </div>
+                </template>
+
+                <!-- Vade Durumu -->
+                <template v-slot:item.enYakinVade="{ item }">
+                    <div v-if="item.enYakinVade">
+                        <v-chip :color="vadeRengi(item.enYakinVade)" size="small" variant="tonal">
+                            <v-icon left size="16">mdi-calendar</v-icon>
+                            {{ formatDate(item.enYakinVade) }}
+                        </v-chip>
+                    </div>
+                    <span v-else class="text-grey-500">Vade yok</span>
+                </template>
+
+                <!-- İşlemler -->
+                <template v-slot:item.actions="{ item }">
+                    <div class="d-flex gap-1">
+                        <v-tooltip text="Detayları Görüntüle">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-eye" size="small" color="info" variant="text"
+                                    @click="openDialogDetay(item)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                        <v-tooltip text="Düzenle">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-pencil" size="small" color="primary" variant="text"
+                                    @click="openDialogFullEdit(item)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                        <v-tooltip text="Ödeme Ekle">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-cash-plus" size="small" color="success" variant="text"
+                                    @click="openDialogOdeme(item)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                        <v-tooltip text="Sil">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-delete" size="small" color="error" variant="text"
+                                    @click="deleteCari(item)" v-bind="props"></v-btn>
+                            </template>
+                        </v-tooltip>
+                    </div>
+                                 </template>
+             </v-data-table>
+        </v-card>
 
         <!-- Detay Dialog (Mobil) -->
         <v-dialog v-model="dialogDetay" max-width="900" persistent scrollable>
@@ -317,12 +466,12 @@ const yeniAdres = ref({ tip: 'Ev', adres: '' });
 const adresKayitLoading = ref(false);
 
 const headers = [
-    { title: 'ADI', key: 'ad' },
-    { title: 'MÜŞTERİ KODU', key: 'musteriKodu' },
-    { title: 'TEL', key: 'telefon' },
-    { title: 'GÜNCEL BORÇ', key: 'bakiye' },
-    { title: 'EN YAKIN VADE/GEÇMİŞ VADE', key: 'enYakinVade' },
-    { title: 'İşlemler', key: 'actions', sortable: false },
+    { title: 'MÜŞTERİ', key: 'ad', sortable: true },
+    { title: 'KOD', key: 'musteriKodu', sortable: true },
+    { title: 'İLETİŞİM', key: 'telefon', sortable: false },
+    { title: 'BAKİYE', key: 'bakiye', sortable: true, align: 'end' },
+    { title: 'VADE DURUMU', key: 'enYakinVade', sortable: true },
+    { title: 'İŞLEMLER', key: 'actions', sortable: false, align: 'center' },
 ];
 const hareketHeaders = [
     { text: 'Tarih', value: 'createdAt' },
@@ -340,7 +489,30 @@ const vadeHeaders = [
 
 const filteredCariler = computed(() => {
     if (!search.value) return cariler.value;
-    return cariler.value.filter(c => c.ad.toLowerCase().includes(search.value.toLowerCase()));
+    return cariler.value.filter(c => 
+        c.ad.toLowerCase().includes(search.value.toLowerCase()) ||
+        c.musteriKodu.toLowerCase().includes(search.value.toLowerCase()) ||
+        (c.telefon && c.telefon.includes(search.value)) ||
+        (c.email && c.email.toLowerCase().includes(search.value.toLowerCase()))
+    );
+});
+
+// İstatistik hesaplamaları
+const toplamAlacaklar = computed(() => {
+    return cariler.value.reduce((total, cari) => total + (cari.bakiye || 0), 0);
+});
+
+const vadesiGecenSayisi = computed(() => {
+    return cariler.value.filter(cari => {
+        if (!cari.enYakinVade) return false;
+        const vadeDate = new Date(cari.enYakinVade);
+        const today = new Date();
+        return vadeDate < today;
+    }).length;
+});
+
+const aktifMusteriSayisi = computed(() => {
+    return cariler.value.filter(cari => cari.aktif !== false).length;
 });
 
 const toplamBorc = computed(() => hareketler.value.filter(h => h.direction === 'borc').reduce((a, b) => a + (b.tutar || 0), 0));
@@ -368,6 +540,31 @@ onBeforeUnmount(() => {
 async function fetchCariler() {
     const { data } = await axios.get('/api/cari');
     cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
+}
+
+// Yardımcı fonksiyonlar
+function formatTutar(tutar) {
+    if (!tutar) return '0,00';
+    return new Intl.NumberFormat('tr-TR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(tutar);
+}
+
+function bakiyeRengi(bakiye) {
+    if (!bakiye || bakiye === 0) return 'text-grey-600';
+    return bakiye > 0 ? 'text-success' : 'text-error';
+}
+
+function vadeRengi(vadeTarihi) {
+    if (!vadeTarihi) return 'grey';
+    const vadeDate = new Date(vadeTarihi);
+    const today = new Date();
+    const diffDays = Math.ceil((vadeDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'error'; // Gecikmiş
+    if (diffDays <= 7) return 'warning'; // 7 gün içinde
+    return 'success'; // Normal
 }
 
 function openDialogYeni() { dialogYeni.value = true; }
@@ -481,7 +678,10 @@ async function fetchHareketler(cariId) {
     }
 }
 
-function openDialogOdeme() { dialogOdeme.value = true; }
+function openDialogOdeme(item = null) { 
+    if (item) detayCari.value = item;
+    dialogOdeme.value = true; 
+}
 function closeDialogOdeme() {
     dialogOdeme.value = false;
     odemeTutar.value = 0;
@@ -564,11 +764,23 @@ function exportPDF() {
 }
 
 function openVadeTakipDialog() {
-    axios.get('/api/cari/vade-takip').then(r => {
-        vadeList.value = r.data;
-        selectedVade.value = [];
-        dialogVadeTakip.value = true;
-    });
+    // Vadesi geçmiş borçları hesapla
+    const today = new Date();
+    const vadesiGecenler = cariler.value.filter(cari => {
+        if (!cari.enYakinVade) return false;
+        const vadeDate = new Date(cari.enYakinVade);
+        return vadeDate < today && (cari.bakiye || 0) > 0;
+    }).map(cari => ({
+        cariId: cari.id,
+        ad: cari.ad,
+        telefon: cari.telefon,
+        kalanBorc: cari.bakiye,
+        vadeTarihi: cari.enYakinVade
+    }));
+    
+    vadeList.value = vadesiGecenler;
+    selectedVade.value = [];
+    dialogVadeTakip.value = true;
 }
 function closeVadeTakip() { dialogVadeTakip.value = false; }
 

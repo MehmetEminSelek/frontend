@@ -146,6 +146,9 @@
                           Hizmet:</v-list-item-title> <template v-slot:append>{{ item.digerHizmetTutari?.toFixed(2) }}
                           ₺</template>
                       </v-list-item>
+                      <v-list-item class="text-caption"> <v-list-item-title class="text-right">KDV Toplamı:</v-list-item-title>
+                        <template v-slot:append>{{ (item.kdvToplam || calculateKdvTotal(item.kalemler)).toFixed(2) }} ₺</template>
+                      </v-list-item>
                       <v-divider class="my-1"></v-divider>
                       <v-list-item class="font-weight-bold"> <v-list-item-title
                           class="text-right text-subtitle-1">Sipariş
@@ -334,6 +337,20 @@ function calculatePackageProductTotal(kalemler) {
 function calculateProductTotal(kalemler) {
   if (!kalemler || !Array.isArray(kalemler)) return 0;
   return kalemler.reduce((total, kalem) => total + calculateItemTotal(kalem), 0);
+}
+
+function calculateProductSubtotal(kalemler) {
+  if (!kalemler || !Array.isArray(kalemler)) return 0;
+  return kalemler.reduce((total, kalem) => {
+    return total + (kalem.araToplam || 0);
+  }, 0);
+}
+
+function calculateKdvTotal(kalemler) {
+  if (!kalemler || !Array.isArray(kalemler)) return 0;
+  return kalemler.reduce((total, kalem) => {
+    return total + (kalem.kdvTutari || 0);
+  }, 0);
 }
 
 function calculateTotalPaid(odemeler) {
