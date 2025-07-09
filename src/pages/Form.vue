@@ -2,7 +2,7 @@
   <v-container class="py-6 px-2 px-md-8" fluid>
     <!-- Hero Section -->
     <div class="hero-section mb-6">
-      <v-card class="pa-6 rounded-xl elevation-4" 
+      <v-card class="pa-6 rounded-xl elevation-4"
         style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%); color: #1B5E20; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
           <v-icon size="120">mdi-clipboard-check</v-icon>
@@ -13,7 +13,8 @@
               <v-icon size="48" class="mr-3" color="#2E7D32">mdi-clipboard-text-outline</v-icon>
               <div>
                 <h1 class="text-h3 font-weight-bold mb-1" style="color: #1B5E20;">Sipariş Formu</h1>
-                <p class="text-h6 mb-0" style="color: #2E7D32; opacity: 0.8;">Yeni sipariş oluşturma ve paket yönetimi</p>
+                <p class="text-h6 mb-0" style="color: #2E7D32; opacity: 0.8;">Yeni sipariş oluşturma ve paket yönetimi
+                </p>
               </div>
             </div>
             <div class="d-flex align-center">
@@ -28,7 +29,7 @@
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center">
-            <v-btn size="x-large" color="white" variant="elevated" @click="() => {}" class="font-weight-bold" 
+            <v-btn size="x-large" color="white" variant="elevated" @click="() => { }" class="font-weight-bold"
               style="color: #2E7D32 !important; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);">
               <v-icon left size="20">mdi-plus-circle</v-icon>
               Hızlı Sipariş
@@ -60,12 +61,12 @@
                 @change="onDateChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.fullTarih" label="Gün" readonly placeholder="Tarih seçiniz..." 
+              <v-text-field v-model="form.fullTarih" label="Gün" readonly placeholder="Tarih seçiniz..."
                 variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
               <v-select v-model="form.teslimatTuruId" :items="dropdowns.teslimatTurleri" item-title="ad" item-value="id"
-                label="Teslimat Türü" :rules="[rules.required]" @update:modelValue="handleTeslimatChange" 
+                label="Teslimat Türü" :rules="[rules.required]" @update:modelValue="handleTeslimatChange"
                 variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6" v-if="showSube">
@@ -89,8 +90,8 @@
                 label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" 
-                variant="outlined" color="#388E3C" />
+              <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" variant="outlined"
+                color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11" :rules="[rules.phone]"
@@ -115,7 +116,7 @@
                     <v-col v-for="(adres, i) in cariAdresler" :key="i" cols="12" md="6" lg="4">
                       <v-card :elevation="selectedAdres === adres.adres ? 8 : 2"
                         :class="['adres-row-card', { 'adres-row-selected': selectedAdres === adres.adres }]"
-                        @click="selectAdres(adres.adres)" 
+                        @click="selectAdres(adres.adres)"
                         :style="selectedAdres === adres.adres ? 'border: 2px solid #388E3C; background: #E8F5E9;' : 'border: 1px solid #E0E0E0;'">
                         <div class="d-flex align-center justify-space-between pa-3">
                           <div>
@@ -155,24 +156,44 @@
           </v-avatar>
           <div>
             <h3 class="text-h6 font-weight-bold">Paket Yönetimi</h3>
-            <p class="text-body-2 opacity-80 ma-0">Ambalaj türlerini seçin ve içeriklerini düzenleyin</p>
+            <p class="text-body-2 opacity-80 ma-0">Tepsi/Tava veya Kutu seçin ve içeriklerini düzenleyin</p>
           </div>
         </div>
       </v-card-title>
 
       <v-card-text class="pa-6">
         <v-row>
-          <v-col v-for="ambalaj in dropdowns.ambalajlar" :key="ambalaj.id" cols="6" md="3">
-            <v-card class="package-card pa-4 text-center" elevation="2" @click="openPackageDialog(ambalaj)"
+          <!-- Tepsi/Tava Kartı -->
+          <v-col cols="6" md="3">
+            <v-card class="package-card pa-4 text-center" elevation="2"
+              @click="openPackageDialog({ id: 'tepsi', ad: 'Tepsi/Tava' })"
               style="cursor: pointer; border: 1px solid #FFE0B2; transition: all 0.3s ease; border-radius: 12px;"
-              :style="selectedAmbalajId === ambalaj.id ? 'background: #FFF3E0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);' : 'background: white;'">
-              <v-icon size="48" :color="selectedAmbalajId === ambalaj.id ? '#E65100' : '#FF9800'" class="mb-3">
-                {{ getAmbalajIcon(ambalaj.ad) }}
+              :style="selectedPackageType === 'tepsi' ? 'background: #FFF3E0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);' : 'background: white;'">
+              <v-icon size="48" :color="selectedPackageType === 'tepsi' ? '#E65100' : '#FF9800'" class="mb-3">
+                mdi-silverware-fork-knife
               </v-icon>
-              <h4 class="text-h6 font-weight-bold mb-2" :style="{ color: selectedAmbalajId === ambalaj.id ? '#E65100' : '#FF9800' }">
-                {{ ambalaj.ad }}
+              <h4 class="text-h6 font-weight-bold mb-2"
+                :style="{ color: selectedPackageType === 'tepsi' ? '#E65100' : '#FF9800' }">
+                Tepsi/Tava
               </h4>
-              <p class="text-body-2" style="color: #757575;">Paketi düzenlemek için tıklayın</p>
+              <p class="text-body-2" style="color: #757575;">Tepsi veya tava paketi oluşturun</p>
+            </v-card>
+          </v-col>
+
+          <!-- Kutu Kartı -->
+          <v-col cols="6" md="3">
+            <v-card class="package-card pa-4 text-center" elevation="2"
+              @click="openPackageDialog({ id: 'kutu', ad: 'Kutu' })"
+              style="cursor: pointer; border: 1px solid #FFE0B2; transition: all 0.3s ease; border-radius: 12px;"
+              :style="selectedPackageType === 'kutu' ? 'background: #FFF3E0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);' : 'background: white;'">
+              <v-icon size="48" :color="selectedPackageType === 'kutu' ? '#E65100' : '#FF9800'" class="mb-3">
+                mdi-package-variant-closed
+              </v-icon>
+              <h4 class="text-h6 font-weight-bold mb-2"
+                :style="{ color: selectedPackageType === 'kutu' ? '#E65100' : '#FF9800' }">
+                Kutu
+              </h4>
+              <p class="text-body-2" style="color: #757575;">Kutu paketi oluşturun</p>
             </v-card>
           </v-col>
         </v-row>
@@ -201,10 +222,11 @@
       <v-card-text class="pa-6">
         <v-row dense>
           <v-col v-for="(pkg, index) in orderPackages" :key="index" cols="12" md="6" lg="4">
-            <v-card class="package-summary-card h-100" elevation="1" style="border: 1px solid #E1BEE7; border-radius: 12px;">
+            <v-card class="package-summary-card h-100" elevation="1"
+              style="border: 1px solid #E1BEE7; border-radius: 12px;">
               <v-card-title class="d-flex justify-space-between text-body-1 font-weight-medium pa-3"
                 style="background: #F3E5F5; color: #4A148C; border-radius: 12px 12px 0 0;">
-                <span>{{ pkg.ambalajAdi }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : '' }}</span>
+                <span>{{ pkg.packageName }} {{ pkg.specificPackageName ? `(${pkg.specificPackageName})` : '' }}</span>
                 <v-btn icon="mdi-delete" color="#7B1FA2" size="x-small" variant="text"
                   @click="removeOrderPackage(index)"></v-btn>
               </v-card-title>
@@ -216,7 +238,8 @@
                     <v-icon size="x-small" class="mr-2" color="#7B1FA2">{{ getUrunIcon(item.urunAdi) }}</v-icon>
                   </template>
                   <template v-slot:append>
-                    <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim }}</span>
+                    <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim
+                      }}</span>
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
@@ -231,7 +254,7 @@
 
     <!-- Submit Section -->
     <div class="text-center mt-8">
-      <v-btn size="x-large" @click="submitForm" :disabled="orderPackages.length === 0" 
+      <v-btn size="x-large" @click="submitForm" :disabled="orderPackages.length === 0"
         prepend-icon="mdi-check-circle-outline" class="font-weight-bold px-8"
         style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
         Siparişi Kaydet
@@ -241,18 +264,18 @@
     <v-dialog v-model="isPackageDialogOpen" persistent max-width="700px" transition="dialog-bottom-transition">
       <v-card>
         <v-card-title class="bg-primary">
-          <span class="text-h6">{{ currentPackage.ambalajAdi }} İçeriği</span>
+          <span class="text-h6">{{ currentPackage.packageName }} İçeriği</span>
         </v-card-title>
         <v-card-text class="pt-4">
           <v-container>
             <v-row dense>
-              <v-col cols="12" v-if="currentPackage.ambalajAdi === 'Kutu'">
+              <v-col cols="12" v-if="currentPackage.packageType === 'kutu'">
                 <v-select v-model="currentPackage.kutuId" :items="dropdowns.kutular" item-title="ad" item-value="id"
-                  label="Spesifik Kutu Tipi Seçin" :rules="[rules.required]" />
+                  label="Spesifik Kutu Tipi Seçin" :rules="[rules.required]" variant="outlined" />
               </v-col>
-              <v-col cols="12" v-if="currentPackage.ambalajAdi === 'Tepsi/Tava'">
+              <v-col cols="12" v-if="currentPackage.packageType === 'tepsi'">
                 <v-select v-model="currentPackage.tepsiTavaId" :items="dropdowns.tepsiTavalar" item-title="ad"
-                  item-value="id" label="Spesifik Tepsi/Tava Tipi Seçin" :rules="[rules.required]" />
+                  item-value="id" label="Spesifik Tepsi/Tava Tipi Seçin" :rules="[rules.required]" variant="outlined" />
               </v-col>
 
               <v-col cols="12" sm="5">
@@ -335,11 +358,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
-import { createCustomVuetify } from '../plugins/vuetify';
-
-// Sipariş modülüne özel tema ile Vuetify instance'ı oluştur
-const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
-provide('vuetify', siparisVuetify);
+// Custom Vuetify theme devre dışı (test için)
+// import { createCustomVuetify } from '../plugins/vuetify';
+// const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
+// provide('vuetify', siparisVuetify);
 
 const valid = ref(true);
 const formRef = ref(null);
@@ -369,7 +391,6 @@ const dropdowns = reactive({
   teslimatTurleri: [],
   subeler: [],
   aliciTipleri: [],
-  ambalajlar: [],
   urunler: [],
   kutular: [],
   tepsiTavalar: [],
@@ -378,11 +399,11 @@ const dropdowns = reactive({
 
 const orderPackages = ref([]);
 const isPackageDialogOpen = ref(false);
-const selectedAmbalajId = ref(null);
+const selectedPackageType = ref(null); // 'tepsi' veya 'kutu'
 
 const currentPackage = reactive({
-  ambalajId: null,
-  ambalajAdi: '',
+  packageType: null, // 'tepsi' veya 'kutu'
+  packageName: '',
   kutuId: null,
   tepsiTavaId: null,
   urunler: []
@@ -469,13 +490,14 @@ function handleGonderenChange() {
   }
 }
 
-function openPackageDialog(ambalaj) {
-  if (!ambalaj) return;
-  currentPackage.ambalajId = ambalaj.id;
-  currentPackage.ambalajAdi = ambalaj.ad;
+function openPackageDialog(packageInfo) {
+  if (!packageInfo) return;
+  currentPackage.packageType = packageInfo.id; // 'tepsi' veya 'kutu'
+  currentPackage.packageName = packageInfo.ad;
   currentPackage.kutuId = null;
   currentPackage.tepsiTavaId = null;
   currentPackage.urunler = [];
+  selectedPackageType.value = packageInfo.id;
   newItemInPackage.value = { urunId: null, urunAdi: '', miktar: null, birim: 'Gram' };
   isPackageDialogOpen.value = true;
 }
@@ -498,8 +520,8 @@ function addItemToCurrentPackage() {
 function removeItemFromCurrentPackage(index) { currentPackage.urunler.splice(index, 1); }
 function cancelPackageDialog() { isPackageDialogOpen.value = false; }
 function isSpecificPackageSelected() {
-  if (currentPackage.ambalajAdi === 'Kutu') return !!currentPackage.kutuId;
-  if (currentPackage.ambalajAdi === 'Tepsi/Tava') return !!currentPackage.tepsiTavaId;
+  if (currentPackage.packageType === 'kutu') return !!currentPackage.kutuId;
+  if (currentPackage.packageType === 'tepsi') return !!currentPackage.tepsiTavaId;
   return true;
 }
 
@@ -513,22 +535,22 @@ function savePackage() {
     return;
   }
   let specificName = '';
-  if (currentPackage.kutuId) { specificName = dropdowns.kutular.find(k => k.id === currentPackage.kutuId)?.ad || ''; }
-  else if (currentPackage.tepsiTavaId) { specificName = dropdowns.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || ''; }
+  if (currentPackage.kutuId) {
+    specificName = dropdowns.kutular.find(k => k.id === currentPackage.kutuId)?.ad || '';
+  }
+  else if (currentPackage.tepsiTavaId) {
+    specificName = dropdowns.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || '';
+  }
+
   const packageToAdd = JSON.parse(JSON.stringify(currentPackage));
   packageToAdd.specificPackageName = specificName;
   orderPackages.value.push(packageToAdd);
   isPackageDialogOpen.value = false;
-  showSnackbar('Sipariş başarıyla kaydedildi!', 'success');
+  selectedPackageType.value = null;
+  showSnackbar('Paket başarıyla eklendi!', 'success');
 }
 
 function removeOrderPackage(index) { orderPackages.value.splice(index, 1); }
-function getAmbalajIcon(ambalajAdi) {
-  if (ambalajAdi === 'Kutu') return 'mdi-package-variant-closed';
-  if (ambalajAdi === 'Tepsi/Tava') return 'mdi-silverware-fork-knife';
-  if (ambalajAdi === 'Özel') return 'mdi-star-outline';
-  return 'mdi-help-box-outline';
-}
 
 function getUrunIcon(urunAdi) {
   if (!urunAdi) return 'mdi-help-circle-outline';
@@ -633,7 +655,6 @@ async function submitForm() {
   // Her paketteki her ürünü düzleştir
   const siparisPayload = orderPackages.value.flatMap(pkg =>
     pkg.urunler.map(item => ({
-      ambalajId: pkg.ambalajId,
       urunId: item.urunId,
       miktar: item.miktar,
       birim: item.birim,
@@ -695,6 +716,7 @@ function resetForm() {
   aliciSearch.value = '';
   cariAdresler.value = [];
   selectedAdres.value = '';
+  selectedPackageType.value = null;
 }
 
 </script>

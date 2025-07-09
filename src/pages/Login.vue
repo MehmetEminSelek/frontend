@@ -30,8 +30,8 @@
               <div class="input-group mb-6">
                 <label class="input-label">Kullanıcı Adı / Email</label>
                 <v-text-field
-                  v-model="email"
-                  placeholder="kullanici@example.com"
+                  v-model="kullaniciAdi"
+                  placeholder="bari8 (test kullanıcısı)"
                   prepend-inner-icon="mdi-account-outline"
                   variant="outlined"
                   density="comfortable"
@@ -45,9 +45,9 @@
               <div class="input-group mb-6">
                 <label class="input-label">Şifre</label>
                 <v-text-field
-                  v-model="password"
+                  v-model="sifre"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="temp123 (test şifresi)"
                   prepend-inner-icon="mdi-lock-outline"
                   variant="outlined"
                   density="comfortable"
@@ -113,11 +113,11 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { apiCall } from '@/utils/api';
 
-const email = ref('');
-const password = ref('');
+const kullaniciAdi = ref('');
+const sifre = ref('');
 const loading = ref(false);
 const error = ref('');
 const router = useRouter();
@@ -127,18 +127,28 @@ async function login() {
   error.value = '';
   
   try {
-    const res = await axios.post('/api/auth/login', { 
-      email: email.value, 
-      password: password.value 
+    const res = await apiCall('/auth/login', { 
+      method: 'POST',
+      data: {
+        kullaniciAdi: kullaniciAdi.value, 
+        sifre: sifre.value 
+      }
     });
     
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    
-    // Smooth transition to main app
-    router.push({ name: 'SiparisFormu' });
+    if (res.success) {
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+      // Rol mapping: GENEL_MUDUR => admin, diğerleri => user
+      const mappedRole = res.user.role === 'GENEL_MUDUR' ? 'admin' : 'user';
+      localStorage.setItem('userRole', mappedRole);
+      
+      // Smooth transition to main app
+      router.push({ name: 'SiparisFormu' });
+    } else {
+      error.value = res.message || 'Giriş başarısız';
+    }
   } catch (err) {
-    error.value = err.response?.data?.message || 'Giriş başarısız.';
+    error.value = err.message || 'Giriş başarısız.';
   } finally {
     loading.value = false;
   }

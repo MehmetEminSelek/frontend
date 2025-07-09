@@ -5,10 +5,11 @@
         class="sidebar-pastel text-dark" width="280" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
         :touchless="!isMobile" @click:outside="onDrawerOutsideClick" @update:model-value="onDrawerUpdate"
         style="background: linear-gradient(180deg, #F5F7FA 0%, #E8F1F8 100%); box-shadow: 2px 0 12px rgba(0,0,0,0.05);">
-        
+
         <v-list nav density="comfortable" class="pa-2">
           <!-- Header -->
-          <v-list-item class="mb-3" style="background: linear-gradient(135deg, #A1887F 0%, #BCAAA4 100%); border-radius: 12px; color: white;">
+          <v-list-item class="mb-3"
+            style="background: linear-gradient(135deg, #A1887F 0%, #BCAAA4 100%); border-radius: 12px; color: white;">
             <template v-slot:prepend>
               <v-avatar color="rgba(255,255,255,0.2)" size="36">
                 <v-icon color="white">mdi-factory</v-icon>
@@ -94,9 +95,8 @@
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/personel-yonetimi" title="Personel Yönetimi" link
-            prepend-icon="mdi-account-tie" :active="isActive('/main/personel-yonetimi')"
-            class="modern-nav-item mb-1" @click="onMenuClick"
+          <v-list-item to="/main/personel-yonetimi" title="Personel Yönetimi" link prepend-icon="mdi-account-tie"
+            :active="isActive('/main/personel-yonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
             style="border-radius: 8px; color: #5D4037;">
             <template v-slot:prepend>
               <v-icon color="#8D6E63">mdi-account-tie</v-icon>
@@ -111,17 +111,17 @@
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/MalzemeFiyatlari" title="Malzeme Fiyatları" link prepend-icon="mdi-package-variant-closed"
-            :active="isActive('/main/MalzemeFiyatlari')" class="modern-nav-item mb-1" @click="onMenuClick"
-            style="border-radius: 8px; color: #5D4037;">
+          <v-list-item to="/main/MalzemeFiyatlari" title="Malzeme Fiyatları" link
+            prepend-icon="mdi-package-variant-closed" :active="isActive('/main/MalzemeFiyatlari')"
+            class="modern-nav-item mb-1" @click="onMenuClick" style="border-radius: 8px; color: #5D4037;">
             <template v-slot:prepend>
               <v-icon color="#8D6E63">mdi-package-variant-closed</v-icon>
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/recete-yonetimi" title="Reçete Yönetimi" link
-            prepend-icon="mdi-receipt-text-outline" :active="isActive('/main/recete-yonetimi')" class="modern-nav-item mb-1"
-            @click="onMenuClick" style="border-radius: 8px; color: #5D4037;">
+          <v-list-item to="/main/recete-yonetimi" title="Reçete Yönetimi" link prepend-icon="mdi-receipt-text-outline"
+            :active="isActive('/main/recete-yonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
+            style="border-radius: 8px; color: #5D4037;">
             <template v-slot:prepend>
               <v-icon color="#8D6E63">mdi-receipt-text-outline</v-icon>
             </template>
@@ -154,7 +154,7 @@
       </v-navigation-drawer>
 
       <!-- Top App Bar -->
-      <v-app-bar v-if="currentUser" app elevation="0" height="64" 
+      <v-app-bar v-if="currentUser" app elevation="0" height="64"
         style="background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); border-bottom: 1px solid #E0E7ED;">
         <v-app-bar-nav-icon class="d-md-none" @click="drawer = !drawer" color="#8D6E63"></v-app-bar-nav-icon>
 
@@ -222,27 +222,33 @@
 
           <!-- Login button (only when not logged in) -->
           <div v-if="!currentUser" style="position:fixed;left:24px;bottom:24px;z-index:2000;">
-            <v-btn icon size="large" style="background: linear-gradient(135deg, #A1887F 0%, #8D6E63 100%); color: white; box-shadow: 0 4px 12px rgba(161, 136, 127, 0.3);" @click="loginDialog = true">
+            <v-btn icon size="large"
+              style="background: linear-gradient(135deg, #A1887F 0%, #8D6E63 100%); color: white; box-shadow: 0 4px 12px rgba(161, 136, 127, 0.3);"
+              @click="loginDialog = true">
               <v-icon>mdi-account-circle</v-icon>
             </v-btn>
           </div>
-          
+
           <!-- Login Dialog -->
           <v-dialog v-model="loginDialog" max-width="400">
             <v-card style="border-radius: 16px; overflow: hidden;">
-              <v-card-title class="text-h6" style="background: linear-gradient(135deg, #A1887F 0%, #8D6E63 100%); color: white;">Giriş Yap</v-card-title>
+              <v-card-title class="text-h6"
+                style="background: linear-gradient(135deg, #A1887F 0%, #8D6E63 100%); color: white;">Giriş
+                Yap</v-card-title>
               <v-card-text class="pa-6">
                 <v-text-field v-model="loginForm.email" label="Kullanıcı Adı veya Email"
-                  placeholder="Kullanıcı Adı veya Email" prepend-inner-icon="mdi-account" required autofocus 
+                  placeholder="Kullanıcı Adı veya Email" prepend-inner-icon="mdi-account" required autofocus
                   variant="outlined" color="#8D6E63" />
                 <v-text-field v-model="loginForm.password" label="Şifre" placeholder="Şifre"
                   prepend-inner-icon="mdi-lock" type="password" required variant="outlined" color="#8D6E63" />
-                <v-alert v-if="loginError" type="error" dense class="mt-2" style="border-radius: 8px;">{{ loginError }}</v-alert>
+                <v-alert v-if="loginError" type="error" dense class="mt-2" style="border-radius: 8px;">{{ loginError
+                  }}</v-alert>
               </v-card-text>
               <v-card-actions class="pa-4">
                 <v-spacer />
                 <v-btn variant="text" @click="loginDialog = false" style="color: #8D6E63;">İptal</v-btn>
-                <v-btn @click="handleLogin" :loading="loginLoading" style="background: #8D6E63; color: white;">GİRİŞ YAP</v-btn>
+                <v-btn @click="handleLogin" :loading="loginLoading" style="background: #8D6E63; color: white;">GİRİŞ
+                  YAP</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -255,7 +261,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { apiCall } from '../utils/api.js';
 import { useRealtimeStore } from '../stores/realtime.js';
 // import { socketService } from '../composables/useSocket.js'; // Socket.IO disabled
 import NotificationPanel from '../components/NotificationPanel.vue';
@@ -303,22 +309,30 @@ async function handleLogin() {
   loginError.value = '';
   loginLoading.value = true;
   try {
-    const res = await axios.post('/api/auth/login', loginForm.value);
-    if (res.data && res.data.user && res.data.token) {
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('token', res.data.token);
-      currentUser.value = res.data.user;
+    // Backend'in beklediği şekilde parametreleri mapliyoruz
+    const payload = {
+      kullaniciAdi: loginForm.value.email,
+      sifre: loginForm.value.password
+    };
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
+      data: payload
+    });
+    
+    if (data && data.user && data.token) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      // Rol mapping: GENEL_MUDUR => admin, diğerleri => user
+      const mappedRole = data.user.role === 'GENEL_MUDUR' ? 'admin' : 'user';
+      localStorage.setItem('userRole', mappedRole);
+      currentUser.value = data.user;
       loginDialog.value = false;
-
-      // Socket.IO temporarily disabled
-      // socketService.connect();
-
       window.location.reload();
     } else {
       loginError.value = 'Giriş başarısız.';
     }
   } catch (e) {
-    loginError.value = e.response?.data?.message || 'Giriş başarısız.';
+    loginError.value = e.response?.data?.message || e.message || 'Giriş başarısız.';
   } finally {
     loginLoading.value = false;
   }

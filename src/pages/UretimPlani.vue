@@ -2,7 +2,7 @@
     <v-container class="py-6 px-2 px-md-8" fluid>
         <!-- Hero Section -->
         <div class="hero-section mb-6">
-            <v-card class="pa-6 rounded-xl elevation-4" 
+            <v-card class="pa-6 rounded-xl elevation-4"
                 style="background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 50%, #81D4FA 100%); color: #0D47A1; position: relative; overflow: hidden;">
                 <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
                     <v-icon size="120">mdi-factory</v-icon>
@@ -12,8 +12,10 @@
                         <div class="d-flex align-center mb-3">
                             <v-icon size="48" class="mr-3" color="#1565C0">mdi-chart-timeline-variant</v-icon>
                             <div>
-                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #0D47A1;">Üretim Planı & Maliyet</h1>
-                                <p class="text-h6 mb-0" style="color: #1565C0; opacity: 0.8;">Sipariş bazlı üretim durumu ve karlılık analizi</p>
+                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #0D47A1;">Üretim Planı & Maliyet
+                                </h1>
+                                <p class="text-h6 mb-0" style="color: #1565C0; opacity: 0.8;">Sipariş bazlı üretim
+                                    durumu ve karlılık analizi</p>
                             </div>
                         </div>
                         <div class="d-flex align-center">
@@ -29,7 +31,8 @@
                     </v-col>
                     <v-col cols="12" md="4" class="text-center">
                         <v-btn size="x-large" color="white" variant="elevated" @click="fetchData" :loading="loading"
-                            class="font-weight-bold" style="color: #1565C0 !important; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.2);">
+                            class="font-weight-bold"
+                            style="color: #1565C0 !important; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.2);">
                             <v-icon left size="20">mdi-refresh</v-icon>
                             Verileri Yenile
                         </v-btn>
@@ -47,26 +50,14 @@
             <v-card-text class="pt-0">
                 <v-row>
                     <v-col cols="12" md="4">
-                        <v-text-field 
-                            v-model="startDate" 
-                            label="Başlangıç Tarihi" 
-                            type="date"
-                            prepend-inner-icon="mdi-calendar-start"
-                            variant="outlined" 
-                            density="comfortable"
-                            color="#42A5F5"
-                            hide-details />
+                        <v-text-field v-model="startDate" label="Başlangıç Tarihi" type="date"
+                            prepend-inner-icon="mdi-calendar-start" variant="outlined" density="comfortable"
+                            color="#42A5F5" hide-details />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-text-field 
-                            v-model="endDate" 
-                            label="Bitiş Tarihi" 
-                            type="date"
-                            prepend-inner-icon="mdi-calendar-end"
-                            variant="outlined"
-                            density="comfortable"
-                            color="#42A5F5"
-                            hide-details />
+                        <v-text-field v-model="endDate" label="Bitiş Tarihi" type="date"
+                            prepend-inner-icon="mdi-calendar-end" variant="outlined" density="comfortable"
+                            color="#42A5F5" hide-details />
                     </v-col>
                     <v-col cols="12" md="4" class="d-flex align-center">
                         <v-btn color="#42A5F5" variant="outlined" @click="fetchData" :loading="loading"
@@ -81,31 +72,34 @@
         <!-- Summary Cards -->
         <v-row class="mb-6">
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #FFECB3 0%, #FFD54F 100%); color: #E65100; border: 1px solid #FFE0B2;">
                     <v-icon size="40" class="mb-2">mdi-clock-fast</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ data?.genel?.bekleyenMaliyet ? formatCurrency(data.genel.bekleyenMaliyet) : '₺0' }}</div>
+                    <div class="text-h4 font-weight-bold">{{ data?.genel?.bekleyenMaliyet ?
+                        formatCurrency(data.genel.bekleyenMaliyet) : '₺0' }}</div>
                     <div class="text-body-2">Bekleyen Maliyet</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%); color: #2E7D32; border: 1px solid #E8F5E9;">
                     <v-icon size="40" class="mb-2">mdi-check-circle</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ data?.genel?.toplamCiro ? formatCurrency(data.genel.toplamCiro) : '₺0' }}</div>
+                    <div class="text-h4 font-weight-bold">{{ data?.genel?.toplamCiro ?
+                        formatCurrency(data.genel.toplamCiro) : '₺0' }}</div>
                     <div class="text-body-2">Toplam Ciro</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #E1BEE7 0%, #CE93D8 100%); color: #6A1B9A; border: 1px solid #F3E5F5;">
                     <v-icon size="40" class="mb-2">mdi-trending-up</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ data?.hazırlananlar?.toplam?.toplamKar ? formatCurrency(data.hazırlananlar.toplam.toplamKar) : '₺0' }}</div>
+                    <div class="text-h4 font-weight-bold">{{ data?.genel?.toplamKar ?
+                        formatCurrency(data.genel.toplamKar) : '₺0' }}</div>
                     <div class="text-body-2">Toplam Kar</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #BBDEFB 0%, #90CAF9 100%); color: #1565C0; border: 1px solid #E3F2FD;">
                     <v-icon size="40" class="mb-2">mdi-package-variant</v-icon>
                     <div class="text-h4 font-weight-bold">{{ data?.genel?.toplamSiparis || 0 }}</div>
@@ -131,7 +125,8 @@
                 <!-- Hazırlanacaklar Tab -->
                 <v-window-item value="hazirlanacak">
                     <v-card-text class="pa-4">
-                        <v-alert v-if="error" type="error" class="mb-4" closable style="border-radius: 8px;">{{ error }}</v-alert>
+                        <v-alert v-if="error" type="error" class="mb-4" closable style="border-radius: 8px;">{{ error
+                            }}</v-alert>
 
                         <!-- Malzeme İhtiyacı Özeti -->
                         <div v-if="data?.hazirlanacaklar?.toplam?.malzemeIhtiyaci?.length" class="mb-6">
@@ -140,7 +135,7 @@
                                 Toplam Malzeme İhtiyacı
                             </h3>
                             <v-row>
-                                <v-col v-for="malzeme in data.hazirlanacaklar.toplam.malzemeIhtiyaci.slice(0, 6)" 
+                                <v-col v-for="malzeme in data.hazirlanacaklar.toplam.malzemeIhtiyaci.slice(0, 6)"
                                     :key="malzeme.stokKod" cols="12" md="4">
                                     <v-card variant="outlined" class="pa-3">
                                         <div class="d-flex justify-space-between align-center">
@@ -152,7 +147,8 @@
                                                 <div class="font-weight-bold" style="color: #E65100;">
                                                     {{ formatWeight(malzeme.miktar) }}
                                                 </div>
-                                                <div class="text-caption">{{ formatCurrency(malzeme.toplamMaliyet) }}</div>
+                                                <div class="text-caption">{{ formatCurrency(malzeme.toplamMaliyet) }}
+                                                </div>
                                             </div>
                                         </div>
                                     </v-card>
@@ -165,14 +161,10 @@
                             <v-icon class="mr-2" color="#E65100">mdi-list-box</v-icon>
                             Hazırlanacak Siparişler
                         </h3>
-                        <v-data-table 
-                            :headers="hazirlanacakHeaders" 
-                            :items="data?.hazirlanacaklar?.siparisler || []" 
-                            :loading="loading"
-                            class="pending-table rounded-lg"
-                            density="comfortable"
+                        <v-data-table :headers="hazirlanacakHeaders" :items="data?.hazirlanacaklar?.siparisler || []"
+                            :loading="loading" class="pending-table rounded-lg" density="comfortable"
                             items-per-page="10">
-                            
+
                             <template v-slot:item.tarih="{ item }">
                                 <span class="text-body-2">{{ formatDate(item.tarih) }}</span>
                             </template>
@@ -186,8 +178,8 @@
 
                             <template v-slot:item.urunler="{ item }">
                                 <div>
-                                    <v-chip v-for="kalem in item.kalemler.slice(0, 2)" :key="kalem.id" 
-                                        size="x-small" class="ma-1" color="#FFE0B2" style="color: #E65100;">
+                                    <v-chip v-for="kalem in item.kalemler.slice(0, 2)" :key="kalem.id" size="x-small"
+                                        class="ma-1" color="#FFE0B2" style="color: #E65100;">
                                         {{ kalem.urun.ad }} ({{ kalem.miktar }}{{ kalem.birim }})
                                     </v-chip>
                                     <span v-if="item.kalemler.length > 2" class="text-caption">
@@ -203,7 +195,7 @@
                             </template>
 
                             <template v-slot:item.actions="{ item }">
-                                <v-btn icon="mdi-eye" size="small" color="#42A5F5" variant="text" 
+                                <v-btn icon="mdi-eye" size="small" color="#42A5F5" variant="text"
                                     @click="showSiparisDetay(item)" title="Detay Görüntüle"></v-btn>
                             </template>
                         </v-data-table>
@@ -220,7 +212,7 @@
                                 Kullanılan Malzemeler
                             </h3>
                             <v-row>
-                                <v-col v-for="malzeme in data.hazırlananlar.toplam.kullanılanMalzemeler.slice(0, 6)" 
+                                <v-col v-for="malzeme in data.hazırlananlar.toplam.kullanılanMalzemeler.slice(0, 6)"
                                     :key="malzeme.stokKod" cols="12" md="4">
                                     <v-card variant="outlined" class="pa-3">
                                         <div class="d-flex justify-space-between align-center">
@@ -232,7 +224,8 @@
                                                 <div class="font-weight-bold" style="color: #2E7D32;">
                                                     {{ formatWeight(malzeme.miktar) }}
                                                 </div>
-                                                <div class="text-caption">{{ formatCurrency(malzeme.toplamMaliyet) }}</div>
+                                                <div class="text-caption">{{ formatCurrency(malzeme.toplamMaliyet) }}
+                                                </div>
                                             </div>
                                         </div>
                                     </v-card>
@@ -245,14 +238,10 @@
                             <v-icon class="mr-2" color="#2E7D32">mdi-check-all</v-icon>
                             Hazırlanan Siparişler
                         </h3>
-                        <v-data-table 
-                            :headers="hazırlananHeaders" 
-                            :items="data?.hazırlananlar?.siparisler || []" 
-                            :loading="loading"
-                            class="completed-table rounded-lg"
-                            density="comfortable"
+                        <v-data-table :headers="hazırlananHeaders" :items="data?.hazırlananlar?.siparisler || []"
+                            :loading="loading" class="completed-table rounded-lg" density="comfortable"
                             items-per-page="10">
-                            
+
                             <template v-slot:item.tarih="{ item }">
                                 <span class="text-body-2">{{ formatDate(item.tarih) }}</span>
                             </template>
@@ -270,8 +259,8 @@
 
                             <template v-slot:item.urunler="{ item }">
                                 <div>
-                                    <v-chip v-for="kalem in item.kalemler.slice(0, 2)" :key="kalem.id" 
-                                        size="x-small" class="ma-1" color="#C8E6C9" style="color: #2E7D32;">
+                                    <v-chip v-for="kalem in item.kalemler.slice(0, 2)" :key="kalem.id" size="x-small"
+                                        class="ma-1" color="#C8E6C9" style="color: #2E7D32;">
                                         {{ kalem.urun.ad }} ({{ kalem.miktar }}{{ kalem.birim }})
                                     </v-chip>
                                     <span v-if="item.kalemler.length > 2" class="text-caption">
@@ -293,13 +282,14 @@
                             </template>
 
                             <template v-slot:item.kar="{ item }">
-                                <div class="font-weight-bold" :style="{ color: (item.kar || 0) >= 0 ? '#2E7D32' : '#D32F2F' }">
+                                <div class="font-weight-bold"
+                                    :style="{ color: (item.kar || 0) >= 0 ? '#2E7D32' : '#D32F2F' }">
                                     {{ formatCurrency(item.kar || 0) }}
                                 </div>
                             </template>
 
                             <template v-slot:item.actions="{ item }">
-                                <v-btn icon="mdi-eye" size="small" color="#42A5F5" variant="text" 
+                                <v-btn icon="mdi-eye" size="small" color="#42A5F5" variant="text"
                                     @click="showSiparisDetay(item)" title="Detay Görüntüle"></v-btn>
                             </template>
                         </v-data-table>
@@ -311,7 +301,8 @@
         <!-- Sipariş Detay Dialog -->
         <v-dialog v-model="detayDialog" max-width="800px">
             <v-card v-if="selectedSiparis" style="border-radius: 16px;">
-                <v-card-title class="text-h5" style="background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%); color: white;">
+                <v-card-title class="text-h5"
+                    style="background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%); color: white;">
                     <v-icon class="mr-2">mdi-receipt</v-icon>
                     Sipariş Detayı #{{ selectedSiparis.id }}
                 </v-card-title>
@@ -325,7 +316,7 @@
                             <strong>Tarih:</strong> {{ formatDate(selectedSiparis.tarih) }}
                         </v-col>
                         <v-col cols="6">
-                            <strong>Durum:</strong> {{ selectedSiparis.hazirlanmaDurumu }}
+                            <strong>Durum:</strong> {{ selectedSiparis.durum }}
                         </v-col>
                         <v-col cols="6">
                             <strong>Teslimat:</strong> {{ selectedSiparis.teslimatTuru?.ad }}
@@ -344,11 +335,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="kalem in selectedSiparis.maliyet?.kalemler || []" :key="kalem.urunAd">
-                                <td>{{ kalem.urunAd }}</td>
+                            <tr v-for="kalem in selectedSiparis.kalemler || []" :key="kalem.id">
+                                <td>{{ kalem.urunAdi || kalem.urun?.ad }}</td>
                                 <td>{{ kalem.miktar }} {{ kalem.birim }}</td>
-                                <td>{{ formatCurrency(kalem.birimMaliyet) }}</td>
-                                <td>{{ formatCurrency(kalem.toplamMaliyet) }}</td>
+                                <td>{{ formatCurrency(kalem.birimFiyat) }}</td>
+                                <td>{{ formatCurrency(kalem.toplamTutar) }}</td>
                             </tr>
                         </tbody>
                     </v-table>
@@ -357,17 +348,23 @@
                     <v-row>
                         <v-col cols="6">
                             <div class="text-subtitle-1 font-weight-bold">Maliyet Özeti:</div>
-                            <div>Ürün Maliyeti: {{ formatCurrency((selectedSiparis.maliyet?.toplam || 0) - (selectedSiparis.maliyet?.kargoUcreti || 0) - (selectedSiparis.maliyet?.digerMasraflar || 0)) }}</div>
-                            <div>Kargo: {{ formatCurrency(selectedSiparis.maliyet?.kargoUcreti || 0) }}</div>
-                            <div>Diğer: {{ formatCurrency(selectedSiparis.maliyet?.digerMasraflar || 0) }}</div>
-                            <div class="font-weight-bold">Toplam: {{ formatCurrency(selectedSiparis.maliyet?.toplam || 0) }}</div>
+                            <div>Ürün Maliyeti: {{ formatCurrency(selectedSiparis.araToplam || 0) }}</div>
+                            <div>KDV: {{ formatCurrency(selectedSiparis.kdvToplam || 0) }}</div>
+                            <div>Kargo: {{ formatCurrency(selectedSiparis.kargoUcreti || 0) }}</div>
+                            <div>Diğer: {{ formatCurrency(selectedSiparis.digerHizmetTutari || 0) }}</div>
+                            <div class="font-weight-bold">Toplam: {{ formatCurrency(selectedSiparis.toplamTutar || 0) }}
+                            </div>
                         </v-col>
-                        <v-col v-if="selectedSiparis.satis" cols="6">
+                        <v-col cols="6">
                             <div class="text-subtitle-1 font-weight-bold">Satış & Kar:</div>
-                            <div>Satış Tutarı: {{ formatCurrency(selectedSiparis.satis?.toplam || 0) }}</div>
-                            <div>Maliyet: {{ formatCurrency(selectedSiparis.maliyet?.toplam || 0) }}</div>
-                            <div class="font-weight-bold" :style="{ color: (selectedSiparis.kar || 0) >= 0 ? '#2E7D32' : '#D32F2F' }">
-                                Kar: {{ formatCurrency(selectedSiparis.kar || 0) }}
+                            <div>Satış Tutarı: {{ formatCurrency(selectedSiparis.toplamTutar || 0) }}</div>
+                            <div>Maliyet: {{ formatCurrency(selectedSiparis.toplamMaliyet || 0) }}</div>
+                            <div class="font-weight-bold"
+                                :style="{ color: (selectedSiparis.karMarji || 0) >= 0 ? '#2E7D32' : '#D32F2F' }">
+                                Kar: {{ formatCurrency(selectedSiparis.karMarji || 0) }}
+                            </div>
+                            <div class="text-body-2">
+                                Kar Oranı: {{ ((selectedSiparis.karOrani || 0)).toFixed(1) }}%
                             </div>
                         </v-col>
                     </v-row>
@@ -455,9 +452,9 @@ const hazırlananHeaders = [
 // Functions
 function formatCurrency(amount) {
     if (amount == null) return '₺0,00';
-    return new Intl.NumberFormat('tr-TR', { 
-        style: 'currency', 
-        currency: 'TRY' 
+    return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY'
     }).format(amount);
 }
 
@@ -483,10 +480,10 @@ function showSiparisDetay(siparis) {
 async function fetchData() {
     loading.value = true;
     error.value = null;
-    
+
     try {
         console.log('🔄 Üretim planı verileri yükleniyor...');
-        
+
         const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/uretim-plani`, {
             startDate: startDate.value,
             endDate: endDate.value

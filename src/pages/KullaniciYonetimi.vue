@@ -356,9 +356,9 @@
 
 <script setup>
 import { ref, onMounted, provide, computed } from 'vue';
-import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { createCustomVuetify } from '../plugins/vuetify';
+import { apiCall } from '@/utils/api';
 
 // Personel yönetimi modülüne özel tema ile Vuetify instance'ı oluştur
 const personelTheme = {
@@ -521,7 +521,7 @@ async function fetchPersonel() {
     loading.value = true;
     error.value = null;
     
-    const response = await axios.get('/api/auth/users');
+    const response = await apiCall('/auth/users', {}, 'GET');
     personel.value = response.data;
     
   } catch (err) {
@@ -535,7 +535,7 @@ async function fetchPersonel() {
 
 async function fetchSubeler() {
   try {
-    const response = await axios.get('/api/dropdown');
+    const response = await apiCall('/dropdown', {}, 'GET');
     subeler.value = response.data.subeler || [];
   } catch (err) {
     console.error('Şube verileri yüklenirken hata:', err);
@@ -608,11 +608,11 @@ async function savePersonel() {
     
     if (editingPersonel.value) {
       // Update existing personel
-      await axios.put(`/api/auth/users/${editingPersonel.value.id}`, data);
+      await apiCall(`/auth/users/${editingPersonel.value.id}`, data, 'PUT');
       showSnackbar('Personel başarıyla güncellendi', 'success');
     } else {
       // Create new personel
-      await axios.post('/api/auth/users', data);
+      await apiCall('/auth/users', data, 'POST');
       showSnackbar('Yeni personel başarıyla eklendi', 'success');
     }
     
@@ -630,7 +630,7 @@ async function savePersonel() {
 async function deletePersonel(item) {
   if (confirm(`${item.ad} adlı personeli silmek istediğinizden emin misiniz?`)) {
     try {
-      await axios.delete(`/api/auth/users/${item.id}`);
+      await apiCall(`/auth/users/${item.id}`, {}, 'DELETE');
       showSnackbar('Personel başarıyla silindi', 'success');
       await fetchPersonel();
     } catch (err) {

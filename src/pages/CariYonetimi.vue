@@ -429,12 +429,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import axios from 'axios';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDate } from '../utils/date';
 import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
+import { apiCall } from '@/utils/api';
 
 const cariler = ref([]);
 const search = ref('');
@@ -538,7 +538,7 @@ onBeforeUnmount(() => {
 });
 
 async function fetchCariler() {
-    const { data } = await axios.get('/api/cari');
+    const { data } = await apiCall('/cari', {}, 'GET');
     cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
 }
 
@@ -585,7 +585,7 @@ function closeDialogDetay() {
 
 async function deleteCari(item) {
     if (confirm('Silmek istediğinize emin misiniz?')) {
-        await axios.delete('/api/cari', { data: { id: item.id } });
+        await apiCall('/cari', { id: item.id }, 'DELETE');
         snackbar.value = { show: true, text: 'Cari silindi', color: 'success' };
         fetchCariler();
         detayCari.value = null;
