@@ -2,7 +2,7 @@
   <div class="login-container">
     <!-- Background Pattern -->
     <div class="background-pattern"></div>
-    
+
     <!-- Main Content -->
     <v-container class="login-content fill-height d-flex align-center justify-center">
       <div class="login-wrapper">
@@ -29,43 +29,22 @@
               <!-- Email Field -->
               <div class="input-group mb-6">
                 <label class="input-label">Kullanıcı Adı / Email</label>
-                <v-text-field
-                  v-model="kullaniciAdi"
-                  placeholder="bari8 (test kullanıcısı)"
-                  prepend-inner-icon="mdi-account-outline"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                  class="modern-input"
-                  color="primary"
-                />
+                <v-text-field v-model="kullaniciAdi" placeholder="bari8 (test kullanıcısı)"
+                  prepend-inner-icon="mdi-account-outline" variant="outlined" density="comfortable" hide-details
+                  class="modern-input" color="primary" />
               </div>
 
               <!-- Password Field -->
               <div class="input-group mb-6">
                 <label class="input-label">Şifre</label>
-                <v-text-field
-                  v-model="sifre"
-                  type="password"
-                  placeholder="temp123 (test şifresi)"
-                  prepend-inner-icon="mdi-lock-outline"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                  class="modern-input"
-                  color="primary"
-                />
+                <v-text-field v-model="sifre" type="password" placeholder="temp123 (test şifresi)"
+                  prepend-inner-icon="mdi-lock-outline" variant="outlined" density="comfortable" hide-details
+                  class="modern-input" color="primary" />
               </div>
 
               <!-- Error Alert -->
               <v-slide-y-transition>
-                <v-alert
-                  v-if="error"
-                  type="error"
-                  variant="tonal"
-                  class="mb-6 modern-alert"
-                  rounded="lg"
-                >
+                <v-alert v-if="error" type="error" variant="tonal" class="mb-6 modern-alert" rounded="lg">
                   <template v-slot:prepend>
                     <v-icon>mdi-alert-circle-outline</v-icon>
                   </template>
@@ -74,15 +53,8 @@
               </v-slide-y-transition>
 
               <!-- Login Button -->
-              <v-btn
-                type="submit"
-                :loading="loading"
-                block
-                size="large"
-                class="login-btn text-none"
-                rounded="lg"
-                elevation="2"
-              >
+              <v-btn type="submit" :loading="loading" block size="large" class="login-btn text-none" rounded="lg"
+                elevation="2">
                 <template v-slot:prepend>
                   <v-icon>mdi-login-variant</v-icon>
                 </template>
@@ -115,33 +87,97 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiCall } from '@/utils/api';
+import { useRealtimeStore } from '@/stores/realtime.js';
 
 const kullaniciAdi = ref('');
 const sifre = ref('');
 const loading = ref(false);
 const error = ref('');
 const router = useRouter();
+const realtimeStore = useRealtimeStore();
 
 async function login() {
   loading.value = true;
   error.value = '';
-  
+
   try {
-    const res = await apiCall('/auth/login', { 
+    const res = await apiCall('/auth/login', {
       method: 'POST',
       data: {
-        kullaniciAdi: kullaniciAdi.value, 
-        sifre: sifre.value 
+        kullaniciAdi: kullaniciAdi.value,
+        sifre: sifre.value
       }
     });
-    
+
     if (res.success) {
       localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
-      // Rol mapping: GENEL_MUDUR => admin, diğerleri => user
-      const mappedRole = res.user.role === 'GENEL_MUDUR' ? 'admin' : 'user';
+
+      // Rol mapping düzeltildi: GENEL_MUDUR => admin
+      let mappedRole = 'user';
+      if (res.user.rol === 'GENEL_MUDUR') {
+        mappedRole = 'admin';
+      } else if (res.user.rol === 'SUBE_MUDURU') {
+        mappedRole = 'manager';
+      }
+
       localStorage.setItem('userRole', mappedRole);
-      
+
+      console.log('✅ Login başarılı:', {
+        user: res.user,
+        originalRole: res.user.rol,
+        mappedRole: mappedRole
+      });
+
+      // 🔔 Stok uyarılarını kontrol et ve bildirim gönder
+      if (res.stokUyarilari && res.stokUyarilari.count > 0) {
+        console.log(`⚠️ ${res.user.ad} için ${res.stokUyarilari.count} stok uyarısı bulundu`);
+        
+        // Ana stok uyarı bildirimi
+        realtimeStore.addNotification({
+          type: res.stokUyarilari.severity === 'critical' ? 'critical' : 'warning',
+          title: '🏪 Stok Uyarısı',
+          message: `Hoş geldiniz ${res.user.ad}! ${res.stokUyarilari.message}`,
+          icon: res.stokUyarilari.severity === 'critical' ? 'mdi-alert-circle' : 'mdi-alert',
+          autoRemove: false // Manuel kapatma
+        });
+
+        // Örnekleri detaylı bildirimlerde göster
+        if (res.stokUyarilari.samples && res.stokUyarilari.samples.length > 0) {
+          res.stokUyarilari.samples.forEach((material, index) => {
+            setTimeout(() => {
+              realtimeStore.addNotification({
+                type: material.mevcutStok <= 0 ? 'critical' : 'warning',
+                title: material.mevcutStok <= 0 ? '❌ Negatif Stok' : '⚠️ Düşük Stok',
+                message: `${material.ad}: ${material.mevcutStok}${material.birim}`,
+                icon: 'mdi-package-down',
+                autoRemove: true
+              });
+            }, (index + 1) * 1000); // 1 saniye ara ile göster
+          });
+        }
+
+        // Stok yönetim sayfasına yönlendirme bildirimi
+        setTimeout(() => {
+          realtimeStore.addNotification({
+            type: 'info',
+            title: '📊 Stok Yönetimi',
+            message: 'Detaylı stok durumu için Stok Yönetimi sayfasını ziyaret edin',
+            icon: 'mdi-chart-box-outline',
+            autoRemove: true
+          });
+        }, 3000);
+      } else {
+        // Stok durumu normal bildirimi
+        realtimeStore.addNotification({
+          type: 'success',
+          title: '✅ Hoş Geldiniz',
+          message: `${res.user.ad}, stok durumunuz normal görünüyor`,
+          icon: 'mdi-check-circle',
+          autoRemove: true
+        });
+      }
+
       // Smooth transition to main app
       router.push({ name: 'SiparisFormu' });
     } else {
@@ -170,16 +206,23 @@ async function login() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
-    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: float 20s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(1deg); }
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
 }
 
 .login-content {
@@ -195,7 +238,7 @@ async function login() {
 /* Branding */
 .brand-logo {
   background: linear-gradient(135deg, #d4a574, #b8956a);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .brand-title {
@@ -203,7 +246,7 @@ async function login() {
   font-weight: 700;
   color: #5d4037;
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .brand-subtitle {
@@ -217,7 +260,7 @@ async function login() {
   background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 16px rgba(0, 0, 0, 0.05) !important;
 }
@@ -228,7 +271,7 @@ async function login() {
 
 .login-card:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.15),
     0 4px 20px rgba(0, 0, 0, 0.08) !important;
 }
@@ -310,11 +353,11 @@ async function login() {
     max-width: 90vw;
     padding: 0 1rem;
   }
-  
+
   .brand-title {
     font-size: 1.8rem;
   }
-  
+
   .login-card {
     margin: 0 1rem;
   }

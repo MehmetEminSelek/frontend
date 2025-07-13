@@ -158,9 +158,9 @@
                 <template v-slot:item.guncelFiyat="{ item }">
                     <div v-if="item.guncelFiyat">
                         <div class="font-weight-medium">
-                            {{ formatFiyat(item.guncelFiyat.fiyat) }} / {{ item.guncelFiyat.birim }}
+                            {{ formatFiyat(item.guncelFiyat.kgFiyati) }} / {{ item.guncelFiyat.birim }}
                         </div>
-                        <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'normal'" size="x-small" color="orange"
+                        <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'NORMAL'" size="x-small" color="orange"
                             variant="tonal">
                             {{ item.guncelFiyat.fiyatTipi }}
                         </v-chip>
@@ -258,7 +258,7 @@
                                 </div>
 
                                 <div v-if="urun.guncelFiyat" class="text-h6 font-weight-bold primary--text">
-                                    {{ formatFiyat(urun.guncelFiyat.fiyat) }} / {{ urun.guncelFiyat.birim }}
+                                    {{ formatFiyat(urun.guncelFiyat.kgFiyati) }} / {{ urun.guncelFiyat.birim }}
                                 </div>
                                 <div v-else class="text-body-2 text-grey-500">
                                     Fiyat belirlenmemiş
@@ -473,6 +473,7 @@ export default {
             { title: 'Ürün', key: 'ad', sortable: false },
             { title: 'Kategori', key: 'kategori', sortable: false },
             { title: 'Fiyat', key: 'guncelFiyat', sortable: false },
+            { title: 'Reçete', key: 'recete', sortable: false, width: 120 },
             { title: 'Durum', key: 'durum', sortable: false },
             { title: 'İşlemler', key: 'islemler', sortable: false, width: 120 }
         ]
@@ -594,70 +595,38 @@ export default {
 
         const urunKaydet = async (urunData) => {
             try {
-                const response = await fetch('/api/urunler', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(urunData)
-                })
-
-                if (response.ok) {
+                await apiCall('/urunler', 'POST', urunData)
                     snackbarGoster('Ürün başarıyla oluşturuldu')
                     yeniUrunDialog.value = false
                     urunleriYukle()
-                } else {
-                    const error = await response.json()
-                    snackbarGoster(error.error || 'Ürün oluşturulurken hata oluştu', 'error')
-                }
             } catch (error) {
                 console.error('Ürün kaydetme hatası:', error)
-                snackbarGoster('Ürün kaydedilirken hata oluştu', 'error')
+                snackbarGoster(error.message || 'Ürün kaydedilirken hata oluştu', 'error')
             }
         }
 
         const urunGuncelle = async (urunData) => {
             try {
-                const response = await fetch(`/api/urunler/${seciliUrun.value.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(urunData)
-                })
-
-                if (response.ok) {
+                await apiCall(`/urunler/${seciliUrun.value.id}`, 'PUT', urunData)
                     snackbarGoster('Ürün başarıyla güncellendi')
                     duzenleDialog.value = false
                     urunleriYukle()
-                } else {
-                    const error = await response.json()
-                    snackbarGoster(error.error || 'Ürün güncellenirken hata oluştu', 'error')
-                }
             } catch (error) {
                 console.error('Ürün güncelleme hatası:', error)
-                snackbarGoster('Ürün güncellenirken hata oluştu', 'error')
+                snackbarGoster(error.message || 'Ürün güncellenirken hata oluştu', 'error')
             }
         }
 
         const urunSilOnayla = async () => {
             silmeYukleniyor.value = true
             try {
-                const response = await fetch(`/api/urunler/${seciliUrun.value.id}`, {
-                    method: 'DELETE'
-                })
-
-                if (response.ok) {
+                await apiCall(`/urunler/${seciliUrun.value.id}`, 'DELETE')
                     snackbarGoster('Ürün başarıyla silindi')
                     silmeDialog.value = false
                     urunleriYukle()
-                } else {
-                    const error = await response.json()
-                    snackbarGoster(error.error || 'Ürün silinirken hata oluştu', 'error')
-                }
             } catch (error) {
                 console.error('Ürün silme hatası:', error)
-                snackbarGoster('Ürün silinirken hata oluştu', 'error')
+                snackbarGoster(error.message || 'Ürün silinirken hata oluştu', 'error')
             } finally {
                 silmeYukleniyor.value = false
             }

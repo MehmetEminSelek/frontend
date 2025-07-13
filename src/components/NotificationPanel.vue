@@ -1,156 +1,113 @@
 <template>
   <div class="notification-panel">
-    <!-- Notification Bell Icon -->
-    <v-btn
-      icon
-      size="large"
-      class="notification-button"
-      @click="togglePanel"
-      :color="hasUnread ? 'primary' : 'default'"
-    >
-      <v-icon :color="hasUnread ? 'white' : 'grey'">
-        {{ hasUnread ? 'mdi-bell-ring' : 'mdi-bell' }}
-      </v-icon>
-      <v-badge
-        v-if="unreadCount > 0"
-        :content="unreadCount > 99 ? '99+' : unreadCount"
-        color="error"
-        offset-x="8"
-        offset-y="8"
-      />
-    </v-btn>
+    <!-- Normal Mode - Bell Button & Dropdown -->
+    <div v-if="!embedded">
+      <!-- Notification Bell Icon -->
+      <v-btn
+        icon
+        size="large"
+        class="notification-button"
+        @click="togglePanel"
+        :color="hasUnread ? 'primary' : 'default'"
+      >
+        <v-icon :color="hasUnread ? 'white' : 'grey'">
+          {{ hasUnread ? 'mdi-bell-ring' : 'mdi-bell' }}
+        </v-icon>
+        <v-badge
+          v-if="unreadCount > 0"
+          :content="unreadCount > 99 ? '99+' : unreadCount"
+          color="error"
+          offset-x="8"
+          offset-y="8"
+        />
+      </v-btn>
 
-    <!-- Notification Panel -->
-    <v-menu
-      v-model="isOpen"
-      :close-on-content-click="false"
-      location="bottom end"
-      width="400"
-      max-height="600"
-    >
-      <template v-slot:activator="{ props }">
-        <span v-bind="props"></span>
-      </template>
+      <!-- Notification Panel -->
+      <v-menu
+        v-model="isOpen"
+        :close-on-content-click="false"
+        location="bottom end"
+        width="400"
+        max-height="600"
+      >
+        <template v-slot:activator="{ props }">
+          <span v-bind="props"></span>
+        </template>
 
-      <v-card class="notification-card">
-        <!-- Header -->
-        <v-card-title class="d-flex justify-space-between align-center pa-4 bg-primary">
-          <div class="text-white">
-            <h3>Bildirimler</h3>
-            <div class="d-flex align-center">
-              <v-icon
-                :color="realtimeStore.isConnected ? 'success' : 'error'"
-                size="small"
-                class="mr-1"
-              >
-                {{ realtimeStore.isConnected ? 'mdi-wifi' : 'mdi-wifi-off' }}
-              </v-icon>
-              <span class="text-caption">
-                {{ realtimeStore.isConnected ? 'Canlı' : 'Bağlantı Yok' }}
-              </span>
+        <v-card class="notification-card">
+          <!-- Header -->
+          <v-card-title class="d-flex justify-space-between align-center pa-4 notification-header">
+            <div class="text-white">
+              <h3>Bildirimler</h3>
+              <div class="d-flex align-center">
+                <v-icon
+                  :color="realtimeStore.isConnected ? 'success' : 'error'"
+                  size="small"
+                  class="mr-1"
+                >
+                  {{ realtimeStore.isConnected ? 'mdi-wifi' : 'mdi-wifi-off' }}
+                </v-icon>
+                <span class="text-caption">
+                  {{ realtimeStore.isConnected ? 'Canlı' : 'Bağlantı Yok' }}
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="d-flex">
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="markAllRead"
-              class="text-white mr-2"
-            >
-              <v-icon>mdi-check-all</v-icon>
-            </v-btn>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="clearAll"
-              class="text-white"
-            >
-              <v-icon>mdi-delete-sweep</v-icon>
-            </v-btn>
-          </div>
-        </v-card-title>
-
-        <!-- Notifications List -->
-        <v-card-text class="pa-0" style="max-height: 400px; overflow-y: auto;">
-          <v-list v-if="notifications.length > 0" class="pa-0">
-            <template v-for="(notification, index) in notifications" :key="notification.id">
-              <v-list-item
-                :class="{
-                  'notification-item': true,
-                  'unread': !notification.read,
-                  'critical': notification.type === 'critical'
-                }"
-                @click="markAsRead(notification.id)"
+            <div class="d-flex">
+              <v-btn
+                icon
+                size="small"
+                variant="text"
+                @click="markAllRead"
+                class="text-white mr-2"
               >
-                <template v-slot:prepend>
-                  <v-avatar
-                    :color="getNotificationColor(notification)"
-                    size="40"
-                    class="mr-3"
-                  >
-                    <v-icon :color="notification.type === 'warning' || notification.type === 'error' ? 'white' : 'primary'">
-                      {{ notification.icon || 'mdi-bell' }}
-                    </v-icon>
-                  </v-avatar>
-                </template>
+                <v-icon>mdi-check-all</v-icon>
+              </v-btn>
+              <v-btn
+                icon
+                size="small"
+                variant="text"
+                @click="clearAll"
+                class="text-white"
+              >
+                <v-icon>mdi-delete-sweep</v-icon>
+              </v-btn>
+            </div>
+          </v-card-title>
 
-                <v-list-item-title class="text-body-2 font-weight-medium">
-                  {{ notification.title }}
-                </v-list-item-title>
-                <v-list-item-subtitle class="text-caption">
-                  {{ notification.message }}
-                </v-list-item-subtitle>
-                <v-list-item-subtitle class="text-caption mt-1">
-                  {{ formatTime(notification.timestamp) }}
-                </v-list-item-subtitle>
+          <!-- Notifications List -->
+          <v-card-text class="pa-0" style="max-height: 400px; overflow-y: auto;">
+            <NotificationList
+              :notifications="notifications"
+              :embedded="false"
+              @notification-click="handleNotificationClick"
+              @remove-notification="removeNotification"
+            />
+          </v-card-text>
 
-                <template v-slot:append>
-                  <div class="d-flex flex-column align-center">
-                    <v-btn
-                      icon
-                      size="x-small"
-                      variant="text"
-                      @click.stop="removeNotification(notification.id)"
-                    >
-                      <v-icon size="16">mdi-close</v-icon>
-                    </v-btn>
-                    <v-chip
-                      v-if="!notification.read"
-                      size="x-small"
-                      color="primary"
-                      class="mt-1"
-                    >
-                      Yeni
-                    </v-chip>
-                  </div>
-                </template>
-              </v-list-item>
-              <v-divider v-if="index < notifications.length - 1" />
-            </template>
-          </v-list>
+          <!-- Footer -->
+          <v-card-actions class="pa-4 bg-grey-lighten-5">
+            <v-spacer />
+            <v-btn
+              size="small"
+              variant="text"
+              @click="viewAllNotifications"
+            >
+              Tümünü Görüntüle
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
+    </div>
 
-          <!-- Empty State -->
-          <div v-else class="d-flex flex-column align-center justify-center pa-8">
-            <v-icon size="64" color="grey-lighten-2">mdi-bell-off</v-icon>
-            <p class="text-body-2 text-grey mt-4">Henüz bildirim yok</p>
-          </div>
-        </v-card-text>
-
-        <!-- Footer -->
-        <v-card-actions class="pa-4 bg-grey-lighten-5">
-          <v-spacer />
-          <v-btn
-            size="small"
-            variant="text"
-            @click="viewAllNotifications"
-          >
-            Tümünü Görüntüle
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-menu>
+    <!-- Embedded Mode - Direct Notifications List -->
+    <div v-else class="embedded-panel">
+      <NotificationList
+        :notifications="notifications"
+        :embedded="true"
+        @notification-click="handleNotificationClick"
+        @remove-notification="removeNotification"
+      />
+    </div>
 
     <!-- Connection Status Snackbar -->
     <v-snackbar
@@ -164,81 +121,228 @@
       </v-icon>
       {{ realtimeStore.isConnected ? 'Bağlantı kuruldu' : 'Bağlantı kesildi' }}
     </v-snackbar>
+
+    <!-- Tümünü Göster Dialog -->
+    <v-dialog v-model="showAllDialog" max-width="700" persistent>
+      <v-card class="notification-dialog">
+        <v-card-title class="d-flex justify-space-between align-center pa-4 notification-header text-white">
+          <div>
+            <h3>📋 Tüm Bildirimler</h3>
+            <div class="text-caption">
+              {{ notifications.length }} bildirim • {{ unreadCount }} okunmamış
+            </div>
+          </div>
+          <v-btn icon size="small" @click="showAllDialog = false" class="text-white">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text class="pa-0">
+          <NotificationList
+            :notifications="notifications"
+            :embedded="false"
+            :dialog-mode="true"
+            @notification-click="handleDialogNotificationClick"
+            @remove-notification="removeNotification"
+          />
+        </v-card-text>
+
+        <!-- Dialog Footer -->
+        <v-card-actions class="pa-4 bg-grey-lighten-5">
+          <v-btn
+            variant="text"
+            color="grey-darken-1"
+            @click="showAllDialog = false"
+          >
+            <v-icon class="mr-1">mdi-close</v-icon>
+            Kapat
+          </v-btn>
+          
+          <v-spacer />
+          
+          <v-btn
+            v-if="unreadCount > 0"
+            variant="tonal"
+            color="primary"
+            @click="markAllReadInDialog"
+          >
+            <v-icon class="mr-1">mdi-check-all</v-icon>
+            Tümünü Okundu İşaretle
+          </v-btn>
+          
+          <v-btn
+            variant="tonal"
+            color="warning"
+            @click="goToStockPage"
+          >
+            <v-icon class="mr-1">mdi-warehouse</v-icon>
+            Stok Sayfasına Git
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useRealtimeStore } from '../stores/realtime.js'
-// import { socketService } from '../composables/useSocket.js' // Socket.IO disabled
+import NotificationList from './NotificationList.vue'
 
+// Props
+const props = defineProps({
+  embedded: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const router = useRouter()
 const realtimeStore = useRealtimeStore()
 const isOpen = ref(false)
 const showConnectionStatus = ref(false)
+const showAllDialog = ref(false)
 
 // Computed
 const notifications = computed(() => realtimeStore.notifications)
 const unreadCount = computed(() => realtimeStore.unreadNotifications)
 const hasUnread = computed(() => unreadCount.value > 0)
 
+// Auto-read notifications
+const autoMarkAsRead = () => {
+  notifications.value.forEach(notification => {
+    if (notification.autoRemove && !notification.readTimer && !notification.read) {
+      notification.readTimer = setTimeout(() => {
+        console.log('⏰ Otomatik okundu işareti:', notification.title)
+        markAsRead(notification.id)
+      }, 8000)
+    }
+  })
+}
+
 // Methods
 const togglePanel = () => {
+  console.log('🔔 Bell buton tıklandı. Panel açık mı?', isOpen.value)
   isOpen.value = !isOpen.value
 }
 
+const handleNotificationClick = (notification) => {
+  console.log('🔔 Notification tıklandı:', notification)
+  
+  markAsRead(notification.id)
+  
+  if (notification.navigationAction) {
+    console.log('🧭 Navigation action var, yönlendiriliyor...')
+    navigateToAction(notification)
+  }
+}
+
+const navigateToAction = (notification) => {
+  console.log('🧭 Navigation başlatılıyor:', notification.navigationAction)
+  
+  if (notification.navigationAction) {
+    try {
+      isOpen.value = false
+      
+      setTimeout(() => {
+        router.push(notification.navigationAction)
+          .then(() => {
+            console.log('✅ Navigation başarılı:', notification.navigationAction)
+          })
+          .catch((error) => {
+            console.error('❌ Router navigation hatası:', error)
+            window.location.href = notification.navigationAction
+          })
+      }, 200)
+      
+    } catch (error) {
+      console.error('❌ Navigation exception:', error)
+      setTimeout(() => {
+        window.location.href = notification.navigationAction
+      }, 300)
+    }
+  }
+}
+
 const markAsRead = (notificationId) => {
+  console.log('✅ Notification read olarak işaretleniyor:', notificationId)
   realtimeStore.markAsRead(notificationId)
 }
 
 const markAllRead = () => {
+  console.log('✅ Tüm bildirimler read olarak işaretleniyor')
   realtimeStore.markAllAsRead()
 }
 
 const removeNotification = (notificationId) => {
+  console.log('🗑️ Notification siliniyor:', notificationId)
   realtimeStore.removeNotification(notificationId)
 }
 
 const clearAll = () => {
+  console.log('🧹 Tüm bildirimler temizleniyor')
   realtimeStore.clearAll()
 }
 
 const viewAllNotifications = () => {
+  console.log('📋 Tümünü göster butonuna tıklandı')
   isOpen.value = false
-  // Navigate to detailed notifications page
-  // router.push('/notifications')
+  showAllDialog.value = true
 }
 
-const getNotificationColor = (notification) => {
-  const colorMap = {
-    success: 'success',
-    error: 'error',
-    warning: 'warning',
-    info: 'info',
-    critical: 'error'
+const handleDialogNotificationClick = (notification) => {
+  console.log('🔔 Dialog içindeki notification tıklandı:', notification)
+  markAsRead(notification.id)
+  if (notification.navigationAction) {
+    navigateFromDialog(notification)
   }
-  return colorMap[notification.type] || 'primary'
 }
 
-const formatTime = (timestamp) => {
-  const now = new Date()
-  const time = new Date(timestamp)
-  const diffInMinutes = Math.floor((now - time) / 60000)
-  
-  if (diffInMinutes < 1) {
-    return 'Şimdi'
-  } else if (diffInMinutes < 60) {
-    return `${diffInMinutes} dk önce`
-  } else if (diffInMinutes < 1440) {
-    const hours = Math.floor(diffInMinutes / 60)
-    return `${hours} saat önce`
-  } else {
-    return time.toLocaleDateString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+const navigateFromDialog = (notification) => {
+  console.log('🧭 Dialog içinden navigation başlatılıyor:', notification.navigationAction)
+  if (notification.navigationAction) {
+    try {
+      showAllDialog.value = false
+      
+      setTimeout(() => {
+        router.push(notification.navigationAction)
+          .then(() => {
+            console.log('✅ Navigation başarılı:', notification.navigationAction)
+          })
+          .catch((error) => {
+            console.error('❌ Router navigation hatası:', error)
+            window.location.href = notification.navigationAction
+          })
+      }, 200)
+      
+    } catch (error) {
+      console.error('❌ Dialog navigation exception:', error)
+      setTimeout(() => {
+        window.location.href = notification.navigationAction
+      }, 300)
+    }
   }
+}
+
+const markAllReadInDialog = () => {
+  console.log('✅ Dialog içindeki tüm bildirimler read olarak işaretleniyor')
+  realtimeStore.markAllAsRead()
+}
+
+const goToStockPage = () => {
+  console.log('📋 Stok sayfasına git butonuna tıklandı')
+  showAllDialog.value = false
+  setTimeout(() => {
+    router.push('/main/stok-yonetimi')
+      .then(() => {
+        console.log('✅ Stok sayfasına yönlendirme başarılı')
+      })
+      .catch((error) => {
+        console.error('❌ Stok sayfasına yönlendirme hatası:', error)
+        window.location.href = '/main/stok-yonetimi'
+      })
+  }, 200)
 }
 
 // Watch connection status
@@ -251,24 +355,39 @@ watch(
   }
 )
 
-// Initialize socket connection
+// Watch notifications for auto-remove
+watch(
+  () => notifications.value,
+  (newNotifications, oldNotifications) => {
+    console.log('📬 Notifications değişti:', {
+      yeni: newNotifications?.length || 0,
+      eski: oldNotifications?.length || 0
+    })
+    autoMarkAsRead()
+  },
+  { deep: true }
+)
+
 onMounted(() => {
-  // Socket.IO temporarily disabled
-  // const token = localStorage.getItem('token')
-  // if (token) {
-  //   socketService.connect()
-  // }
+  console.log('🔔 NotificationPanel mount edildi, embedded:', props.embedded)
+  console.log('📊 Başlangıç notification sayısı:', realtimeStore.notifications.length)
 })
 
 onUnmounted(() => {
-  // Don't disconnect here as other components might be using it
-  // socketService.disconnect()
+  // Cleanup
 })
 </script>
 
 <style scoped>
 .notification-panel {
   position: relative;
+  height: 100%;
+}
+
+.embedded-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .notification-button {
@@ -280,35 +399,19 @@ onUnmounted(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
 }
 
-.notification-item {
-  transition: all 0.2s ease;
-  border-left: 4px solid transparent;
+.notification-header {
+  background: linear-gradient(135deg, #455a64 0%, #37474f 100%) !important;
+  color: #ffffff !important;
 }
 
-.notification-item.unread {
-  background-color: rgba(25, 118, 210, 0.05);
-  border-left-color: #1976d2;
+/* Dialog Styles */
+.notification-dialog {
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden;
 }
 
-.notification-item.critical {
-  background-color: rgba(244, 67, 54, 0.05);
-  border-left-color: #f44336;
-  animation: pulse 2s infinite;
-}
-
-.notification-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
-  }
+.notification-dialog .v-card-actions {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 </style> 

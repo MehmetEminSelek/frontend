@@ -116,6 +116,35 @@ export const useRealtimeStore = defineStore('realtime', () => {
         activeUsers.value = count
     }
 
+    // 🐍 Stok Düşümü Uyarıları için özel fonksiyon
+    function addStockWarnings(warnings, siparisId) {
+        if (!warnings || warnings.length === 0) return
+
+        // Ana uyarı bildirimi
+        addNotification({
+            type: 'warning-snake', // Yılan efektli uyarı
+            title: '⚠️ Reçete Uyarısı',
+            message: `Sipariş #${siparisId}: ${warnings.length} ürün için reçete bulunamadı`,
+            icon: 'mdi-alert-circle',
+            details: warnings, // Detayları da ekle
+            orderId: siparisId,
+            autoRemove: true // 5 saniye sonra otomatik kaldır
+        })
+
+        // Her uyarı için ayrı notification da eklenebilir
+        warnings.forEach((warning, index) => {
+            setTimeout(() => {
+                addNotification({
+                    type: 'warning',
+                    title: 'Reçete Eksik',
+                    message: warning,
+                    icon: 'mdi-recipe',
+                    autoRemove: true
+                })
+            }, (index + 1) * 500) // 500ms ara ile ekle
+        })
+    }
+
     function clearAll() {
         notifications.value = []
         orderUpdates.value = []
@@ -144,6 +173,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
         removeNotification,
         addOrderUpdate,
         addStockAlert,
+        addStockWarnings, // 🐍 Yeni eklenen fonksiyon
         addCargoUpdate,
         setConnectionStatus,
         setActiveUsers,

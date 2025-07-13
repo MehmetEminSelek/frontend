@@ -2,7 +2,7 @@
     <v-container class="py-6 px-2 px-md-8" fluid>
         <!-- Hero Section -->
         <div class="hero-section mb-6">
-            <v-card class="pa-6 rounded-xl elevation-4" 
+            <v-card class="pa-6 rounded-xl elevation-4"
                 style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%); color: #0D47A1; position: relative; overflow: hidden;">
                 <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
                     <v-icon size="120">mdi-truck</v-icon>
@@ -12,8 +12,10 @@
                         <div class="d-flex align-center mb-3">
                             <v-icon size="48" class="mr-3" color="#1565C0">mdi-truck-outline</v-icon>
                             <div>
-                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #0D47A1;">Kargo Operasyonları</h1>
-                                <p class="text-h6 mb-0" style="color: #1565C0; opacity: 0.8;">Sevkiyat yönetimi ve kargo takip</p>
+                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #0D47A1;">Kargo Operasyonları
+                                </h1>
+                                <p class="text-h6 mb-0" style="color: #1565C0; opacity: 0.8;">Sevkiyat yönetimi ve kargo
+                                    takip</p>
                             </div>
                         </div>
                         <div class="d-flex align-center">
@@ -30,8 +32,8 @@
                     <v-col cols="12" md="4" class="text-center">
                         <div class="mb-3">
                             <div class="d-flex align-center justify-space-between mb-2">
-                                <v-select v-model="selectedKargoDurumu" :items="kargoDurumlari" item-title="ad" item-value="kodu"
-                                    label="Durum Filtresi" density="compact" variant="solo" 
+                                <v-select v-model="selectedKargoDurumu" :items="kargoDurumlari" item-title="ad"
+                                    item-value="kodu" label="Durum Filtresi" density="compact" variant="solo"
                                     style="background: rgba(255,255,255,0.9); border-radius: 8px; max-width: 140px;" />
                                 <v-checkbox v-model="showOnlyHazirlandi" label="Sadece Hazırlandı" density="compact"
                                     style="color: white;" />
@@ -45,7 +47,7 @@
         <!-- Statistics Cards -->
         <v-row class="mb-6">
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white; border: 1px solid #BBDEFB;">
                     <v-icon size="40" class="mb-2">mdi-package-variant</v-icon>
                     <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoyaVerilecek }}</div>
@@ -53,7 +55,7 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%); color: white; border: 1px solid #C8E6C9;">
                     <v-icon size="40" class="mb-2">mdi-truck-fast</v-icon>
                     <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoda }}</div>
@@ -61,7 +63,7 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white; border: 1px solid #E8F5E9;">
                     <v-icon size="40" class="mb-2">mdi-check-circle</v-icon>
                     <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.teslimEdildi }}</div>
@@ -69,7 +71,7 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2" 
+                <v-card class="text-center pa-4 rounded-xl" elevation="2"
                     style="background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%); color: white; border: 1px solid #FFE0B2;">
                     <v-icon size="40" class="mb-2">mdi-store</v-icon>
                     <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.subeyeGonderilecek }}</div>
@@ -80,7 +82,7 @@
 
         <!-- Main Content Card -->
         <v-card class="rounded-xl" elevation="2" style="border: 1px solid #E3F2FD;">
-            <v-card-title class="pa-4 d-flex justify-space-between align-center" 
+            <v-card-title class="pa-4 d-flex justify-space-between align-center"
                 style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white;">
                 <div class="d-flex align-center">
                     <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
@@ -91,17 +93,20 @@
                         <p class="text-body-2 opacity-80 ma-0">Sevkiyat ve transfer yönetimi</p>
                     </div>
                 </div>
-                <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchKargoSiparisler" title="Yenile"></v-btn>
+                <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchKargoSiparisler"
+                    title="Yenile"></v-btn>
             </v-card-title>
 
             <v-card-text class="pa-4">
-                <v-alert v-if="error" type="error" class="mb-4" closable style="border-radius: 8px;">{{ error }}</v-alert>
-                
+                <v-alert v-if="error" type="error" class="mb-4" closable style="border-radius: 8px;">{{ error
+                }}</v-alert>
+
                 <v-tabs v-model="tab" grow style="border-radius: 8px;">
                     <v-tab value="kargoyaVerilecek" style="color: #1565C0;">Kargoya Verilecek</v-tab>
                     <v-tab value="subeyeGonderilecek" style="color: #1565C0;">Şubeye Gönderilecek</v-tab>
+                    <v-tab value="subedenSubeye" style="color: #1565C0;">Şubeden Şubeye</v-tab>
                 </v-tabs>
-                
+
                 <v-window v-model="tab" class="mt-4">
                     <v-window-item value="kargoyaVerilecek">
                         <v-data-table :headers="headers" :items="kargoyaVerilecek" :loading="loading" item-value="id"
@@ -114,13 +119,15 @@
                                 </v-chip>
                             </template>
                             <template v-slot:item.actions="{ item }">
-                                <v-btn color="#42A5F5" size="small" @click="openKargoDialog(item)" variant="outlined">Kargo İşlemi</v-btn>
-                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)" variant="outlined">Etiket
+                                <v-btn color="#42A5F5" size="small" @click="openKargoDialog(item)"
+                                    variant="outlined">Kargo İşlemi</v-btn>
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)"
+                                    variant="outlined">Etiket
                                     Yazdır</v-btn>
                             </template>
                         </v-data-table>
                     </v-window-item>
-                    
+
                     <v-window-item value="subeyeGonderilecek">
                         <v-data-table :headers="headers" :items="subeyeGonderilecek" :loading="loading" item-value="id"
                             class="cargo-table rounded-lg" hover density="comfortable" items-per-page="20"
@@ -132,10 +139,46 @@
                                 </v-chip>
                             </template>
                             <template v-slot:item.actions="{ item }">
-                                <v-btn color="#FFB74D" size="small" @click="openTransferDialog(item)" variant="outlined">Transfer
+                                <v-btn color="#FFB74D" size="small" @click="openTransferDialog(item)"
+                                    variant="outlined">Transfer
                                     İşlemi</v-btn>
-                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)" variant="outlined">Etiket
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)"
+                                    variant="outlined">Etiket
                                     Yazdır</v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-window-item>
+
+                    <v-window-item value="subedenSubeye">
+                        <v-data-table :headers="subeTransferHeaders" :items="subedenSubeye" :loading="loading"
+                            item-value="id" class="cargo-table rounded-lg" hover density="comfortable"
+                            items-per-page="20" no-data-text="Şubeden şubeye transfer yok."
+                            loading-text="Yükleniyor...">
+                            <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
+                            <template v-slot:item.nereden="{ item }">
+                                <v-chip color="blue" size="small" variant="flat">
+                                    {{ item.subeNereden?.ad || '-' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.nereye="{ item }">
+                                <v-chip color="green" size="small" variant="flat">
+                                    {{ item.subeNereye?.ad || '-' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.kargoDurumu="{ item }">
+                                <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
+                                    {{ item.kargoDurumu || 'Bekliyor' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.actions="{ item }">
+                                <v-btn color="#9C27B0" size="small" @click="openSubeTransferDialog(item)"
+                                    variant="outlined">
+                                    Transfer Yönet
+                                </v-btn>
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)"
+                                    variant="outlined">
+                                    Etiket Yazdır
+                                </v-btn>
                             </template>
                         </v-data-table>
                     </v-window-item>
@@ -148,8 +191,8 @@
             <v-card>
                 <v-card-title class="text-h6">Kargo İşlemi (Sipariş ID: {{ selectedSiparis?.id }})</v-card-title>
                 <v-card-text>
-                    <v-select v-model="kargoForm.kargoSirketi" :items="kargoSirketleri" item-title="ad" item-value="kodu"
-                        label="Kargo Şirketi" required></v-select>
+                    <v-select v-model="kargoForm.kargoSirketi" :items="kargoSirketleri" item-title="ad"
+                        item-value="kodu" label="Kargo Şirketi" required></v-select>
                     <v-text-field v-model="kargoForm.kargoTakipNo" label="Takip Numarası" required></v-text-field>
                     <v-textarea v-model="kargoForm.kargoNotu" label="Kargo Notu" rows="2"></v-textarea>
                     <v-text-field v-model="kargoForm.kargoTarihi" label="Kargo Tarihi" type="date"></v-text-field>
@@ -182,6 +225,64 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Şubeden Şubeye Transfer Dialog -->
+        <v-dialog v-model="subeTransferDialog" persistent max-width="450px">
+            <v-card>
+                <v-card-title class="text-h6" style="background: #9C27B0; color: white;">
+                    <v-icon class="mr-2" color="white">mdi-swap-horizontal</v-icon>
+                    Şubeden Şubeye Transfer (Sipariş #{{ selectedSiparis?.id }})
+                </v-card-title>
+                <v-card-text class="pa-4">
+                    <v-row class="mb-4">
+                        <v-col cols="6">
+                            <v-select v-model="subeTransferForm.subeNeredenId" :items="subeler" item-title="ad"
+                                item-value="id" label="Nereden Şube" variant="outlined" density="compact"
+                                :prepend-inner-icon="'mdi-map-marker-radius'" color="blue" required>
+                            </v-select>
+                        </v-col>
+                        <v-col cols="6">
+                            <v-select v-model="subeTransferForm.subeNereyeId" :items="subeler" item-title="ad"
+                                item-value="id" label="Nereye Şube" variant="outlined" density="compact"
+                                :prepend-inner-icon="'mdi-map-marker-check'" color="green" required>
+                            </v-select>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Mevcut Şube Bilgilerini Göster (Salt Okunur) -->
+                    <v-row v-if="selectedSiparis" class="mb-4">
+                        <v-col cols="12">
+                            <v-alert type="info" variant="tonal" class="mb-0">
+                                <div class="text-body-2">
+                                    <strong>Mevcut Transfer:</strong>
+                                    {{ selectedSiparis.subeNereden?.ad || 'Belirtilmemiş' }}
+                                    →
+                                    {{ selectedSiparis.subeNereye?.ad || 'Belirtilmemiş' }}
+                                </div>
+                            </v-alert>
+                        </v-col>
+                    </v-row>
+
+                    <v-select v-model="subeTransferForm.kargoDurumu" :items="[
+                        { title: 'Transfer Başlatıldı', value: 'SUBEDEN_SUBEYE' },
+                        { title: 'Yolda', value: 'TRANSFER_YOLDA' },
+                        { title: 'Hedef Şubede', value: 'HEDEF_SUBEDE' },
+                        { title: 'Teslim Edildi', value: 'TRANSFER_TAMAMLANDI' }
+                    ]" item-title="title" item-value="value" label="Transfer Durumu" variant="outlined"
+                        density="compact" required></v-select>
+                    <v-textarea v-model="subeTransferForm.kargoNotu" label="Transfer Notu" rows="3" variant="outlined"
+                        density="compact"></v-textarea>
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions class="pa-3">
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey-darken-1" variant="text" @click="closeSubeTransferDialog">İptal</v-btn>
+                    <v-btn color="#9C27B0" variant="flat" @click="saveSubeTransferDialog"
+                        :loading="subeTransferDialogLoading">Transfer Güncelle</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Etiket Dialog -->
         <v-dialog v-model="etiketDialog" max-width="420px">
             <v-card>
@@ -196,11 +297,12 @@
                         </div>
                         <div class="etiket-content">
                             <div class="etiket-row">
-                                <strong>Takip No:</strong> 
+                                <strong>Takip No:</strong>
                                 <span class="tracking-number">{{ etiketSiparis?.kargoTakipNo || '-' }}</span>
                             </div>
                             <div class="etiket-row">
-                                <strong>Alıcı:</strong> {{ etiketSiparis?.aliciAdi || etiketSiparis?.gorunecekAd || '-' }}
+                                <strong>Alıcı:</strong> {{ etiketSiparis?.aliciAdi || etiketSiparis?.gorunecekAd || '-'
+                                }}
                             </div>
                             <div class="etiket-row">
                                 <strong>Adres:</strong> {{ etiketSiparis?.adres || '-' }}
@@ -212,15 +314,18 @@
                                 <strong>Sipariş ID:</strong> {{ etiketSiparis?.id }}
                             </div>
                             <div class="etiket-row">
-                                <strong>Tarih:</strong> {{ etiketSiparis?.tarih ? formatDate(etiketSiparis.tarih, true) : '-' }}
+                                <strong>Tarih:</strong> {{ etiketSiparis?.tarih ? formatDate(etiketSiparis.tarih, true)
+                                    : '-' }}
                             </div>
                             <div class="etiket-row" v-if="etiketSiparis?.kargoNotu">
                                 <strong>Not:</strong> {{ etiketSiparis?.kargoNotu }}
                             </div>
                         </div>
                         <div class="etiket-footer">
-                            <div style="border-top:2px solid #333;margin-top:15px;padding-top:10px;text-align:center;font-size:12px;">
-                                {{ new Date().toLocaleDateString('tr-TR') }} - {{ new Date().toLocaleTimeString('tr-TR') }}
+                            <div
+                                style="border-top:2px solid #333;margin-top:15px;padding-top:10px;text-align:center;font-size:12px;">
+                                {{ new Date().toLocaleDateString('tr-TR') }} - {{ new Date().toLocaleTimeString('tr-TR')
+                                }}
                             </div>
                         </div>
                     </div>
@@ -245,9 +350,9 @@
 </template>
 <script setup>
 import { ref, onMounted, provide, watch } from 'vue';
-import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { apiCall } from '../utils/api';
 
 // Kargo modülüne özel tema ile Vuetify instance'ı oluştur
 const kargoTheme = {
@@ -271,13 +376,25 @@ const tab = ref('kargoyaVerilecek');
 const headers = [
     { title: 'ID', key: 'id', sortable: true },
     { title: 'Tarih', key: 'tarih', sortable: true },
-    { title: 'Müşteri', key: 'gorunecekAd', sortable: true },
-    { title: 'Adres', key: 'adres', sortable: false },
+    { title: 'Müşteri', key: 'gonderenAdi', sortable: true },
+    { title: 'Alıcı', key: 'aliciAdi', sortable: true },
+    { title: 'Teslimat Türü', key: 'teslimatTuru.ad', sortable: true },
+    { title: 'Durum', key: 'kargoDurumu', sortable: true },
+    { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
+];
+
+const subeTransferHeaders = [
+    { title: 'ID', key: 'id', sortable: true },
+    { title: 'Tarih', key: 'tarih', sortable: true },
+    { title: 'Müşteri', key: 'gonderenAdi', sortable: true },
+    { title: 'Nereden', key: 'nereden', sortable: true },
+    { title: 'Nereye', key: 'nereye', sortable: true },
     { title: 'Durum', key: 'kargoDurumu', sortable: true },
     { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ];
 const kargoyaVerilecek = ref([]);
 const subeyeGonderilecek = ref([]);
+const subedenSubeye = ref([]);
 const subeler = ref([]);
 const loading = ref(false);
 const error = ref(null);
@@ -333,6 +450,17 @@ const kargoSirketleri = [
 const transferDialog = ref(false);
 const transferDialogLoading = ref(false);
 const transferForm = ref({ hedefSubeId: null, kargoNotu: '' });
+
+// Şubeden Şubeye Transfer Dialog State
+const subeTransferDialog = ref(false);
+const subeTransferDialogLoading = ref(false);
+const subeTransferForm = ref({
+    kargoDurumu: 'SUBEDEN_SUBEYE',
+    kargoNotu: '',
+    subeNeredenId: null,
+    subeNereyeId: null
+});
+
 const selectedSiparis = ref(null);
 // Etiket Dialog State
 const etiketDialog = ref(false);
@@ -340,67 +468,111 @@ const etiketSiparis = ref(null);
 const etiketRef = ref(null);
 
 const kargoDurumlari = [
-    { ad: 'Kargoya Verilecek', kodu: 'Kargoya Verilecek' },
-    { ad: 'Şubeye Gönderilecek', kodu: 'Şubeye Gönderilecek' },
-    { ad: 'Kargoda', kodu: 'Kargoda' },
-    { ad: 'Şubede Teslim', kodu: 'Şubede Teslim' },
-    { ad: 'İptal', kodu: 'İptal' },
-    { ad: 'Hazırlandı', kodu: 'Hazırlandı' },
-    { ad: 'İşlemde', kodu: 'İşlemde' },
-    { ad: 'Diğer', kodu: 'Diğer' }
+    { ad: 'Kargoya Verilecek', kodu: 'KARGOYA_VERILECEK' },
+    { ad: 'Şubeye Gönderilecek', kodu: 'SUBEYE_GONDERILECEK' },
+    { ad: 'Kargoda', kodu: 'KARGODA' },
+    { ad: 'Şubede Teslim', kodu: 'SUBEDE_TESLIM' },
+    { ad: 'Teslim Edildi', kodu: 'TESLIM_EDILDI' },
+    { ad: 'Şubeden Şubeye', kodu: 'SUBEDEN_SUBEYE' },
 ];
 
 async function fetchKargoSiparisler() {
-    loading.value = true; error.value = null;
+    loading.value = true;
+    error.value = null;
     try {
-        // Tüm siparişleri çek (kargo durumu filtresiz)
-        const [allOrdersRes, subeRes, dropdownRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`),
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`, { params: { kargoDurumu: 'Şubeye Gönderilecek' } }),
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`),
+        console.log('🚚 Kargo siparişleri yükleniyor...');
+
+        // Siparişleri ve dropdown verilerini paralel olarak çek
+        const [siparisler, dropdownData] = await Promise.all([
+            apiCall('/siparis'),
+            apiCall('/dropdown')
         ]);
-        
-        console.log('🚚 Tüm Siparişler API Yanıtı:', allOrdersRes.data?.length);
-        
-        // Kargo için uygun teslimat türü kodları
-        const kargoTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
-        
-        // Teslimat türüne göre filtrele ve kargo durumu kontrol et
-        let filtered = (allOrdersRes.data || []).filter(siparis => {
-            const teslimatKodu = siparis.teslimatTuru?.kodu;
-            const isKargoTeslimati = kargoTeslimatKodlari.includes(teslimatKodu);
-            const kargoCompatible = siparis.kargoDurumu === 'Kargoya Verilecek' || 
-                                  siparis.kargoDurumu === null || 
-                                  siparis.kargoDurumu === '';
-            return isKargoTeslimati && kargoCompatible;
-        });
-        
-        console.log('🚚 Teslimat Türüne Göre Filtrelenmiş:', filtered.length);
-        
-        // Kargo durumu filtresi
-        if (selectedKargoDurumu.value) {
-            filtered = filtered.filter(siparis => siparis.kargoDurumu === selectedKargoDurumu.value);
-            console.log('🚚 Kargo Durumu Filtrelenmiş:', filtered.length);
+
+        console.log('🚚 Toplam sipariş sayısı:', siparisler?.length || 0);
+
+        // Şubeler listesini dropdown'dan al
+        subeler.value = dropdownData?.subeler || [];
+
+        if (!siparisler || siparisler.length === 0) {
+            console.log('🚚 Hiç sipariş bulunamadı');
+            kargoyaVerilecek.value = [];
+            subeyeGonderilecek.value = [];
+            subedenSubeye.value = [];
+            return;
         }
-        
+
+        // Kargo durumlarına göre siparleri kategorize et
+        const kargoyaVerilecekList = siparisler.filter(siparis => {
+            const kargoDurumu = siparis.kargoDurumu;
+            const teslimatKodu = siparis.teslimatTuru?.kod;
+
+            // Adrese teslimat türleri için kargoya verilecek olanlar
+            const adreseTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
+            const isAdreseTeslimat = adreseTeslimatKodlari.includes(teslimatKodu);
+
+            const kargoyaUygun = [
+                'KARGOYA_VERILECEK',
+                'ADRESE_TESLIMAT',
+                null,
+                undefined,
+                ''
+            ].includes(kargoDurumu);
+
+            return isAdreseTeslimat && kargoyaUygun;
+        });
+
+        const subeyeGonderilecekList = siparisler.filter(siparis => {
+            const kargoDurumu = siparis.kargoDurumu;
+            const teslimatKodu = siparis.teslimatTuru?.kod;
+
+            // Şubeye teslimat türleri
+            const subeTeslimatKodlari = ['TT002', 'TT005'];
+            const isSubeTeslimat = subeTeslimatKodlari.includes(teslimatKodu);
+
+            const subeyeUygun = [
+                'SUBEYE_GONDERILECEK',
+                'SUBEDE_TESLIM',
+                null,
+                undefined,
+                ''
+            ].includes(kargoDurumu);
+
+            return isSubeTeslimat && subeyeUygun;
+        });
+
+        const subedenSubeyeList = siparisler.filter(siparis => {
+            const teslimatKodu = siparis.teslimatTuru?.kod;
+            return teslimatKodu === 'TT008'; // Şubeden şubeye teslimat türü
+        });
+
         // Sadece hazırlandı filtresi
         if (showOnlyHazirlandi.value) {
-            filtered = filtered.filter(siparis => siparis.hazirlanmaDurumu === 'Hazırlandı');
-            console.log('🚚 Sadece Hazırlandı Olanlar:', filtered.length);
+            kargoyaVerilecek.value = kargoyaVerilecekList.filter(s => s.durum === 'HAZIRLANDI');
+            subeyeGonderilecek.value = subeyeGonderilecekList.filter(s => s.durum === 'HAZIRLANDI');
+            subedenSubeye.value = subedenSubeyeList.filter(s => s.durum === 'HAZIRLANDI');
+        } else {
+            kargoyaVerilecek.value = kargoyaVerilecekList;
+            subeyeGonderilecek.value = subeyeGonderilecekList;
+            subedenSubeye.value = subedenSubeyeList;
         }
-        
-        console.log('🚚 Final Kargo Listesi:', filtered.length);
-        kargoyaVerilecek.value = filtered;
-        subeyeGonderilecek.value = subeRes.data;
-        subeler.value = dropdownRes.data.subeler || [];
-        
-        // Kargo istatistiklerini hesapla
-        hesaplaKargoIstatistikleri(allOrdersRes.data || []);
+
+        console.log('🚚 Kategorize edilmiş siparişler:');
+        console.log('   - Kargoya Verilecek:', kargoyaVerilecek.value.length);
+        console.log('   - Şubeye Gönderilecek:', subeyeGonderilecek.value.length);
+        console.log('   - Şubeden Şubeye:', subedenSubeye.value.length);
+
+        // İstatistikleri hesapla
+        hesaplaKargoIstatistikleri(siparisler);
+
     } catch (err) {
         console.error('🚚 Kargo siparişleri yüklenirken hata:', err);
-        error.value = 'Siparişler yüklenirken hata oluştu.';
+        error.value = 'Siparişler yüklenirken hata oluştu: ' + (err.message || 'Bilinmeyen hata');
+        showSnackbar('Siparişler yüklenirken hata oluştu.', 'error');
+
+        // Hata durumunda boş listeler göster
         kargoyaVerilecek.value = [];
         subeyeGonderilecek.value = [];
+        subedenSubeye.value = [];
         subeler.value = [];
     } finally {
         loading.value = false;
@@ -408,11 +580,11 @@ async function fetchKargoSiparisler() {
 }
 function openKargoDialog(item) {
     selectedSiparis.value = item;
-    kargoForm.value = { 
-        kargoSirketi: '', 
-        kargoTakipNo: generateKargoTakipNo(), 
-        kargoNotu: '', 
-        kargoTarihi: new Date().toISOString().split('T')[0] 
+    kargoForm.value = {
+        kargoSirketi: '',
+        kargoTakipNo: generateKargoTakipNo(),
+        kargoNotu: '',
+        kargoTarihi: new Date().toISOString().split('T')[0]
     };
     kargoDialog.value = true;
 }
@@ -424,12 +596,15 @@ async function saveKargoDialog() {
     if (!selectedSiparis.value) return;
     kargoDialogLoading.value = true;
     try {
-        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/siparis/${selectedSiparis.value.id}/kargo`, {
-            kargoSirketi: kargoForm.value.kargoSirketi,
-            kargoTakipNo: kargoForm.value.kargoTakipNo,
-            kargoNotu: kargoForm.value.kargoNotu,
-            kargoTarihi: kargoForm.value.kargoTarihi || null,
-            kargoDurumu: 'Kargoda',
+        await apiCall(`/siparis/${selectedSiparis.value.id}/kargo`, {
+            method: 'PATCH',
+            data: {
+                kargoSirketi: kargoForm.value.kargoSirketi,
+                kargoTakipNo: kargoForm.value.kargoTakipNo,
+                kargoNotu: kargoForm.value.kargoNotu,
+                kargoTarihi: kargoForm.value.kargoTarihi || null,
+                kargoDurumu: 'KARGODA',
+            }
         });
         showSnackbar('Kargo bilgisi güncellendi!', 'success');
         closeKargoDialog();
@@ -457,10 +632,13 @@ async function saveTransferDialog() {
     }
     transferDialogLoading.value = true;
     try {
-        await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/siparis/${selectedSiparis.value.id}/transfer`, {
-            hedefSubeId: transferForm.value.hedefSubeId,
-            kargoNotu: transferForm.value.kargoNotu,
-            kargoDurumu: 'Şubede Teslim',
+        await apiCall(`/siparis/${selectedSiparis.value.id}/transfer`, {
+            method: 'PATCH',
+            data: {
+                hedefSubeId: transferForm.value.hedefSubeId,
+                kargoNotu: transferForm.value.kargoNotu,
+                kargoDurumu: 'SUBEDE_TESLIM',
+            }
         });
         showSnackbar('Transfer işlemi güncellendi!', 'success');
         closeTransferDialog();
@@ -471,6 +649,79 @@ async function saveTransferDialog() {
         transferDialogLoading.value = false;
     }
 }
+
+function openSubeTransferDialog(item) {
+    selectedSiparis.value = item;
+    subeTransferForm.value = {
+        kargoDurumu: item.kargoDurumu || 'SUBEDEN_SUBEYE',
+        kargoNotu: item.kargoNotu || `${item.subeNereden?.ad || 'Bilinmeyen'} → ${item.subeNereye?.ad || 'Bilinmeyen'} transfer`,
+        subeNeredenId: item.subeNeredenId || null,
+        subeNereyeId: item.subeNereyeId || null
+    };
+    subeTransferDialog.value = true;
+}
+
+function closeSubeTransferDialog() {
+    subeTransferDialog.value = false;
+    selectedSiparis.value = null;
+    // Form'u sıfırla
+    subeTransferForm.value = {
+        kargoDurumu: 'SUBEDEN_SUBEYE',
+        kargoNotu: '',
+        subeNeredenId: null,
+        subeNereyeId: null
+    };
+}
+
+async function saveSubeTransferDialog() {
+    if (!selectedSiparis.value) return;
+
+    // Debug: Gönderilecek veriyi kontrol et
+    console.log('🔍 Transfer Form Data:', {
+        siparisId: selectedSiparis.value.id,
+        kargoDurumu: subeTransferForm.value.kargoDurumu,
+        kargoNotu: subeTransferForm.value.kargoNotu,
+        subeNeredenId: subeTransferForm.value.subeNeredenId,
+        subeNereyeId: subeTransferForm.value.subeNereyeId,
+    });
+
+    // Validation - şubeler seçilmiş mi?
+    if (!subeTransferForm.value.subeNeredenId || !subeTransferForm.value.subeNereyeId) {
+        showSnackbar('Lütfen nereden ve nereye şubelerini seçin.', 'warning');
+        return;
+    }
+
+    if (subeTransferForm.value.subeNeredenId === subeTransferForm.value.subeNereyeId) {
+        showSnackbar('Nereden ve nereye şube aynı olamaz.', 'warning');
+        return;
+    }
+
+    subeTransferDialogLoading.value = true;
+    try {
+        const payload = {
+            kargoDurumu: subeTransferForm.value.kargoDurumu,
+            kargoNotu: subeTransferForm.value.kargoNotu,
+            subeNeredenId: parseInt(subeTransferForm.value.subeNeredenId),
+            subeNereyeId: parseInt(subeTransferForm.value.subeNereyeId),
+        };
+        
+        console.log('🚀 API Payload:', payload);
+        
+        await apiCall(`/siparis/${selectedSiparis.value.id}/sube-transfer`, {
+            method: 'PATCH',
+            data: payload
+        });
+        showSnackbar('Şubeden şubeye transfer güncellendi!', 'success');
+        closeSubeTransferDialog();
+        fetchKargoSiparisler();
+    } catch (err) {
+        console.error('❌ Transfer güncellenme hatası:', err);
+        showSnackbar('Transfer güncellenirken hata oluştu: ' + (err.response?.data?.message || err.message), 'error');
+    } finally {
+        subeTransferDialogLoading.value = false;
+    }
+}
+
 function openEtiketDialog(item) {
     etiketSiparis.value = item;
     etiketDialog.value = true;
@@ -535,15 +786,21 @@ function yazdirEtiket() {
 }
 function getKargoDurumuColor(kargoDurumu) {
     const colors = {
-        'Kargoya Verilecek': 'primary',
-        'Şubeye Gönderilecek': 'secondary',
-        'Kargoda': 'info',
-        'Şubede Teslim': 'success',
-        'İptal': 'error',
-        'Hazırlandı': 'success',
+        'KARGOYA_VERILECEK': 'primary',
+        'SUBEYE_GONDERILECEK': 'secondary',
+        'KARGODA': 'info',
+        'SUBEDE_TESLIM': 'success',
+        'TESLIM_EDILDI': 'success',
+        'SUBEDEN_SUBEYE': 'success',
+        'TRANSFER_YOLDA': 'info',
+        'HEDEF_SUBEDE': 'info',
+        'TRANSFER_TAMAMLANDI': 'success',
+        'Bekliyor': 'warning',
+        'HAZIRLANDI': 'success',
         'İşlemde': 'info',
-        'Diğer': 'warning',
-        'Bekliyor': 'warning'
+        'İptal': 'error',
+        'ADRESE_TESLIMAT': 'info',
+        'Diğer': 'warning'
     };
     return colors[kargoDurumu] || 'warning';
 }
@@ -570,10 +827,10 @@ function getKargoSirketiAdi(kargoSirketi) {
 }
 function hesaplaKargoIstatistikleri(siparisler) {
     kargoIstatistikleri.value = {
-        kargoyaVerilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'Kargoya Verilecek').length,
-        kargoda: siparisler.filter(siparis => siparis.kargoDurumu === 'Kargoda').length,
-        teslimEdildi: siparisler.filter(siparis => siparis.kargoDurumu === 'Şubede Teslim').length,
-        subeyeGonderilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'Şubeye Gönderilecek').length
+        kargoyaVerilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'KARGOYA_VERILECEK').length,
+        kargoda: siparisler.filter(siparis => siparis.kargoDurumu === 'KARGODA').length,
+        teslimEdildi: siparisler.filter(siparis => siparis.kargoDurumu === 'TESLIM_EDILDI').length,
+        subeyeGonderilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'SUBEYE_GONDERILECEK').length
     };
 }
 onMounted(fetchKargoSiparisler);

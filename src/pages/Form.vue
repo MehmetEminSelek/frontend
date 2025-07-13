@@ -28,7 +28,8 @@
               </v-chip>
             </div>
           </v-col>
-          <v-col cols="12" md="4" class="text-center">
+          <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
+            <CacheStatus />
             <v-btn size="x-large" color="white" variant="elevated" @click="() => { }" class="font-weight-bold"
               style="color: #2E7D32 !important; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);">
               <v-icon left size="20">mdi-plus-circle</v-icon>
@@ -99,9 +100,42 @@
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
-                <v-autocomplete v-model="selectedCari" :items="dropdowns.cariler" item-title="ad" item-value="id"
-                  label="Alıcı Adı" :search-input.sync="aliciSearch" :filter="customCariFilter" clearable hide-no-data
-                  @update:modelValue="onCariSelected" @blur="onCariBlur" variant="outlined" color="#388E3C" />
+                <v-autocomplete 
+                  v-model="selectedCari" 
+                  v-model:search="searchQuery"
+                  :items="filteredCariler"
+                  item-title="displayName"
+                  item-value="id"
+                  return-object
+                  label="Alıcı Adı" 
+                  clearable
+                  no-data-text="Müşteri bulunamadı" 
+                  placeholder="Müşteri adı arayın..."
+                  @update:model-value="onCariSelected" 
+                  @update:search="onSearchInput"
+                  variant="outlined" 
+                  color="#388E3C">
+                  <template v-slot:item="{ props, item }">
+                    <v-list-item v-bind="props" :title="item.raw.displayName">
+                      <template v-slot:prepend>
+                        <v-avatar size="32" color="primary" class="mr-3">
+                          <v-icon color="white" size="16">mdi-account</v-icon>
+                        </v-avatar>
+                      </template>
+                      <v-list-item-title>
+                        {{ item.raw.displayName }}
+                        <v-chip v-if="item.raw.musteriKodu" size="x-small" variant="outlined" class="ml-2">
+                          {{ item.raw.musteriKodu }}
+                        </v-chip>
+                      </v-list-item-title>
+                      <v-list-item-subtitle v-if="item.raw.telefon">
+                        <v-icon size="x-small" class="mr-1">mdi-phone</v-icon>
+                        {{ item.raw.telefon }}
+                      </v-list-item-subtitle>
+                      <v-list-item-subtitle v-else class="text-grey">Telefon: -</v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+                </v-autocomplete>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field ref="aliciTelRef" :key="selectedCari" :value="form.aliciTel"
@@ -110,33 +144,49 @@
               </v-col>
             </template>
             <v-col cols="12">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <label class="text-subtitle-2 font-weight-medium" style="color: #2E7D32;">Teslimat Adresi</label>
+                <v-btn v-if="selectedCari && adresEnabled" size="small" variant="tonal" color="#388E3C"
+                  prepend-icon="mdi-plus" @click="openAdresDialog">
+                  Yeni Adres Ekle
+                </v-btn>
+              </div>
+
+              <!-- Çoklu Adres Seçimi -->
               <template v-if="cariAdresler.length > 1">
-                <div class="adresler-row-group">
+                <div class="adresler-row-group mb-3">
                   <v-row dense>
                     <v-col v-for="(adres, i) in cariAdresler" :key="i" cols="12" md="6" lg="4">
-                      <v-card :elevation="selectedAdres === adres.adres ? 8 : 2"
-                        :class="['adres-row-card', { 'adres-row-selected': selectedAdres === adres.adres }]"
-                        @click="selectAdres(adres.adres)"
-                        :style="selectedAdres === adres.adres ? 'border: 2px solid #388E3C; background: #E8F5E9;' : 'border: 1px solid #E0E0E0;'">
+                      <v-card :elevation="selectedAdres?.id === adres.id ? 8 : 2"
+                        :class="['adres-row-card', { 'adres-row-selected': selectedAdres?.id === adres.id }]"
+                        @click="selectAdres(adres)"
+                        :style="selectedAdres?.id === adres.id ? 'border: 2px solid #388E3C; background: #E8F5E9;' : 'border: 1px solid #E0E0E0;'">
                         <div class="d-flex align-center justify-space-between pa-3">
-                          <div>
-                            <div class="font-weight-bold" style="color: #2E7D32;">{{ adres.tip }}</div>
+                          <div class="flex-grow-1">
+                            <div class="d-flex align-center mb-1">
+                              <v-chip size="x-small" :color="getAdresTipColor(adres.tip)" class="mr-2">
+                                {{ getAdresTipText(adres.tip) }}
+                              </v-chip>
+                              <v-chip v-if="adres.varsayilan" size="x-small" color="primary"
+                                variant="tonal">Varsayılan</v-chip>
+                            </div>
                             <div class="text-body-2" style="color: #4CAF50;">{{ adres.adres }}</div>
+                            <div v-if="adres.tarif" class="text-caption text-grey-darken-1 mt-1">{{ adres.tarif }}</div>
                           </div>
-                          <v-radio :model-value="selectedAdres" :value="adres.adres" color="#388E3C" />
+                          <v-radio :model-value="selectedAdres?.id" :value="adres.id" color="#388E3C" />
                         </div>
                       </v-card>
                     </v-col>
                   </v-row>
                 </div>
               </template>
-              <template v-else-if="cariAdresler.length === 1">
-                <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                  :disabled="!adresEnabled" rows="2" variant="outlined" color="#388E3C" />
-              </template>
+
+              <!-- Tek Adres veya Manuel Adres Girişi -->
               <template v-else>
-                <v-textarea :key="selectedAdres" :value="form.adres" @input="val => form.adres = val" label="Adres"
-                  :disabled="!adresEnabled" rows="2" variant="outlined" color="#388E3C" />
+                <v-textarea v-model="form.adres" label="Teslimat Adresi" :disabled="!adresEnabled" rows="2"
+                  variant="outlined" color="#388E3C"
+                  :placeholder="cariAdresler.length === 0 ? 'Adres bilgisi giriniz...' : ''"
+                  :hint="cariAdresler.length === 0 ? 'Bu müşteri için kayıtlı adres bulunamadı. Yeni adres eklemek için üstteki butonu kullanabilirsiniz.' : ''" />
               </template>
             </v-col>
             <v-col cols="12">
@@ -239,7 +289,7 @@
                   </template>
                   <template v-slot:append>
                     <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim
-                      }}</span>
+                    }}</span>
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
@@ -345,6 +395,67 @@
       </v-card>
     </v-dialog>
 
+    <!-- Adres Ekleme Dialog -->
+    <v-dialog v-model="adresDialog" persistent max-width="600px">
+      <v-card>
+        <v-card-title class="text-h6 font-weight-bold d-flex align-center" style="background: #E8F5E9; color: #2E7D32;">
+          <v-icon left color="#2E7D32">mdi-map-marker-plus</v-icon>
+          Yeni Adres Ekle
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-form ref="adresFormRef" v-model="adresFormValid">
+            <v-row dense>
+              <v-col cols="12" md="6">
+                <v-select v-model="newAdres.tip" :items="adresTipleri" item-title="text" item-value="value"
+                  label="Adres Tipi" :rules="[rules.required]" variant="outlined" color="#388E3C">
+                  <template v-slot:prepend-inner>
+                    <v-icon :color="getAdresTipColor(newAdres.tip)" size="small">
+                      {{ getAdresTipIcon(newAdres.tip) }}
+                    </v-icon>
+                  </template>
+                </v-select>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch v-model="newAdres.varsayilan" label="Varsayılan Adres" color="#388E3C" hide-details
+                  class="mt-2" />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea v-model="newAdres.adres" label="Adres" :rules="[rules.required]" rows="3" variant="outlined"
+                  color="#388E3C" placeholder="Tam adres bilgisini giriniz..." />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field v-model="newAdres.il" label="İl" variant="outlined" color="#388E3C" />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field v-model="newAdres.ilce" label="İlçe" variant="outlined" color="#388E3C" />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field v-model="newAdres.postaKodu" label="Posta Kodu" variant="outlined" color="#388E3C" />
+              </v-col>
+              <v-col cols="12">
+                <v-text-field v-model="newAdres.mahalle" label="Mahalle" variant="outlined" color="#388E3C" />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea v-model="newAdres.tarif" label="Ek Açıklama/Tarif (Opsiyonel)" rows="2" variant="outlined"
+                  color="#388E3C" placeholder="Adres tarifi, bina numarası, daire no vb..." />
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-3">
+          <v-spacer></v-spacer>
+          <v-btn color="grey-darken-1" variant="text" @click="closeAdresDialog" :disabled="adresLoading">
+            İptal
+          </v-btn>
+          <v-btn color="#388E3C" variant="flat" @click="saveAdres" :loading="adresLoading"
+            prepend-icon="mdi-content-save">
+            Adresi Kaydet
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar" :timeout="snackbarTimeout" :color="snackbarColor" location="bottom right">
       {{ snackbarText }}
@@ -358,6 +469,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
+import { useCacheStore } from '../stores/cache.js';
+import CacheStatus from '../components/CacheStatus.vue';
 // Custom Vuetify theme devre dışı (test için)
 // import { createCustomVuetify } from '../plugins/vuetify';
 // const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
@@ -387,15 +500,11 @@ const rules = {
   optionalPhone: value => !value || /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
 };
 
-const dropdowns = reactive({
-  teslimatTurleri: [],
-  subeler: [],
-  aliciTipleri: [],
-  urunler: [],
-  kutular: [],
-  tepsiTavalar: [],
-  cariler: [],
-});
+// Cache store
+const cacheStore = useCacheStore();
+
+// Reactive reference to cached data
+const dropdowns = computed(() => cacheStore.dropdownData);
 
 const orderPackages = ref([]);
 const isPackageDialogOpen = ref(false);
@@ -417,11 +526,34 @@ const newItemInPackage = ref({
 });
 
 const selectedCari = ref(null);
-const aliciSearch = ref('');
+const searchQuery = ref('');
 const cariAdresler = ref([]);
-const selectedAdres = ref('');
+const selectedAdres = ref(null);
 const aliciTelRef = ref(null);
 const successDialog = ref(false);
+
+// Adres Dialog State
+const adresDialog = ref(false);
+const adresFormRef = ref(null);
+const adresFormValid = ref(false);
+const adresLoading = ref(false);
+const newAdres = reactive({
+  tip: 'EV',
+  adres: '',
+  il: '',
+  ilce: '',
+  mahalle: '',
+  postaKodu: '',
+  tarif: '',
+  varsayilan: false
+});
+
+// Adres Tip Seçenekleri
+const adresTipleri = [
+  { text: 'Ev', value: 'EV' },
+  { text: 'İş', value: 'IS' },
+  { text: 'Diğer', value: 'DIGER' }
+];
 
 // Snackbar State
 const snackbar = ref(false);
@@ -438,28 +570,57 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 
 onMounted(async () => {
   try {
-    const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`);
-    console.log('Dropdown Response:', data);
-    if (data && typeof data === 'object') {
-      Object.assign(dropdowns, data);
-      console.log('Dropdowns populated:', dropdowns);
-    } else {
-      console.warn('Dropdown API boş veya beklenmeyen formatta döndü:', data);
-    }
+    // Initialize cache system
+    cacheStore.cleanup();
+    
+    // Fetch dropdown data (uses cache if available)
+    await cacheStore.fetchDropdownData();
+    
+    console.log('✅ Dropdown data ready:', {
+      cariler: dropdowns.value.cariler?.length || 0,
+      urunler: dropdowns.value.urunler?.length || 0,
+      cached: cacheStore.isCacheValid
+    });
   } catch (err) {
-    console.error('❌ Dropdown API hatası:', err.response?.data || err.message || err);
+    console.error('❌ Dropdown loading error:', err);
   }
 });
 
-const selectedTeslimatTuru = computed(() => dropdowns.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
+const selectedTeslimatTuru = computed(() => dropdowns.value.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
 const showSube = computed(() => selectedTeslimatTuru.value?.ad === 'Şubeden Teslim');
 
-const selectedGonderenTipi = computed(() => dropdowns.aliciTipleri.find(t => t.id === form.gonderenTipiId));
+const selectedGonderenTipi = computed(() => dropdowns.value.aliciTipleri.find(t => t.id === form.gonderenTipiId));
 const showAliciFields = computed(() => selectedGonderenTipi.value?.ad === 'Gönderen ve Alıcı');
 
 const adresEnabled = computed(() => {
   const teslimatAdi = selectedTeslimatTuru.value?.ad;
   return ['Evine Gönderilecek', 'Mtn', 'Otobüs', 'Yurtiçi Kargo'].includes(teslimatAdi);
+});
+
+// Cari listesi için computed property
+const filteredCariler = computed(() => {
+  if (!dropdowns.value.cariler || dropdowns.value.cariler.length === 0) return [];
+  
+  // Her cari için displayName ekle
+  return dropdowns.value.cariler.map(cari => ({
+    ...cari,
+    displayName: `${cari.ad} ${cari.soyad || ''}`.trim()
+  })).filter(cari => {
+    if (!searchQuery.value) return true;
+    
+    const query = searchQuery.value.toLowerCase();
+    const searchFields = [
+      cari.ad || '',
+      cari.soyad || '',
+      cari.displayName || '',
+      cari.telefon || '',
+      cari.musteriKodu || ''
+    ];
+    
+    return searchFields.some(field => 
+      field.toString().toLowerCase().includes(query)
+    );
+  });
 });
 
 function onDateChange() {
@@ -503,7 +664,7 @@ function openPackageDialog(packageInfo) {
 }
 
 function addItemToCurrentPackage() {
-  const selectedUrun = dropdowns.urunler.find(u => u.id === newItemInPackage.value.urunId);
+  const selectedUrun = dropdowns.value.urunler.find(u => u.id === newItemInPackage.value.urunId);
   if (selectedUrun && newItemInPackage.value.miktar > 0 && newItemInPackage.value.birim) {
     currentPackage.urunler.push({
       urunId: selectedUrun.id,
@@ -536,10 +697,10 @@ function savePackage() {
   }
   let specificName = '';
   if (currentPackage.kutuId) {
-    specificName = dropdowns.kutular.find(k => k.id === currentPackage.kutuId)?.ad || '';
+    specificName = dropdowns.value.kutular.find(k => k.id === currentPackage.kutuId)?.ad || '';
   }
   else if (currentPackage.tepsiTavaId) {
-    specificName = dropdowns.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || '';
+    specificName = dropdowns.value.tepsiTavalar.find(t => t.id === currentPackage.tepsiTavaId)?.ad || '';
   }
 
   const packageToAdd = JSON.parse(JSON.stringify(currentPackage));
@@ -560,37 +721,52 @@ function getUrunIcon(urunAdi) {
   return 'mdi-food-variant';
 }
 
-function customCariFilter(item, queryText, itemText) {
-  const text = itemText.toLocaleLowerCase('tr-TR');
-  const query = queryText.toLocaleLowerCase('tr-TR');
-  return text.includes(query);
+function onSearchInput(value) {
+  console.log('🔍 Search input:', value);
+  searchQuery.value = value || '';
 }
 
-function onCariSelected(cariId) {
-  const cari = dropdowns.cariler.find(c => c.id === cariId);
-  if (cari) {
-    form.aliciAdi = cari.ad;
+function onCariSelected(cari) {
+  console.log('🎯 Cari selected:', cari);
+  
+  if (cari && typeof cari === 'object') {
+    // return-object kullandığımız için cari artık tam bir object
+    form.aliciAdi = cari.displayName || `${cari.ad} ${cari.soyad || ''}`.trim();
     form.aliciTel = cari.telefon || '';
-    // Adresleri ata
+
+    // Adres sistemini yenile
     if (cari.adresler && cari.adresler.length > 0) {
-      cariAdresler.value = cari.adresler.map(a => ({
-        adres: a.adres,
-        tip: a.tip,
-        adresGosterim: a.tip ? `${a.tip}: ${a.adres}` : a.adres
-      }));
-      selectedAdres.value = cariAdresler.value[0].adres;
-      form.adres = cariAdresler.value[0].adres;
+      cariAdresler.value = cari.adresler;
+
+      // Varsayılan adresi seç, yoksa ilkini seç
+      const varsayilanAdres = cari.adresler.find(a => a.varsayilan);
+      const secilenAdres = varsayilanAdres || cari.adresler[0];
+
+      selectedAdres.value = secilenAdres;
+      form.adres = secilenAdres.adres;
     } else {
       cariAdresler.value = [];
-      selectedAdres.value = '';
-      form.adres = '';
+      selectedAdres.value = null;
+      form.adres = cari.adres || ''; // Fallback olarak ana adres
     }
+
+    // Search query'yi seçilen isimle güncelle
+    searchQuery.value = cari.displayName;
+
     nextTick(() => {
       if (aliciTelRef.value) {
         aliciTelRef.value.focus();
         aliciTelRef.value.blur();
       }
     });
+  } else if (!cari) {
+    // Temizleme
+    form.aliciAdi = '';
+    form.aliciTel = '';
+    form.adres = '';
+    cariAdresler.value = [];
+    selectedAdres.value = null;
+    searchQuery.value = '';
   }
 }
 
@@ -600,33 +776,51 @@ function onAdresSelected(adres) {
 
 async function onCariBlur() {
   // Eğer yazılan isim mevcut carilerde yoksa yeni müşteri oluştur
-  const girilenAd = aliciSearch.value?.trim();
-  if (!girilenAd) return;
-  const mevcutCari = dropdowns.cariler.find(c => c.ad.toLocaleLowerCase('tr-TR') === girilenAd.toLocaleLowerCase('tr-TR'));
+  const girilenAd = searchQuery.value?.trim();
+  if (!girilenAd || selectedCari.value) return; // Zaten seçili bir cari varsa işlem yapma
+
+  // Basit arama - mevcut carilerde var mı kontrol et
+  const mevcutCari = filteredCariler.value.find(c => 
+    c.displayName.toLowerCase() === girilenAd.toLowerCase() ||
+    c.ad.toLowerCase() === girilenAd.toLowerCase()
+  );
+
   if (!mevcutCari) {
     // Yeni müşteri oluştur
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`, { ad: girilenAd });
       if (data && data.id) {
-        dropdowns.cariler.push(data);
-        selectedCari.value = data.id;
-        form.aliciAdi = data.ad;
+        // Tam ad bilgisini oluştur
+        const newCariData = {
+          ...data,
+          displayName: `${data.ad} ${data.soyad || ''}`.trim(),
+          adresler: data.adresler || []
+        };
+        
+        // Yeni cariyi cache'e ekle
+        cacheStore.addCariToCache(newCariData);
+
+        // Yeni cariyi seç
+        selectedCari.value = newCariData;
+        form.aliciAdi = newCariData.displayName;
         form.aliciTel = data.telefon || '';
-        cariAdresler.value = data.adresler?.map(a => ({
-          adres: a.adres,
-          tip: a.tip,
-          adresGosterim: a.tip ? `${a.tip}: ${a.adres}` : a.adres
-        })) || [];
-        if (cariAdresler.value.length > 0) {
-          selectedAdres.value = cariAdresler.value[0].adres;
-          form.adres = cariAdresler.value[0].adres;
+
+        // Adres sistemini güncelle
+        if (data.adresler && data.adresler.length > 0) {
+          cariAdresler.value = data.adresler;
+          const varsayilanAdres = data.adresler.find(a => a.varsayilan) || data.adresler[0];
+          selectedAdres.value = varsayilanAdres;
+          form.adres = varsayilanAdres.adres;
         } else {
-          selectedAdres.value = '';
-          form.adres = '';
+          cariAdresler.value = [];
+          selectedAdres.value = null;
+          form.adres = data.adres || '';
         }
+
         showSnackbar('Yeni müşteri oluşturuldu ve seçildi.', 'success');
       }
     } catch (err) {
+      console.error('Yeni müşteri oluşturma hatası:', err);
       showSnackbar('Yeni müşteri oluşturulamadı: ' + (err.response?.data?.message || err.message), 'error');
     }
   }
@@ -680,18 +874,126 @@ async function submitForm() {
   };
   console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
   try {
+    console.log('🚀 Sipariş API çağrısı başlıyor...');
     const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload);
     console.log('✅ Sipariş kaydedildi:', data);
     successDialog.value = true;
   } catch (err) {
-    console.error('❌ Sipariş gönderilemedi:', err.response?.data || err.message || err);
+    console.error('❌ SIPARIŞ API HATASI:');
+    console.error('Status:', err.response?.status);
+    console.error('Response Data:', err.response?.data);
+    console.error('Full Error:', err);
     showSnackbar(`Sipariş gönderilirken hata oluştu: ${err.response?.data?.message || err.message}`, 'error');
   }
 }
 
 function selectAdres(adres) {
   selectedAdres.value = adres;
-  form.adres = adres;
+  form.adres = adres.adres;
+}
+
+// Adres Dialog Fonksiyonları
+function openAdresDialog() {
+  if (!selectedCari.value) {
+    showSnackbar('Önce bir müşteri seçmelisiniz.', 'warning');
+    return;
+  }
+
+  // Form temizle
+  newAdres.tip = 'EV';
+  newAdres.adres = '';
+  newAdres.il = '';
+  newAdres.ilce = '';
+  newAdres.mahalle = '';
+  newAdres.postaKodu = '';
+  newAdres.tarif = '';
+  newAdres.varsayilan = cariAdresler.value.length === 0; // İlk adres ise varsayılan yap
+
+  adresDialog.value = true;
+}
+
+function closeAdresDialog() {
+  adresDialog.value = false;
+}
+
+async function saveAdres() {
+  const { valid } = await adresFormRef.value.validate();
+  if (!valid) {
+    showSnackbar('Lütfen zorunlu alanları doldurun.', 'warning');
+    return;
+  }
+
+  adresLoading.value = true;
+
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/cari/${selectedCari.value}/adres`,
+      newAdres
+    );
+
+    const yeniAdres = response.data;
+
+    // Adres listesini güncelle
+    cariAdresler.value.push(yeniAdres);
+
+    // Eğer varsayılan adres ise diğerlerini güncelle
+    if (yeniAdres.varsayilan) {
+      cariAdresler.value.forEach(a => {
+        if (a.id !== yeniAdres.id) a.varsayilan = false;
+      });
+    }
+
+    // Yeni adresi seç
+    selectedAdres.value = yeniAdres;
+    form.adres = yeniAdres.adres;
+
+    // Cari dropdown'ındaki veriyi de güncelle
+    const cari = dropdowns.value.cariler.find(c => c.id === selectedCari.value);
+    if (cari) {
+      if (!cari.adresler) cari.adresler = [];
+      cari.adresler.push(yeniAdres);
+    }
+
+    showSnackbar('Adres başarıyla eklendi!', 'success');
+    closeAdresDialog();
+
+  } catch (error) {
+    console.error('Adres ekleme hatası:', error);
+    showSnackbar(
+      `Adres eklenirken hata oluştu: ${error.response?.data?.error || error.message}`,
+      'error'
+    );
+  } finally {
+    adresLoading.value = false;
+  }
+}
+
+// Adres Tip Yardımcı Fonksiyonları
+function getAdresTipText(tip) {
+  switch (tip) {
+    case 'EV': return 'Ev';
+    case 'IS': return 'İş';
+    case 'DIGER': return 'Diğer';
+    default: return tip;
+  }
+}
+
+function getAdresTipColor(tip) {
+  switch (tip) {
+    case 'EV': return 'green';
+    case 'IS': return 'blue';
+    case 'DIGER': return 'orange';
+    default: return 'grey';
+  }
+}
+
+function getAdresTipIcon(tip) {
+  switch (tip) {
+    case 'EV': return 'mdi-home';
+    case 'IS': return 'mdi-briefcase';
+    case 'DIGER': return 'mdi-map-marker';
+    default: return 'mdi-map-marker';
+  }
 }
 
 function closeSuccessDialog() {
@@ -713,9 +1015,9 @@ function resetForm() {
   form.aciklama = '';
   orderPackages.value = [];
   selectedCari.value = null;
-  aliciSearch.value = '';
+  searchQuery.value = '';
   cariAdresler.value = [];
-  selectedAdres.value = '';
+  selectedAdres.value = null;
   selectedPackageType.value = null;
 }
 

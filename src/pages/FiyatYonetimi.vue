@@ -43,16 +43,16 @@
       <v-card-text class="pa-4">
         <v-row>
           <v-col cols="12" md="4">
-            <v-text-field v-model="search" label="Ürün Ara" prepend-inner-icon="mdi-magnify"
-              variant="outlined" density="compact" clearable color="#F57C00" />
+            <v-text-field v-model="search" label="Ürün Ara" prepend-inner-icon="mdi-magnify" variant="outlined"
+              density="compact" clearable color="#F57C00" />
           </v-col>
           <v-col cols="12" md="4">
-            <v-select v-model="selectedCategory" :items="categories" label="Kategori"
-              variant="outlined" density="compact" clearable color="#F57C00" />
+            <v-select v-model="selectedCategory" :items="categories" label="Kategori" variant="outlined"
+              density="compact" clearable color="#F57C00" />
           </v-col>
           <v-col cols="12" md="4">
-            <v-select v-model="selectedType" :items="priceTypes" label="Fiyat Türü"
-              variant="outlined" density="compact" clearable color="#F57C00" />
+            <v-select v-model="selectedType" :items="priceTypes" label="Fiyat Türü" variant="outlined" density="compact"
+              clearable color="#F57C00" />
           </v-col>
         </v-row>
       </v-card-text>
@@ -71,7 +71,8 @@
             <p class="text-body-2 opacity-80 ma-0">Ürün fiyatları ve güncellemeleri</p>
           </div>
         </div>
-        <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchFiyatlar" title="Yenile"></v-btn>
+        <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchFiyatlar"
+          title="Yenile"></v-btn>
       </v-card-title>
 
       <v-card-text class="pa-4">
@@ -85,7 +86,8 @@
           <template v-slot:item.urun="{ item }">
             <div class="d-flex align-center">
               <v-avatar color="#FFE0B2" size="36" class="mr-3">
-                <span class="font-weight-bold" style="color: #E65100;">{{ item.urun?.ad?.charAt(0).toUpperCase() }}</span>
+                <span class="font-weight-bold" style="color: #E65100;">{{ item.urun?.ad?.charAt(0).toUpperCase()
+                }}</span>
               </v-avatar>
               <div>
                 <div class="font-weight-medium" style="color: #E65100;">{{ item.urun?.ad }}</div>
@@ -109,12 +111,12 @@
 
           <template v-slot:item.fiyat="{ item }">
             <div class="text-h6 font-weight-bold" style="color: #E65100;">
-              {{ formatCurrency(item.fiyat) }}
+              {{ formatCurrency(item.kgFiyati) }}
             </div>
           </template>
 
           <template v-slot:item.gecerliTarih="{ item }">
-            <span class="text-body-2">{{ formatDate(item.gecerliTarih) }}</span>
+            <span class="text-body-2">{{ formatDate(item.baslangicTarihi) }}</span>
           </template>
 
           <template v-slot:item.bitisTarihi="{ item }">
@@ -130,8 +132,10 @@
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-pencil" size="small" color="#F57C00" variant="text" @click="editFiyat(item)" title="Düzenle"></v-btn>
-            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deleteFiyat(item)" title="Sil"></v-btn>
+            <v-btn icon="mdi-pencil" size="small" color="#F57C00" variant="text" @click="editFiyat(item)"
+              title="Düzenle"></v-btn>
+            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deleteFiyat(item)"
+              title="Sil"></v-btn>
           </template>
         </v-data-table>
       </v-card-text>
@@ -140,15 +144,16 @@
     <!-- Price Dialog -->
     <v-dialog v-model="fiyatDialog" persistent max-width="600px">
       <v-card style="border-radius: 16px; overflow: hidden;">
-        <v-card-title class="text-h6" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
+        <v-card-title class="text-h6"
+          style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
           {{ editingFiyat ? 'Fiyat Düzenle' : 'Yeni Fiyat Ekle' }}
         </v-card-title>
         <v-card-text class="pa-6">
           <v-form ref="fiyatFormRef" v-model="validForm">
             <v-row>
               <v-col cols="12">
-                <v-select v-model="fiyatForm.urunId" :items="urunler" item-title="ad" item-value="id" 
-                  label="Ürün" :rules="[rules.required]" variant="outlined" color="#FF9800" />
+                <v-select v-model="fiyatForm.urunId" :items="urunler" item-title="ad" item-value="id" label="Ürün"
+                  :rules="[rules.required]" variant="outlined" color="#FF9800" />
               </v-col>
               <v-col cols="6">
                 <v-select v-model="fiyatForm.birim" :items="birimOptions" item-title="text" item-value="value" 
@@ -160,16 +165,15 @@
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="fiyatForm.fiyat" label="Fiyat" type="number" step="0.01" 
-                  :rules="[rules.required, rules.positiveNumber]" variant="outlined" color="#FF9800" 
-                  prefix="₺" />
+                  :rules="[rules.required, rules.positiveNumber]" variant="outlined" color="#FF9800" prefix="₺" />
               </v-col>
               <v-col cols="6">
                 <v-text-field v-model="fiyatForm.gecerliTarih" label="Geçerlilik Tarihi" type="date" 
                   :rules="[rules.required]" variant="outlined" color="#FF9800" />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="fiyatForm.bitisTarihi" label="Bitiş Tarihi" type="date" 
-                  variant="outlined" color="#FF9800" hint="Boş bırakılırsa süresiz geçerli olur" />
+                <v-text-field v-model="fiyatForm.bitisTarihi" label="Bitiş Tarihi" type="date" variant="outlined"
+                  color="#FF9800" hint="Boş bırakılırsa süresiz geçerli olur" />
               </v-col>
               <v-col cols="12">
                 <v-checkbox v-model="fiyatForm.aktif" label="Aktif" color="#FF9800" />
@@ -227,8 +231,8 @@ const headers = ref([
   { title: 'Ürün', key: 'urun', sortable: true }, 
   { title: 'Birim', key: 'birim', sortable: true },
   { title: 'Tür', key: 'fiyatTipi', sortable: true }, 
-  { title: 'Fiyat', key: 'fiyat', align: 'end', sortable: true }, 
-  { title: 'Başlangıç', key: 'gecerliTarih', sortable: true }, 
+  { title: 'Fiyat', key: 'kgFiyati', align: 'end', sortable: true },
+  { title: 'Başlangıç', key: 'baslangicTarihi', sortable: true },
   { title: 'Bitiş', key: 'bitisTarihi', sortable: true }, 
   { title: 'Durum', key: 'aktif', sortable: true },
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' }
@@ -323,7 +327,7 @@ function formatCurrency(amount) {
 }
 
 function getTipColor(tip) {
-  switch(tip) {
+  switch (tip) {
     case 'normal': return '#4CAF50';
     case 'toptan': return '#FF9800';
     case 'perakende': return '#9C27B0';
@@ -333,7 +337,7 @@ function getTipColor(tip) {
 }
 
 function getTipIcon(tip) {
-  switch(tip) {
+  switch (tip) {
     case 'normal': return 'mdi-tag';
     case 'toptan': return 'mdi-warehouse';
     case 'perakende': return 'mdi-store';
@@ -343,7 +347,7 @@ function getTipIcon(tip) {
 }
 
 function getTipText(tip) {
-  switch(tip) {
+  switch (tip) {
     case 'normal': return 'Normal';
     case 'toptan': return 'Toptan';
     case 'perakende': return 'Perakende';
@@ -429,8 +433,8 @@ function openEditFiyatDialog(fiyat) {
   fiyatForm.urunId = fiyat.urunId;
   fiyatForm.birim = fiyat.birim || 'KG';
   fiyatForm.fiyatTipi = fiyat.fiyatTipi || 'normal';
-  fiyatForm.fiyat = fiyat.fiyat;
-  fiyatForm.gecerliTarih = fiyat.gecerliTarih ? new Date(fiyat.gecerliTarih).toISOString().split('T')[0] : null;
+  fiyatForm.fiyat = fiyat.kgFiyati;
+  fiyatForm.gecerliTarih = fiyat.baslangicTarihi ? new Date(fiyat.baslangicTarihi).toISOString().split('T')[0] : null;
   fiyatForm.bitisTarihi = fiyat.bitisTarihi ? new Date(fiyat.bitisTarihi).toISOString().split('T')[0] : null;
   fiyatForm.aktif = fiyat.aktif !== false;
   fiyatDialog.value = true;
@@ -475,8 +479,8 @@ async function saveFiyat() {
       urunId: fiyatForm.urunId,
       birim: fiyatForm.birim,
       fiyatTipi: fiyatForm.fiyatTipi,
-      fiyat: parseFloat(fiyatForm.fiyat),
-      gecerliTarih: fiyatForm.gecerliTarih ? new Date(fiyatForm.gecerliTarih) : null,
+      kgFiyati: parseFloat(fiyatForm.fiyat),
+      baslangicTarihi: fiyatForm.gecerliTarih ? new Date(fiyatForm.gecerliTarih) : null,
       bitisTarihi: fiyatForm.bitisTarihi ? new Date(fiyatForm.bitisTarihi) : null,
       aktif: fiyatForm.aktif
     };

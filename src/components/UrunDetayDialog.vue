@@ -291,7 +291,7 @@
                                                                 {{ formatFiyat(maliyetAnalizi.toplamMaliyet) }}
                                                             </div>
                                                             <div class="text-caption">Toplam Maliyet ({{ selectedGramaj
-                                                                }}g)</div>
+                                                            }}g)</div>
                                                         </v-card>
                                                     </v-col>
                                                     <v-col cols="12" md="3">
@@ -387,7 +387,7 @@
                                                                 {{ item.miktarGram }}g
                                                             </template>
                                                             <template v-slot:item.birimMaliyet="{ item }">
-                                                                {{ item.birimMaliyet }}₺/KG
+                                                                {{ (item.birimMaliyet || 0).toFixed(2) }}₺/KG
                                                             </template>
                                                             <template v-slot:item.toplamMaliyet="{ item }">
                                                                 <strong>{{ formatFiyat(item.toplamMaliyet) }}</strong>
@@ -537,44 +537,74 @@ export default {
                 return
             }
 
-            console.log('Reçete maliyet yükleniyor - Ürün ID:', props.urun.id, 'Gramaj:', selectedGramaj.value)
+            console.log('Reçete yükleniyor - Ürün ID:', props.urun.id)
             receteYukleniyor.value = true
             try {
-                const response = await apiCall(`/urunler/${props.urun.id}/recete-maliyet?gramaj=${selectedGramaj.value}`)
-                console.log('API Response:', response)
+                // Düzeltilmiş reçete API'sini kullan
+                const response = await apiCall(`/receteler?urunId=${props.urun.id}`)
+                console.log('Reçete API response:', response)
 
-                // Yeni API yapısına göre verileri ayarla
-                if (response.receteler) {
-                    receteler.value = response.receteler
-                    console.log('Reçeteler ayarlandı:', receteler.value)
-                } else {
-                    console.log('Response.receteler bulunamadı')
-                }
+                if (Array.isArray(response) && response.length > 0) {
+                    // API'den gelen reçeteleri uygun formatta düzenle
+                    receteler.value = response.map(recete => {
+                        // Her malzeme için maliyet hesapla
+                        const malzemeler = (recete.ingredients || []).map(ing => {
+                            const miktar = ing.miktar || 0
+                            const birimFiyat = ing.birimFiyat || 0
+                            const toplamMaliyet = (miktar * birimFiyat) / 1000 // KG to gram conversion
 
-                if (response.maliyet) {
+                            return {
+                                ...ing,
+                                miktarGram: miktar,
+                                birimMaliyet: birimFiyat,
+                                toplamMaliyet: toplamMaliyet,
+                                yuzde: 0 // Sonra hesaplanacak
+                            }
+                        })
+
+                        // Toplam maliyet hesapla
+                        const toplamMaliyet = malzemeler.reduce((total, mal) => total + (mal.toplamMaliyet || 0), 0)
+
+                        // Yüzdeleri hesapla
+                        malzemeler.forEach(mal => {
+                            mal.yuzde = toplamMaliyet > 0 ? ((mal.toplamMaliyet || 0) / toplamMaliyet * 100).toFixed(1) : 0
+                        })
+
+                        return {
+                            ...recete,
+                            name: recete.ad || recete.name,
+                            malzemeler: malzemeler,
+                            toplamGram: malzemeler.reduce((total, mal) => total + (mal.miktarGram || 0), 0),
+                            toplamMaliyet: toplamMaliyet
+                        }
+                    })
+
+                    // Basit maliyet analizi hesapla
+                    const toplamMaliyet = receteler.value.reduce((total, recete) => total + recete.toplamMaliyet, 0)
+                    const kgMaliyeti = toplamMaliyet > 0 ? toplamMaliyet : 0
+
                     maliyetAnalizi.value = {
-                        toplamMaliyet: response.maliyet.toplamMaliyet,
-                        kgMaliyeti: response.maliyet.kgMaliyeti,
-                        gramMaliyeti: response.maliyet.gramMaliyeti,
-                        karMiktari: response.maliyet.karMiktari,
-                        karMarji: response.maliyet.karMarji,
-                        araGramajSatisFiyati: response.urun.araGramajSatisFiyati,
-                        receteSayisi: response.receteler?.length || 0,
-                        malzemeSayisi: response.receteler?.reduce((total, recete) => total + (recete.malzemeler?.length || 0), 0) || 0
+                        toplamMaliyet: toplamMaliyet * (selectedGramaj.value / 1000),
+                        kgMaliyeti: kgMaliyeti,
+                        gramMaliyeti: kgMaliyeti / 1000,
+                        karMiktari: 0, // Satış fiyatı bilgisi olmadığı için
+                        karMarji: 0,
+                        araGramajSatisFiyati: 0,
+                        receteSayisi: receteler.value.length,
+                        malzemeSayisi: receteler.value.reduce((total, recete) => total + (recete.malzemeler?.length || 0), 0)
                     }
-                    console.log('Maliyet analizi ayarlandı:', maliyetAnalizi.value)
+
+                    console.log('Reçeteler başarıyla yüklendi:', receteler.value.length, 'adet')
                 } else {
-                    console.log('Response.maliyet bulunamadı')
+                    receteler.value = []
+                    maliyetAnalizi.value = null
+                    console.log('Bu ürün için reçete bulunamadı')
                 }
 
-                console.log('Reçete maliyet analizi yüklendi:', {
-                    receteler: receteler.value,
-                    maliyet: maliyetAnalizi.value,
-                    recetelerLength: receteler.value?.length,
-                    fullResponse: response
-                })
             } catch (error) {
-                console.error('Reçete maliyet analizi yüklenirken hata:', error)
+                console.error('Reçete yüklenirken hata:', error)
+                receteler.value = []
+                maliyetAnalizi.value = null
             } finally {
                 receteYukleniyor.value = false
             }

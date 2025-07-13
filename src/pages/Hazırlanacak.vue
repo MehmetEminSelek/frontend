@@ -79,11 +79,15 @@ import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { useRealtimeStore } from '../stores/realtime.js';
 
 const orders = ref([]); // API'den gelen siparişler (içindeki kalemler düzenlenecek)
 const loading = ref(false);
 const error = ref(null);
 const prepareLoading = reactive({}); // { orderId: boolean } - Her sipariş için ayrı loading
+
+// Realtime Store
+const realtimeStore = useRealtimeStore();
 
 // Snackbar State
 const snackbar = ref(false);
@@ -158,9 +162,50 @@ async function saveAndMarkAsPrepared(order, index) {
 
     try {
         // PUT isteği ile hem kalem miktarlarını hem de durumu güncelle
-        await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
+        const response = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
+
+        // 🐍 Stok düşümü uyarılarını kontrol et ve global toast notifications göster
+        if (response.data && response.data.stokUyarilari && response.data.stokUyarilari.length > 0) {
+            // Store'a stok uyarılarını ekle (yılan efektli border için)
+            realtimeStore.addStockWarnings(response.data.stokUyarilari, orderId);
+            
+            // Her uyarı için ayrı toast notification göster
+            response.data.stokUyarilari.forEach((uyari, index) => {
+                setTimeout(() => {
+                    if (window.showStockAlert) {
+                        window.showStockAlert({
+                            type: 'warning',
+                            title: '🐍 Reçete Uyarısı',
+                            message: uyari,
+                            details: `Sipariş #${orderId} için stok düşümü yapılamadı`,
+                            action: '/main/recete-yonetimi',
+                            actionText: 'Reçeteler',
+                            duration: 8000
+                        });
+                    }
+                }, index * 500); // 500ms aralıklarla göster
+            });
+            
+            // Genel başarı mesajı (snackbar olarak)
+            showSnackbar(
+                `Sipariş ${orderId} güncellendi! ${response.data.stokUyarilari.length} ürün için reçete eksik. ⚠️`, 
+                'warning', 
+                4000
+            );
+        } else {
+            // Tam başarı durumu - toast notification
+            if (window.showToast) {
+                window.showToast({
+                    type: 'success',
+                    title: '✅ Sipariş Hazırlandı',
+                    message: `Sipariş #${orderId} başarıyla hazırlandı!`,
+                    details: 'Tüm stok düşümleri tamamlandı',
+                    duration: 5000
+                });
+            }
 
         showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
+        }
 
         // Başarılı olursa listeden kaldır
         if (index > -1) {

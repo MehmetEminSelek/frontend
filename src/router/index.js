@@ -15,7 +15,6 @@ import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
 import UrunYonetimi from '../pages/UrunYonetimi.vue'
 import SatisRaporu from '../pages/SatisRaporu.vue'
-import MalzemeFiyatlari from '../pages/MalzemeFiyatlari.vue'
 import CrmRaporlama from '../pages/CrmRaporlama.vue'
 import ReceteYonetimi from '../pages/ReceteYonetimi.vue'
 
@@ -48,12 +47,6 @@ const routes = [
         path: 'FiyatYonetimi',
         name: 'FiyatYönetimi',
         component: FiyatYönetimi // /main/form
-      },
-      {
-        path: 'MalzemeFiyatlari',
-        name: 'MalzemeFiyatlari',
-        component: MalzemeFiyatlari,
-        meta: { requiresAuth: true, adminOnly: true }
       },
       {
         path: 'orders', // /main/orders - Onay Bekleyenler

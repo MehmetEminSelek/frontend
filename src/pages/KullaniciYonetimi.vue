@@ -2,7 +2,7 @@
   <v-container class="py-6 px-2 px-md-8" fluid>
     <!-- Hero Section -->
     <div class="hero-section mb-6">
-      <v-card class="pa-6 rounded-xl elevation-4" 
+      <v-card class="pa-6 rounded-xl elevation-4"
         style="background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%); color: #4A148C; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
           <v-icon size="120">mdi-account-tie</v-icon>
@@ -28,7 +28,8 @@
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center">
-            <v-btn size="x-large" color="white" variant="elevated" @click="openNewPersonelDialog" class="font-weight-bold" 
+            <v-btn size="x-large" color="white" variant="elevated" @click="openNewPersonelDialog"
+              class="font-weight-bold"
               style="color: #6A1B9A !important; box-shadow: 0 4px 12px rgba(106, 27, 154, 0.2);">
               <v-icon left size="20">mdi-account-plus</v-icon>
               Yeni Personel
@@ -41,7 +42,8 @@
     <!-- Stats Cards -->
     <v-row class="mb-6">
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2" style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%); color: white;">
+        <v-card class="rounded-xl elevation-2"
+          style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%); color: white;">
           <v-card-text class="pa-4">
             <div class="d-flex align-center">
               <v-icon size="40" class="mr-3">mdi-account-check</v-icon>
@@ -54,7 +56,8 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2" style="background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%); color: white;">
+        <v-card class="rounded-xl elevation-2"
+          style="background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%); color: white;">
           <v-card-text class="pa-4">
             <div class="d-flex align-center">
               <v-icon size="40" class="mr-3">mdi-account-off</v-icon>
@@ -67,7 +70,8 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2" style="background: linear-gradient(135deg, #2196F3 0%, #64B5F6 100%); color: white;">
+        <v-card class="rounded-xl elevation-2"
+          style="background: linear-gradient(135deg, #2196F3 0%, #64B5F6 100%); color: white;">
           <v-card-text class="pa-4">
             <div class="d-flex align-center">
               <v-icon size="40" class="mr-3">mdi-office-building</v-icon>
@@ -80,7 +84,8 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2" style="background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%); color: white;">
+        <v-card class="rounded-xl elevation-2"
+          style="background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%); color: white;">
           <v-card-text class="pa-4">
             <div class="d-flex align-center">
               <v-icon size="40" class="mr-3">mdi-account-group</v-icon>
@@ -99,32 +104,32 @@
       <v-card-text class="pa-4">
         <v-row align="center">
           <v-col cols="12" md="3">
-            <v-select v-model="selectedSube" :items="subeOptions" label="Şube Filtresi" 
-              variant="outlined" density="compact" clearable @update:model-value="filterPersonel">
+            <v-select v-model="selectedSube" :items="subeOptions" label="Şube Filtresi" variant="outlined"
+              density="compact" clearable @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
                 <v-icon color="#AB47BC">mdi-office-building</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
-            <v-select v-model="selectedDurum" :items="durumOptions" label="Durum Filtresi" 
-              variant="outlined" density="compact" clearable @update:model-value="filterPersonel">
+            <v-select v-model="selectedDurum" :items="durumOptions" label="Durum Filtresi" variant="outlined"
+              density="compact" clearable @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
                 <v-icon color="#AB47BC">mdi-account-check</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
-            <v-select v-model="selectedSgk" :items="sgkOptions" label="SGK Durumu" 
-              variant="outlined" density="compact" clearable @update:model-value="filterPersonel">
+            <v-select v-model="selectedSgk" :items="sgkOptions" label="SGK Durumu" variant="outlined" density="compact"
+              clearable @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
                 <v-icon color="#AB47BC">mdi-shield-account</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field v-model="search" label="Personel Ara" prepend-inner-icon="mdi-magnify"
-              variant="outlined" density="compact" clearable />
+            <v-text-field v-model="search" label="Personel Ara" prepend-inner-icon="mdi-magnify" variant="outlined"
+              density="compact" clearable />
           </v-col>
         </v-row>
       </v-card-text>
@@ -132,7 +137,7 @@
 
     <!-- Main Content Card -->
     <v-card class="rounded-xl" elevation="2" style="border: 1px solid #F3E5F5;">
-      <v-card-title class="pa-4 d-flex justify-space-between align-center" 
+      <v-card-title class="pa-4 d-flex justify-space-between align-center"
         style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
         <div class="d-flex align-center">
           <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
@@ -144,7 +149,8 @@
           </div>
         </div>
         <div class="d-flex align-center">
-          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchPersonel" title="Yenile" class="ml-2"></v-btn>
+          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchPersonel" title="Yenile"
+            class="ml-2"></v-btn>
         </div>
       </v-card-title>
 
@@ -153,9 +159,9 @@
 
         <v-data-table :headers="headers" :items="filteredPersonel" :loading="loading" :search="search" item-value="id"
           class="personel-table rounded-lg" hover density="comfortable" items-per-page-text="Sayfa başına personel:"
-          :items-per-page="itemsPerPage" no-data-text="Gösterilecek personel kaydı bulunamadı." 
+          :items-per-page="itemsPerPage" no-data-text="Gösterilecek personel kaydı bulunamadı."
           loading-text="Personel verileri yükleniyor...">
-          
+
           <template v-slot:item.ad="{ item }">
             <div class="d-flex align-center">
               <v-avatar :color="item.aktif ? '#4CAF50' : '#FF9800'" size="40" class="mr-3">
@@ -169,7 +175,7 @@
           </template>
 
           <template v-slot:item.sube="{ item }">
-            <div v-if="item.sube">
+            <div v-if="item.sube && item.sube.ad">
               <v-chip color="#E3F2FD" size="small" style="color: #1976D2;">
                 <v-icon start size="16">mdi-office-building</v-icon>
                 {{ item.sube.ad }}
@@ -194,19 +200,22 @@
 
           <template v-slot:item.gunlukUcret="{ item }">
             <div class="text-right">
-              <span class="font-weight-bold" style="color: #2E7D32;">{{ formatCurrency(item.gunlukUcret) }}</span>
+              <span class="font-weight-bold" style="color: #2E7D32;">{{ formatCurrency(item.gunlukUcret || 0) }}</span>
               <div class="text-caption text-grey">TL/gün</div>
             </div>
           </template>
 
           <template v-slot:item.girisYili="{ item }">
-            <span class="text-body-2">{{ item.girisYili }}</span>
+            <span class="text-body-2">{{ item.girisYili || '-' }}</span>
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-eye" size="small" color="#2196F3" variant="text" @click="viewPersonel(item)" title="Görüntüle"></v-btn>
-            <v-btn icon="mdi-pencil" size="small" color="#7B1FA2" variant="text" @click="editPersonel(item)" title="Düzenle"></v-btn>
-            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deletePersonel(item)" title="Sil"></v-btn>
+            <v-btn icon="mdi-eye" size="small" color="#2196F3" variant="text" @click="viewPersonel(item)"
+              title="Görüntüle"></v-btn>
+            <v-btn icon="mdi-pencil" size="small" color="#7B1FA2" variant="text" @click="editPersonel(item)"
+              title="Düzenle"></v-btn>
+            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deletePersonel(item)"
+              title="Sil"></v-btn>
           </template>
         </v-data-table>
       </v-card-text>
@@ -215,7 +224,8 @@
     <!-- Personel Detail Dialog -->
     <v-dialog v-model="personelDetailDialog" max-width="600px">
       <v-card v-if="selectedPersonel" style="border-radius: 16px; overflow: hidden;">
-        <v-card-title class="text-h6 pa-4" style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
+        <v-card-title class="text-h6 pa-4"
+          style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
           <v-avatar :color="selectedPersonel.aktif ? '#4CAF50' : '#FF9800'" size="40" class="mr-3">
             <span class="font-weight-bold text-white">{{ getInitials(selectedPersonel.ad) }}</span>
           </v-avatar>
@@ -234,7 +244,8 @@
               </div>
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">Şube</div>
-                <v-chip v-if="selectedPersonel.sube" color="#E3F2FD" size="small" style="color: #1976D2;">
+                <v-chip v-if="selectedPersonel.sube && selectedPersonel.sube.ad" color="#E3F2FD" size="small"
+                  style="color: #1976D2;">
                   <v-icon start size="16">mdi-office-building</v-icon>
                   {{ selectedPersonel.sube.ad }}
                 </v-chip>
@@ -245,32 +256,37 @@
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">Durum</div>
                 <v-chip :color="selectedPersonel.aktif ? 'success' : 'warning'" size="small" variant="flat">
-                  <v-icon start size="16">{{ selectedPersonel.aktif ? 'mdi-check-circle' : 'mdi-pause-circle' }}</v-icon>
+                  <v-icon start size="16">{{ selectedPersonel.aktif ? 'mdi-check-circle' : 'mdi-pause-circle'
+                    }}</v-icon>
                   {{ selectedPersonel.aktif ? 'Aktif' : 'Pasif' }}
                 </v-chip>
               </div>
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">SGK Durumu</div>
                 <v-chip :color="selectedPersonel.sgkDurumu === 'VAR' ? 'primary' : 'error'" size="small" variant="flat">
-                  <v-icon start size="16">{{ selectedPersonel.sgkDurumu === 'VAR' ? 'mdi-shield-check' : 'mdi-shield-off' }}</v-icon>
+                  <v-icon start size="16">{{ selectedPersonel.sgkDurumu === 'VAR' ? 'mdi-shield-check' :
+                    'mdi-shield-off'
+                    }}</v-icon>
                   {{ selectedPersonel.sgkDurumu === 'VAR' ? 'SGK Var' : 'SGK Yok' }}
                 </v-chip>
               </div>
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">Günlük Ücret</div>
-                <div class="font-weight-bold text-h6" style="color: #2E7D32;">{{ formatCurrency(selectedPersonel.gunlukUcret) }} TL/gün</div>
+                <div class="font-weight-bold text-h6" style="color: #2E7D32;">{{
+                  formatCurrency(selectedPersonel.gunlukUcret
+                    || 0) }} TL/gün</div>
               </div>
             </v-col>
             <v-col cols="12">
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">Giriş Yılı</div>
-                <div class="font-weight-medium">{{ selectedPersonel.girisYili }}</div>
+                <div class="font-weight-medium">{{ selectedPersonel.girisYili || '-' }}</div>
               </div>
               <div class="mb-4">
                 <div class="text-caption text-grey mb-1">Rol</div>
                 <v-chip color="#F3E5F5" size="small" style="color: #7B1FA2;">
                   <v-icon start size="16">mdi-account-tie</v-icon>
-                  {{ getRoleText(selectedPersonel.role) }}
+                  {{ getRoleText(selectedPersonel.rol || '') }}
                 </v-chip>
               </div>
             </v-col>
@@ -290,43 +306,44 @@
     <!-- Personel Dialog -->
     <v-dialog v-model="personelDialog" persistent max-width="600px">
       <v-card style="border-radius: 16px; overflow: hidden;">
-        <v-card-title class="text-h6" style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
+        <v-card-title class="text-h6"
+          style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
           {{ editingPersonel ? 'Personel Düzenle' : 'Yeni Personel Ekle' }}
         </v-card-title>
         <v-card-text class="pa-6">
           <v-form ref="personelFormRef" v-model="validForm">
             <v-row>
               <v-col cols="12" md="6">
-                <v-text-field v-model="personelForm.ad" label="Ad Soyad" :rules="[rules.required]" 
+                <v-text-field v-model="personelForm.ad" label="Ad Soyad" :rules="[rules.required]" variant="outlined"
+                  color="#AB47BC" />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field v-model="personelForm.email" label="Email" :rules="[rules.required, rules.email]"
                   variant="outlined" color="#AB47BC" />
               </v-col>
               <v-col cols="12" md="6">
-                <v-text-field v-model="personelForm.email" label="Email" :rules="[rules.required, rules.email]" 
+                <v-text-field v-model="personelForm.username" label="Kullanıcı Adı" :rules="[rules.required]"
                   variant="outlined" color="#AB47BC" />
               </v-col>
               <v-col cols="12" md="6">
-                <v-text-field v-model="personelForm.username" label="Kullanıcı Adı" :rules="[rules.required]" 
-                  variant="outlined" color="#AB47BC" />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-if="!editingPersonel" v-model="personelForm.password" label="Şifre" type="password" 
+                <v-text-field v-if="!editingPersonel" v-model="personelForm.password" label="Şifre" type="password"
                   :rules="[rules.required, rules.minLength]" variant="outlined" color="#AB47BC" />
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="personelForm.subeId" :items="subeOptions" label="Şube" 
-                  variant="outlined" color="#AB47BC" clearable />
+                <v-select v-model="personelForm.subeId" :items="subeOptions" label="Şube" variant="outlined"
+                  color="#AB47BC" clearable />
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="personelForm.role" :items="roleOptions" item-title="text" item-value="value" 
+                <v-select v-model="personelForm.role" :items="roleOptions" item-title="text" item-value="value"
                   label="Rol" :rules="[rules.required]" variant="outlined" color="#AB47BC" />
               </v-col>
               <v-col cols="12" md="6">
-                <v-text-field v-model="personelForm.gunlukUcret" label="Günlük Ücret (TL)" type="number" 
+                <v-text-field v-model="personelForm.gunlukUcret" label="Günlük Ücret (TL)" type="number"
                   variant="outlined" color="#AB47BC" />
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="personelForm.sgkDurumu" :items="sgkOptions" label="SGK Durumu" 
-                  variant="outlined" color="#AB47BC" />
+                <v-select v-model="personelForm.sgkDurumu" :items="sgkOptions" label="SGK Durumu" variant="outlined"
+                  color="#AB47BC" />
               </v-col>
               <v-col cols="12">
                 <v-switch v-model="personelForm.aktif" label="Aktif Personel" color="#AB47BC" />
@@ -337,7 +354,7 @@
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="text" @click="closePersonelDialog" style="color: #7B1FA2;">İptal</v-btn>
-          <v-btn @click="savePersonel" :loading="personelDialogLoading" :disabled="!validForm" 
+          <v-btn @click="savePersonel" :loading="personelDialogLoading" :disabled="!validForm"
             style="background: #AB47BC; color: white;">
             {{ editingPersonel ? 'Güncelle' : 'Ekle' }}
           </v-btn>
@@ -388,8 +405,7 @@ const headers = [
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ];
 
-const personel = ref([]);
-const subeler = ref([]);
+const personel = ref([]); // Initialize with empty array
 const loading = ref(true);
 const error = ref(null);
 const search = ref('');
@@ -404,11 +420,11 @@ const selectedPersonel = ref(null);
 const validForm = ref(false);
 const itemsPerPage = ref(15);
 
-const personelForm = ref({ 
-  ad: '', 
-  email: '', 
-  username: '', 
-  password: '', 
+const personelForm = ref({
+  ad: '',
+  email: '',
+  username: '',
+  password: '',
   role: 'ADMIN',
   subeId: null,
   gunlukUcret: 0,
@@ -453,36 +469,57 @@ const sgkOptions = [
   { title: 'SGK Yok', value: 'YOK' }
 ];
 
-// Computed properties
+// Computed properties with safe array access
 const subeOptions = computed(() => {
-  return subeler.value.map(sube => ({
+  if (!Array.isArray(personel.value)) return [];
+
+  // Personel verilerinden unique şubeleri çıkar
+  const uniqueSubeler = personel.value
+    .filter(p => p.sube && p.sube.ad) // Şubesi olan personelleri filtrele
+    .map(p => p.sube) // Şube objelerini al
+    .filter((sube, index, self) =>
+      index === self.findIndex(s => s.id === sube.id) // Unique şubeleri bul
+    );
+
+  return uniqueSubeler.map(sube => ({
     title: sube.ad,
     value: sube.id
   }));
 });
 
 const filteredPersonel = computed(() => {
+  if (!Array.isArray(personel.value)) return [];
   let filtered = [...personel.value];
-  
+
   if (selectedSube.value) {
     filtered = filtered.filter(p => p.subeId === selectedSube.value);
   }
-  
+
   if (selectedDurum.value !== null) {
     filtered = filtered.filter(p => p.aktif === selectedDurum.value);
   }
-  
+
   if (selectedSgk.value) {
     filtered = filtered.filter(p => p.sgkDurumu === selectedSgk.value);
   }
-  
+
   return filtered;
 });
 
-const toplamPersonelSayisi = computed(() => personel.value.length);
-const aktifPersonelSayisi = computed(() => personel.value.filter(p => p.aktif).length);
-const pasifPersonelSayisi = computed(() => personel.value.filter(p => !p.aktif).length);
-const toplamSubeSayisi = computed(() => subeler.value.length);
+const toplamPersonelSayisi = computed(() => Array.isArray(personel.value) ? personel.value.length : 0);
+const aktifPersonelSayisi = computed(() => Array.isArray(personel.value) ? personel.value.filter(p => p.aktif).length : 0);
+const pasifPersonelSayisi = computed(() => Array.isArray(personel.value) ? personel.value.filter(p => !p.aktif).length : 0);
+const toplamSubeSayisi = computed(() => {
+  if (!Array.isArray(personel.value)) return 0;
+
+  // Personel verilerinden unique şube sayısını hesapla
+  const uniqueSubeler = personel.value
+    .filter(p => p.sube && p.sube.ad)
+    .map(p => p.sube.id)
+    .filter((id, index, self) => self.indexOf(id) === index);
+
+  return uniqueSubeler.length;
+});
 
 // Methods
 function showSnackbar(text, color = 'info', timeout = 4000) {
@@ -493,25 +530,37 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 }
 
 function getInitials(name) {
-  if (!name) return '';
+  if (!name || typeof name !== 'string') return '';
   return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
 }
 
 function formatCurrency(amount) {
+  const numAmount = Number(amount) || 0;
   return new Intl.NumberFormat('tr-TR', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount || 0);
+  }).format(numAmount);
 }
 
 function getRoleText(role) {
+  if (!role) return 'Belirtilmemiş';
   const roleMap = {
     'ADMIN': 'Admin',
     'MANAGER': 'Müdür',
     'USER': 'Kullanıcı',
     'PRODUCTION': 'Üretim',
     'SALES': 'Satış',
-    'ACCOUNTING': 'Muhasebe'
+    'ACCOUNTING': 'Muhasebe',
+    'PERSONEL': 'Personel',
+    'SUBE_PERSONELI': 'Şube Personeli',
+    'SUBE_MUDURU': 'Şube Müdürü',
+    'GENEL_MUDUR': 'Genel Müdür',
+    'YONETICI': 'Yönetici',
+    'URETIM_PERSONEL': 'Üretim Personeli',
+    'URETIM_MUDURU': 'Üretim Müdürü',
+    'SEVKIYAT_PERSONELI': 'Sevkiyat Personeli',
+    'SEVKIYAT_MUDURU': 'Sevkiyat Müdürü',
+    'CEP_DEPO_MUDURU': 'Cep Depo Müdürü'
   };
   return roleMap[role] || role;
 }
@@ -520,25 +569,31 @@ async function fetchPersonel() {
   try {
     loading.value = true;
     error.value = null;
-    
+
+    console.log('📡 Personel verilerini çekiyor...');
     const response = await apiCall('/auth/users', {}, 'GET');
-    personel.value = response.data;
-    
+    console.log('📊 API Response:', response);
+    console.log('📊 Response Type:', typeof response);
+    console.log('📊 Is Array:', Array.isArray(response));
+
+    // apiCall zaten response.data döndürüyor
+    if (Array.isArray(response)) {
+      personel.value = response;
+      console.log('✅ Personel verileri yüklendi:', personel.value.length, 'kayıt');
+      showSnackbar(`${personel.value.length} personel yüklendi`, 'success', 2000);
+    } else {
+      console.log('⚠️ Response array değil:', typeof response, response);
+      personel.value = [];
+      showSnackbar('Personel verileri array formatında değil', 'warning');
+    }
+
   } catch (err) {
-    console.error('Personel verileri yüklenirken hata:', err);
+    console.error('❌ Personel verileri yüklenirken hata:', err);
     error.value = 'Personel verileri yüklenirken bir hata oluştu';
-    showSnackbar('Personel verileri yüklenirken hata oluştu', 'error');
+    showSnackbar(`API Hatası: ${err.message}`, 'error');
+    personel.value = []; // Reset to empty array on error
   } finally {
     loading.value = false;
-  }
-}
-
-async function fetchSubeler() {
-  try {
-    const response = await apiCall('/dropdown', {}, 'GET');
-    subeler.value = response.data.subeler || [];
-  } catch (err) {
-    console.error('Şube verileri yüklenirken hata:', err);
   }
 }
 
@@ -548,11 +603,11 @@ function filterPersonel() {
 
 function openNewPersonelDialog() {
   editingPersonel.value = null;
-  personelForm.value = { 
-    ad: '', 
-    email: '', 
-    username: '', 
-    password: '', 
+  personelForm.value = {
+    ad: '',
+    email: '',
+    username: '',
+    password: '',
     role: 'ADMIN',
     subeId: null,
     gunlukUcret: 0,
@@ -571,10 +626,10 @@ function editPersonel(item) {
   editingPersonel.value = item;
   personelForm.value = {
     ad: item.ad,
-    email: item.email,
+    email: item.email || `${item.username}@omergullu.com.tr`, // Email yoksa generate et
     username: item.username,
     password: '',
-    role: item.role,
+    role: item.rol, // Database'den rol field'ı geliyor
     subeId: item.subeId,
     gunlukUcret: item.gunlukUcret || 0,
     sgkDurumu: item.sgkDurumu || 'VAR',
@@ -587,11 +642,11 @@ function editPersonel(item) {
 function closePersonelDialog() {
   personelDialog.value = false;
   editingPersonel.value = null;
-  personelForm.value = { 
-    ad: '', 
-    email: '', 
-    username: '', 
-    password: '', 
+  personelForm.value = {
+    ad: '',
+    email: '',
+    username: '',
+    password: '',
     role: 'ADMIN',
     subeId: null,
     gunlukUcret: 0,
@@ -603,9 +658,12 @@ function closePersonelDialog() {
 async function savePersonel() {
   try {
     personelDialogLoading.value = true;
-    
+
     const data = { ...personelForm.value };
-    
+    // Frontend'te role field'ı var ama backend'e rol olarak gönder
+    data.rol = data.role;
+    delete data.role;
+
     if (editingPersonel.value) {
       // Update existing personel
       await apiCall(`/auth/users/${editingPersonel.value.id}`, data, 'PUT');
@@ -615,10 +673,10 @@ async function savePersonel() {
       await apiCall('/auth/users', data, 'POST');
       showSnackbar('Yeni personel başarıyla eklendi', 'success');
     }
-    
+
     closePersonelDialog();
     await fetchPersonel();
-    
+
   } catch (err) {
     console.error('Personel kaydedilirken hata:', err);
     showSnackbar('Personel kaydedilirken hata oluştu', 'error');
@@ -641,10 +699,7 @@ async function deletePersonel(item) {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    fetchPersonel(),
-    fetchSubeler()
-  ]);
+  await fetchPersonel(); // Sadece personel verilerini çek
 });
 </script>
 

@@ -460,16 +460,21 @@ function getUrunIcon(urunAdi) {
 // --- Gruplama Fonksiyonu (DÜZELTİLDİ) ---
 function groupItemsByPackage(kalemler) {
   if (!kalemler || !Array.isArray(kalemler)) return [];
-  // Aynı ambalajId, kutuId, tepsiTavaId olan kalemleri grupla
+  // Aynı kutuId, tepsiTavaId olan kalemleri grupla
   const grouped = {};
   kalemler.forEach((kalem) => {
-    const key = `${kalem.ambalajId || 'none'}-${kalem.kutuId || 'none'}-${kalem.tepsiTavaId || 'none'}`;
+    const key = `${kalem.kutuId || 'none'}-${kalem.tepsiTavaId || 'none'}`;
     if (!grouped[key]) {
+      // Ambalaj türünü belirle
+      let ambalajAdi = 'Bilinmiyor';
+      if (kalem.kutu?.ad) ambalajAdi = 'Kutu';
+      else if (kalem.tepsiTava?.ad) ambalajAdi = 'Tepsi/Tava';
+      
       grouped[key] = {
         key,
-        ambalajAdi: kalem.ambalaj?.ad || 'Bilinmiyor',
+        ambalajAdi,
         specificPackageName: kalem.kutu?.ad || kalem.tepsiTava?.ad || '',
-        tepsiTavaFiyat: kalem.tepsiTavaId ? (kalem.tepsiTava?.fiyat || 0) : 0,
+        tepsiTavaFiyat: 0, // Tepsi fiyatı artık ayrı tabloda
         urunler: []
       };
     }

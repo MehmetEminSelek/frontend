@@ -80,8 +80,8 @@
             <v-card-text>
                 <v-row>
                     <v-col cols="12" md="4">
-                        <v-text-field v-model="search" label="Müşteri Ara..." prepend-inner-icon="mdi-magnify"
-                            clearable variant="outlined" density="compact" />
+                        <v-text-field v-model="search" label="Müşteri Ara..." prepend-inner-icon="mdi-magnify" clearable
+                            variant="outlined" density="compact" />
                     </v-col>
                     <v-col cols="12" md="2">
                         <v-btn color="info" variant="outlined" @click="downloadExcelTemplate" block>
@@ -123,8 +123,7 @@
                             </div>
                         </v-alert>
                     </div>
-            <v-data-table :headers="headers" :items="filteredCariler" item-key="id" 
-                class="elevation-0 modern-table">
+            <v-data-table :headers="headers" :items="filteredCariler" item-key="id" class="elevation-0 modern-table">
                 <!-- Müşteri Adı -->
                 <template v-slot:item.ad="{ item }">
                     <div class="d-flex align-center">
@@ -435,6 +434,7 @@ import autoTable from 'jspdf-autotable';
 import { formatDate } from '../utils/date';
 import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
 import { apiCall } from '@/utils/api';
+import axios from 'axios';
 
 const cariler = ref([]);
 const search = ref('');
@@ -538,8 +538,16 @@ onBeforeUnmount(() => {
 });
 
 async function fetchCariler() {
-    const { data } = await apiCall('/cari', {}, 'GET');
+    try {
+        console.log('🔄 Cariler yükleniyor...');
+        const data = await apiCall('/cari', { method: 'GET', useCache: true });
+        console.log('✅ Cariler yüklendi:', data.length, 'adet');
     cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
+        console.log('📊 İşlenmiş cariler:', cariler.value.length);
+    } catch (error) {
+        console.error('❌ Cariler çekilemedi:', error);
+        snackbar.value = { show: true, text: 'Müşteriler yüklenemedi: ' + error.message, color: 'error' };
+    }
 }
 
 // Yardımcı fonksiyonlar
@@ -605,10 +613,10 @@ async function addCari() {
         return;
     }
     if (payload.id) {
-        await axios.put('/api/cari', payload);
+        await apiCall('/cari', { method: 'PUT', data: payload });
         snackbar.value = { show: true, text: 'Müşteri güncellendi', color: 'success' };
     } else {
-        await axios.post('/api/cari', payload);
+        await apiCall('/cari', { method: 'POST', data: payload });
         snackbar.value = { show: true, text: 'Müşteri eklendi', color: 'success' };
     }
     closeDialogYeni();
