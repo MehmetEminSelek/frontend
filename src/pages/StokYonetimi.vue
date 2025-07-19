@@ -2,7 +2,7 @@
   <v-container class="py-6 px-2 px-md-8" fluid>
     <!-- 🔔 Stok Uyarıları Widget -->
     <StokUyariWidget class="mb-6" />
-    
+
     <!-- Hero Section -->
     <div class="hero-section mb-6">
       <v-card class="pa-6 rounded-xl elevation-4"
@@ -163,7 +163,7 @@
         loading-text="Hareketler yükleniyor...">
         <template v-slot:item.stok="{ item }">
           <span>{{ item.stok.hammadde?.ad || item.stok.yariMamul?.ad }}<br><small>{{ item.stok.operasyonBirimi?.ad
-              }}</small></span>
+          }}</small></span>
         </template>
         <template v-slot:item.tip="{ item }">
           <span>{{ hareketTipLabel(item.tip) }}</span>
@@ -260,29 +260,13 @@
   </v-container>
 </template>
 <script setup>
-import { ref, reactive, computed, onMounted, watch, provide } from 'vue';
-import { createCustomVuetify } from '../plugins/vuetify';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { formatDate } from '../utils/date';
 import { apiCall } from '../utils/api';
 import StokUyariWidget from '../components/StokUyariWidget.vue';
 
-// Stok modülüne özel tema ile Vuetify instance'ı oluştur
-const stokTheme = {
-  dark: false,
-  colors: {
-    primary: '#388E3C', // Yeşil
-    secondary: '#C8E6C9', // Açık yeşil
-    accent: '#81C784',
-    error: '#D32F2F',
-    info: '#388E3C',
-    success: '#43A047',
-    warning: '#FBC02D',
-    background: '#F4F8F3',
-    surface: '#FFFFFF',
-  },
-};
-const stokVuetify = createCustomVuetify({ themeName: 'stokTheme', extraThemes: { stokTheme } });
-provide('vuetify', stokVuetify);
+// Custom Vuetify instance'ı kaldırdık - global instance kullanacağız
+// Böylece component unmount sırasında vnode null hatası oluşmayacak
 
 const headers = [
   { title: 'Malzeme Adı', key: 'ad', sortable: true },
@@ -387,7 +371,24 @@ onMounted(() => {
   fetchRapor();
 });
 
-watch(selectedOp, fetchStoklar);
+// Watch'ları reactive olarak tanımla ki temizleyebilelim
+const stopWatchSelectedOp = watch(selectedOp, fetchStoklar);
+
+// Component unmount olurken tüm listener'ları ve watch'ları temizle
+onBeforeUnmount(() => {
+  // Watch'ları temizle
+  if (stopWatchSelectedOp) {
+    stopWatchSelectedOp();
+  }
+
+  // Event listener'ları temizle
+  // Global event'ler varsa burada temizle
+
+  // Timer/interval'ları temizle
+  // setInterval/setTimeout'lar varsa burada temizle
+
+  console.log('🧹 StokYonetimi component temizlendi');
+});
 
 const stokDialog = ref(false);
 const stokDialogItem = ref(null);
