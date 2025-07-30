@@ -135,7 +135,11 @@ const router = createRouter({
   }
 })
 
-router.beforeEach((to, from, next) => {
+// Güçlendirilmiş navigation guard'lar
+router.beforeEach(async (to, from, next) => {
+  console.log(`🧭 Navigation START: ${from.path} → ${to.path}`);
+  
+  try {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('userRole')
 
@@ -151,13 +155,68 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // Admin kontrolünü geçici olarak devre dışı bırakıyorum
-  // if (to.meta.adminOnly && userRole !== 'admin') {
-  //   next('/main/form')
-  //   return
-  // }
+    // Vnode hatası durumunda force refresh
+    if (window.vueVnodeError) {
+      console.warn('🔧 Vnode hatası tespit edildi, sayfa yenileniyor...')
+      window.location.reload()
+      return
+    }
+
+    next()
+  } catch (error) {
+    console.error('🚨 Navigation Error:', error)
+    
+    // Kritik hata durumunda ana sayfaya yönlendir
+    if (error.message && error.message.includes('vnode')) {
+      window.location.href = '/main/form'
+      return
+    }
 
   next()
+  }
 })
+
+router.afterEach((to, from) => {
+  console.log(`🧭 Navigation COMPLETE: ${from.path} → ${to.path}`);
+  
+  // Navigation sonrası cleanup
+  try {
+    // DOM cleanup
+    const staleElements = document.querySelectorAll('[data-vue-stale]')
+    staleElements.forEach(el => el.remove())
+    
+    // Memory cleanup
+    if (window.gc && typeof window.gc === 'function') {
+      setTimeout(() => window.gc(), 1000)
+    }
+    
+    // Vue DevTools için
+    if (window.__VUE_DEVTOOLS_GLOBAL_HOOK__) {
+      window.__VUE_DEVTOOLS_GLOBAL_HOOK__.emit('router:transition-end', {
+        from: from.path,
+        to: to.path
+      });
+    }
+  } catch (error) {
+    console.error('🚨 AfterEach Error:', error)
+  }
+})
+
+// Router error handler
+router.onError((error) => {
+  console.error('🚨 Router Error:', error)
+  
+  if (error.message && error.message.includes('vnode')) {
+    console.warn('🔧 Router vnode hatası, flag set ediliyor...')
+    window.vueVnodeError = true
+    
+    // 2 saniye sonra flag'i temizle
+    setTimeout(() => {
+      window.vueVnodeError = false
+    }, 2000)
+  }
+})
+
+// Eski beforeEach kaldırıldı - yukarıdaki güçlendirilmiş version kullanılıyor
 
 export default router
