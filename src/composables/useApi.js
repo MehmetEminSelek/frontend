@@ -1,252 +1,565 @@
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+/**
+ * =============================================
+ * ENHANCED API COMPOSABLE - SECURITY INTEGRATED
+ * =============================================
+ */
 
-// Base API URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+import { ref, computed, watch, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import {
+    securityErrorHandler,
+    InputSanitizer,
+    PermissionUtils,
+    SECURITY_LEVELS
+} from '@/utils/security'
+import api from '@/utils/api'
 
 /**
- * Modern API Composable - Vue 3 + TypeScript Best Practices
- * Tüm API çağrıları için merkezi yönetim
+ * Enhanced API Composable with Security Features
  */
 export function useApi() {
     const router = useRouter()
+    const authStore = useAuthStore()
+
+    // Reactive state
     const loading = ref(false)
     const error = ref(null)
+    const data = ref(null)
+    const requestId = ref(null)
+    const retryCount = ref(0)
+    const abortController = ref(null)
 
-    // HTTP Client with interceptors
-    const apiClient = {
-        async request(endpoint, options = {}) {
-            loading.value = true
-            error.value = null
+    // Computed properties
+    const hasError = computed(() => !!error.value)
+    const isRetrying = computed(() => retryCount.value > 0)
+    const canRetry = computed(() => hasError.value && retryCount.value < 3)
 
-            try {
-                const config = {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    },
-                    ...options
-                }
+    /**
+     * Execute API request with enhanced security
+     */
+    const execute = async (apiCall, options = {}) => {
+        const {
+            requireAuth = true,
+            requirePermission = null,
+            securityLevel = SECURITY_LEVELS.NORMAL,
+            onSuccess = null,
+            onError = null,
+            sanitizeInput = true,
+            skipErrorHandling = false
+        } = options
 
-                const response = await fetch(`${API_BASE}${endpoint}`, config)
+        // Generate unique request ID
+        requestId.value = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        // Unauthorized - redirect to login
-                        router.push('/login')
-                        throw new Error('Oturum süresi doldu')
-                    }
+        // Security checks
+        if (requireAuth && !authStore.isAuthenticated) {
+            const authError = new Error('Authentication required')
+            authError.type = 'UNAUTHORIZED'
+            throw authError
+        }
 
-                    const errorData = await response.json().catch(() => ({}))
-                    throw new Error(errorData.message || `HTTP ${response.status}`)
-                }
+        if (requirePermission && !PermissionUtils.checkPermission(requirePermission)) {
+            const permError = new Error(`Permission required: ${requirePermission}`)
+            permError.type = 'PERMISSION_DENIED'
+            throw permError
+        }
 
-                const data = await response.json()
-                return data
-            } catch (err) {
-                error.value = err.message
-                throw err
-            } finally {
-                loading.value = false
+        // Set security level
+        authStore.setSecurityLevel(securityLevel)
+
+        // Reset state
+        loading.value = true
+        error.value = null
+        data.value = null
+
+        // Create abort controller for request cancellation
+        abortController.value = new AbortController()
+
+        try {
+            // Execute the API call
+            const response = await apiCall()
+
+            // Success handling
+            data.value = response
+            retryCount.value = 0
+
+            if (onSuccess) {
+                await onSuccess(response)
             }
-        },
 
-        get(endpoint, params = {}) {
-            const query = new URLSearchParams(params).toString()
-            const url = query ? `${endpoint}?${query}` : endpoint
-            return this.request(url)
-        },
+            return response
+        } catch (err) {
+            // Error handling
+            if (!skipErrorHandling) {
+                error.value = securityErrorHandler.handleApiError(err, {
+                    requestId: requestId.value,
+                    securityLevel,
+                    requirePermission
+                })
+            } else {
+                error.value = err
+            }
 
-        post(endpoint, data) {
-            return this.request(endpoint, {
-                method: 'POST',
-                body: JSON.stringify(data)
-            })
-        },
+            if (onError) {
+                await onError(error.value)
+            }
 
-        put(endpoint, data) {
-            return this.request(endpoint, {
-                method: 'PUT',
-                body: JSON.stringify(data)
-            })
-        },
-
-        delete(endpoint) {
-            return this.request(endpoint, {
-                method: 'DELETE'
-            })
+            throw error.value
+        } finally {
+            loading.value = false
+            abortController.value = null
         }
     }
 
+    /**
+     * Retry last failed request
+     */
+    const retry = async () => {
+        if (!canRetry.value) return
+
+        retryCount.value++
+
+        try {
+            // Re-execute the last request
+            // Note: This requires storing the last request parameters
+            // For now, this is a placeholder for retry functionality
+            console.log('Retrying request...', requestId.value)
+        } catch (err) {
+            console.error('Retry failed:', err)
+        }
+    }
+
+    /**
+     * Cancel current request
+     */
+    const cancel = () => {
+        if (abortController.value) {
+            abortController.value.abort()
+            loading.value = false
+            error.value = { type: 'CANCELLED', message: 'Request cancelled' }
+        }
+    }
+
+    /**
+     * Clear error state
+     */
+    const clearError = () => {
+        error.value = null
+        retryCount.value = 0
+    }
+
+    /**
+     * Clear all state
+     */
+    const reset = () => {
+        loading.value = false
+        error.value = null
+        data.value = null
+        requestId.value = null
+        retryCount.value = 0
+    }
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+        cancel()
+    })
+
     return {
+        // State
         loading: computed(() => loading.value),
         error: computed(() => error.value),
-        clearError: () => { error.value = null },
-        ...apiClient
+        data: computed(() => data.value),
+        requestId: computed(() => requestId.value),
+        retryCount: computed(() => retryCount.value),
+
+        // Computed
+        hasError,
+        isRetrying,
+        canRetry,
+
+        // Actions
+        execute,
+        retry,
+        cancel,
+        clearError,
+        reset
     }
 }
 
 /**
- * Resource-specific API composables
+ * Specialized composables for different API operations
  */
 
-// Materials API
-export function useMaterialsApi() {
-    const api = useApi()
+/**
+ * Authentication API Composable
+ */
+export function useAuthApi() {
+    const { execute, ...rest } = useApi()
+
+    const login = async (credentials) => {
+        return execute(
+            () => api.login(credentials),
+            {
+                requireAuth: false,
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const logout = async () => {
+        return execute(
+            () => api.logout(),
+            {
+                securityLevel: SECURITY_LEVELS.NORMAL
+            }
+        )
+    }
+
+    const refreshToken = async (token) => {
+        return execute(
+            () => api.refreshToken(token),
+            {
+                requireAuth: false,
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
 
     return {
-        ...api,
-
-        async getMaterials(filters = {}) {
-            return api.get('/materials', filters)
-        },
-
-        async getMaterial(id) {
-            return api.get(`/materials/${id}`)
-        },
-
-        async createMaterial(data) {
-            return api.post('/materials', data)
-        },
-
-        async updateMaterial(id, data) {
-            return api.put(`/materials/${id}`, data)
-        },
-
-        async deleteMaterial(id) {
-            return api.delete(`/materials/${id}`)
-        }
+        ...rest,
+        login,
+        logout,
+        refreshToken
     }
 }
 
-// Products API
-export function useProductsApi() {
-    const api = useApi()
+/**
+ * User Management API Composable
+ */
+export function useUserApi() {
+    const { execute, ...rest } = useApi()
+
+    const getUsers = async (params = {}) => {
+        return execute(
+            () => api.getUsers(params),
+            {
+                requirePermission: 'VIEW_USERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const createUser = async (userData) => {
+        return execute(
+            () => api.createUser(userData),
+            {
+                requirePermission: 'MANAGE_USERS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
+
+    const updateUser = async (id, userData) => {
+        return execute(
+            () => api.updateUser(id, userData),
+            {
+                requirePermission: 'MANAGE_USERS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
+
+    const deleteUser = async (id) => {
+        return execute(
+            () => api.deleteUser(id),
+            {
+                requirePermission: 'MANAGE_USERS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
 
     return {
-        ...api,
-
-        async getProducts(filters = {}) {
-            return api.get('/urunler', filters)
-        },
-
-        async getProduct(id) {
-            return api.get(`/urunler/${id}`)
-        },
-
-        async createProduct(data) {
-            return api.post('/urunler', data)
-        },
-
-        async updateProduct(id, data) {
-            return api.put(`/urunler/${id}`, data)
-        },
-
-        async deleteProduct(id) {
-            return api.delete(`/urunler/${id}`)
-        },
-
-        async getProductRecipes(id) {
-            return api.get(`/urunler/${id}/receteler`)
-        }
+        ...rest,
+        getUsers,
+        createUser,
+        updateUser,
+        deleteUser
     }
 }
 
-// Recipes API
-export function useRecipesApi() {
-    const api = useApi()
+/**
+ * Order Management API Composable
+ */
+export function useOrderApi() {
+    const { execute, ...rest } = useApi()
+
+    const getOrders = async (params = {}) => {
+        return execute(
+            () => api.getOrders(params),
+            {
+                requirePermission: 'VIEW_ORDERS'
+            }
+        )
+    }
+
+    const createOrder = async (orderData) => {
+        return execute(
+            () => api.createOrder(orderData),
+            {
+                requirePermission: 'CREATE_ORDERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const updateOrder = async (id, orderData) => {
+        return execute(
+            () => api.updateOrder(id, orderData),
+            {
+                requirePermission: 'UPDATE_ORDERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const deleteOrder = async (id) => {
+        return execute(
+            () => api.deleteOrder(id),
+            {
+                requirePermission: 'DELETE_ORDERS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
 
     return {
-        ...api,
-
-        async getRecipes(filters = {}) {
-            return api.get('/receteler', filters)
-        },
-
-        async getRecipe(id) {
-            return api.get(`/receteler/${id}`)
-        },
-
-        async createRecipe(data) {
-            return api.post('/receteler', data)
-        },
-
-        async updateRecipe(id, data) {
-            return api.put(`/receteler/${id}`, data)
-        },
-
-        async deleteRecipe(id) {
-            return api.delete(`/receteler/${id}`)
-        },
-
-        async calculateRecipeCost(id) {
-            return api.post(`/receteler/${id}/maliyet`)
-        }
+        ...rest,
+        getOrders,
+        createOrder,
+        updateOrder,
+        deleteOrder
     }
 }
 
-// Orders API
-export function useOrdersApi() {
-    const api = useApi()
+/**
+ * Customer Management API Composable
+ */
+export function useCustomerApi() {
+    const { execute, ...rest } = useApi()
+
+    const getCustomers = async (params = {}) => {
+        return execute(
+            () => api.getCustomers(params),
+            {
+                requirePermission: 'VIEW_CUSTOMERS'
+            }
+        )
+    }
+
+    const createCustomer = async (customerData) => {
+        return execute(
+            () => api.createCustomer(customerData),
+            {
+                requirePermission: 'MANAGE_CUSTOMERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const updateCustomer = async (id, customerData) => {
+        return execute(
+            () => api.updateCustomer(id, customerData),
+            {
+                requirePermission: 'MANAGE_CUSTOMERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
 
     return {
-        ...api,
-
-        async getOrders(filters = {}) {
-            return api.get('/siparis', filters)
-        },
-
-        async getOrder(id) {
-            return api.get(`/siparis/${id}`)
-        },
-
-        async createOrder(data) {
-            return api.post('/siparis', data)
-        },
-
-        async updateOrder(id, data) {
-            return api.put(`/siparis/${id}`, data)
-        },
-
-        async deleteOrder(id) {
-            return api.delete(`/siparis/${id}`)
-        },
-
-        async updateOrderStatus(id, status) {
-            return api.put(`/siparis/${id}/durum`, { durum: status })
-        }
+        ...rest,
+        getCustomers,
+        createCustomer,
+        updateCustomer
     }
 }
 
-// Customers API
-export function useCustomersApi() {
-    const api = useApi()
+/**
+ * Product Management API Composable
+ */
+export function useProductApi() {
+    const { execute, ...rest } = useApi()
+
+    const getProducts = async (params = {}) => {
+        return execute(
+            () => api.getProducts(params),
+            {
+                requirePermission: 'VIEW_PRODUCTS'
+            }
+        )
+    }
+
+    const createProduct = async (productData) => {
+        return execute(
+            () => api.createProduct(productData),
+            {
+                requirePermission: 'MANAGE_PRODUCTS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const updateProduct = async (id, productData) => {
+        return execute(
+            () => api.updateProduct(id, productData),
+            {
+                requirePermission: 'MANAGE_PRODUCTS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
 
     return {
-        ...api,
+        ...rest,
+        getProducts,
+        createProduct,
+        updateProduct
+    }
+}
 
-        async getCustomers(filters = {}) {
-            return api.get('/cari', filters)
-        },
+/**
+ * Reports API Composable
+ */
+export function useReportsApi() {
+    const { execute, ...rest } = useApi()
 
-        async getCustomer(id) {
-            return api.get(`/cari/${id}`)
-        },
+    const getSalesReport = async (params = {}) => {
+        return execute(
+            () => api.getSalesReport(params),
+            {
+                requirePermission: 'VIEW_REPORTS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
 
-        async createCustomer(data) {
-            return api.post('/cari', data)
-        },
+    const getCRMReport = async (params = {}) => {
+        return execute(
+            () => api.getCRMReport(params),
+            {
+                requirePermission: 'VIEW_REPORTS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
 
-        async updateCustomer(id, data) {
-            return api.put(`/cari/${id}`, data)
-        },
+    return {
+        ...rest,
+        getSalesReport,
+        getCRMReport
+    }
+}
 
-        async deleteCustomer(id) {
-            return api.delete(`/cari/${id}`)
-        },
+/**
+ * File Operations API Composable
+ */
+export function useFileApi() {
+    const { execute, ...rest } = useApi()
+    const uploadProgress = ref(0)
 
-        async getCustomerTransactions(id) {
-            return api.get(`/cari/${id}/hareketler`)
-        }
+    const uploadUserExcel = async (file) => {
+        return execute(
+            () => api.uploadUserExcel(file, (progress) => {
+                uploadProgress.value = progress
+            }),
+            {
+                requirePermission: 'MANAGE_USERS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
+
+    const uploadCustomerExcel = async (file) => {
+        return execute(
+            () => api.uploadCustomerExcel(file, (progress) => {
+                uploadProgress.value = progress
+            }),
+            {
+                requirePermission: 'MANAGE_CUSTOMERS',
+                securityLevel: SECURITY_LEVELS.HIGH
+            }
+        )
+    }
+
+    const downloadUserTemplate = async () => {
+        return execute(
+            () => api.downloadUserTemplate(),
+            {
+                requirePermission: 'MANAGE_USERS'
+            }
+        )
+    }
+
+    const downloadCustomerTemplate = async () => {
+        return execute(
+            () => api.downloadCustomerTemplate(),
+            {
+                requirePermission: 'MANAGE_CUSTOMERS'
+            }
+        )
+    }
+
+    return {
+        ...rest,
+        uploadProgress: computed(() => uploadProgress.value),
+        uploadUserExcel,
+        uploadCustomerExcel,
+        downloadUserTemplate,
+        downloadCustomerTemplate
+    }
+}
+
+/**
+ * Utility API Composable
+ */
+export function useUtilityApi() {
+    const { execute, ...rest } = useApi()
+
+    const getDropdownData = async (category = null) => {
+        return execute(
+            () => api.getDropdownData(category),
+            {
+                requireAuth: true
+            }
+        )
+    }
+
+    return {
+        ...rest,
+        getDropdownData
+    }
+}
+
+/**
+ * Audit Logs API Composable (Admin only)
+ */
+export function useAuditApi() {
+    const { execute, ...rest } = useApi()
+
+    const getAuditLogs = async (params = {}) => {
+        return execute(
+            () => api.getAuditLogs(params),
+            {
+                requirePermission: 'VIEW_AUDIT_LOGS',
+                securityLevel: SECURITY_LEVELS.CRITICAL
+            }
+        )
+    }
+
+    return {
+        ...rest,
+        getAuditLogs
     }
 } 

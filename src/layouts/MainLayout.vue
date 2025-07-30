@@ -1,6 +1,6 @@
 <template>
-  <v-app>
-    <v-layout>
+  <v-app class="main-app">
+    <v-layout class="main-layout">
       <!-- Left Sidebar - Classic Fixed Position -->
       <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile"
         class="sidebar-pastel text-dark" width="280" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
@@ -21,8 +21,8 @@
           </v-list-item>
 
           <!-- Navigation Items -->
-          <v-list-item to="/main/form" title="Sipariş Formu" link prepend-icon="mdi-clipboard-text-outline"
-            :active="isActive('/main/form')" class="modern-nav-item mb-1" @click="onMenuClick"
+          <v-list-item title="Sipariş Formu" link prepend-icon="mdi-clipboard-text-outline"
+            :active="isActive('/main/form')" class="modern-nav-item mb-1" @click="() => safeNavigate('/main/form')"
             style="border-radius: 8px; color: white;">
             <template v-slot:prepend>
               <v-icon color="rgba(255,255,255,0.9)">mdi-clipboard-text-outline</v-icon>
@@ -80,17 +80,17 @@
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/stok-yonetimi" title="Stok Yönetimi" link prepend-icon="mdi-archive-outline"
-            :active="isActive('/main/stok-yonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
-            style="border-radius: 8px; color: white;">
+          <v-list-item title="Stok Yönetimi" link prepend-icon="mdi-archive-outline"
+            :active="isActive('/main/stok-yonetimi')" class="modern-nav-item mb-1"
+            @click="() => safeNavigate('/main/stok-yonetimi')" style="border-radius: 8px; color: white;">
             <template v-slot:prepend>
               <v-icon color="rgba(255,255,255,0.9)">mdi-archive-outline</v-icon>
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/kargo-operasyon" title="Kargo Operasyon" link prepend-icon="mdi-truck-outline"
-            :active="isActive('/main/kargo-operasyon')" class="modern-nav-item mb-1" @click="onMenuClick"
-            style="border-radius: 8px; color: white;">
+          <v-list-item title="Kargo Operasyon" link prepend-icon="mdi-truck-outline"
+            :active="isActive('/main/kargo-operasyon')" class="modern-nav-item mb-1"
+            @click="() => safeNavigate('/main/kargo-operasyon')" style="border-radius: 8px; color: white;">
             <template v-slot:prepend>
               <v-icon color="rgba(255,255,255,0.9)">mdi-truck-outline</v-icon>
             </template>
@@ -201,60 +201,46 @@
       </v-app-bar>
 
       <!-- Main Content -->
-      <v-main class="main-content-background">
-        <v-container fluid class="pa-4">
-          <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in" appear>
-              <component :is="Component" />
-            </transition>
-          </router-view>
+      <v-main class="main-content-background scrollable-main">
+        <v-container fluid class="main-container pa-4">
+          <Suspense>
+            <template #default>
+              <router-view :key="$route.fullPath" />
+            </template>
+            <template #fallback>
+              <div class="d-flex justify-center align-center" style="height: 60vh;">
+                <div class="text-center">
+                  <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+                  <p class="mt-4 text-h6">Sayfa yükleniyor...</p>
+                </div>
+              </div>
+            </template>
+          </Suspense>
         </v-container>
       </v-main>
 
       <!-- Floating Notification Drawer Button -->
-      <div 
-        v-if="currentUser && !drawerPinned"
-        class="floating-drawer-button"
-        :style="{ 
-          right: notificationDrawer ? '420px' : '24px',
-          transform: notificationDrawer ? 'translateX(0)' : 'translateX(0)'
-        }"
-      >
-        <v-btn
-          fab
-          color="#8D6E63"
-          size="large"
-          elevation="6"
-          class="notification-trigger"
-          :class="{ 'notification-shake': shouldShakeNotification }"
-          @click="toggleNotificationDrawer"
-          style="background: linear-gradient(135deg, #8D6E63 0%, #A1887F 100%); color: white;"
-        >
+      <div v-if="currentUser && !drawerPinned" class="floating-drawer-button" :style="{
+        right: notificationDrawer ? '420px' : '24px',
+        transform: notificationDrawer ? 'translateX(0)' : 'translateX(0)'
+      }">
+        <v-btn fab color="#8D6E63" size="large" elevation="6" class="notification-trigger"
+          :class="{ 'notification-shake': shouldShakeNotification }" @click="toggleNotificationDrawer"
+          style="background: linear-gradient(135deg, #8D6E63 0%, #A1887F 100%); color: white;">
           <v-icon :color="hasUnreadNotifications ? '#FFD54F' : 'white'" size="28">
             {{ hasUnreadNotifications ? 'mdi-bell-ring' : 'mdi-bell-outline' }}
           </v-icon>
-          <v-badge
-            v-if="unreadNotificationCount > 0"
-            :content="unreadNotificationCount > 99 ? '99+' : unreadNotificationCount"
-            color="error"
-            offset-x="8"
-            offset-y="8"
-            class="notification-badge"
-          />
+          <v-badge v-if="unreadNotificationCount > 0"
+            :content="unreadNotificationCount > 99 ? '99+' : unreadNotificationCount" color="error" offset-x="8"
+            offset-y="8" class="notification-badge" />
         </v-btn>
       </div>
 
       <!-- Notification Drawer -->
-      <v-navigation-drawer
-        v-model="notificationDrawer"
-        location="right"
-        :temporary="!drawerPinned"
-        :permanent="drawerPinned && notificationDrawer"
-        width="400"
-        class="notification-drawer"
+      <v-navigation-drawer v-model="notificationDrawer" location="right" :temporary="!drawerPinned"
+        :permanent="drawerPinned && notificationDrawer" width="400" class="notification-drawer"
         style="background: linear-gradient(180deg, #F5F7FA 0%, #E8F1F8 100%); box-shadow: -4px 0 20px rgba(0,0,0,0.15);"
-        @click:outside="handleDrawerOutsideClick"
-      >
+        @click:outside="handleDrawerOutsideClick">
         <!-- Drawer Header -->
         <v-card-title class="notification-drawer-header d-flex justify-space-between align-center pa-4">
           <div>
@@ -267,47 +253,20 @@
             </div>
           </div>
           <div class="d-flex">
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="markAllAsRead"
-              style="color: #8D6E63;"
-              class="mr-1"
-              v-tooltip:bottom="'Tümünü Okundu İşaretle'"
-            >
+            <v-btn icon size="small" variant="text" @click="markAllAsRead" style="color: #8D6E63;" class="mr-1"
+              v-tooltip:bottom="'Tümünü Okundu İşaretle'">
               <v-icon>mdi-check-all</v-icon>
             </v-btn>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="clearAll"
-              style="color: #8D6E63;"
-              class="mr-1"
-              v-tooltip:bottom="'Tümünü Temizle'"
-            >
+            <v-btn icon size="small" variant="text" @click="clearAll" style="color: #8D6E63;" class="mr-1"
+              v-tooltip:bottom="'Tümünü Temizle'">
               <v-icon>mdi-delete-sweep</v-icon>
             </v-btn>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="toggleDrawerPin"
-              style="color: #8D6E63;"
-              class="mr-1"
-              v-tooltip:bottom="drawerPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'"
-            >
+            <v-btn icon size="small" variant="text" @click="toggleDrawerPin" style="color: #8D6E63;" class="mr-1"
+              v-tooltip:bottom="drawerPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'">
               <v-icon>{{ drawerPinned ? 'mdi-pin-off' : 'mdi-pin' }}</v-icon>
             </v-btn>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              @click="closeNotificationDrawer"
-              style="color: #8D6E63;"
-              v-if="!drawerPinned"
-            >
+            <v-btn icon size="small" variant="text" @click="closeNotificationDrawer" style="color: #8D6E63;"
+              v-if="!drawerPinned">
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </div>
@@ -315,12 +274,8 @@
 
         <!-- Drawer Content -->
         <div class="notification-drawer-content">
-          <NotificationList
-            :notifications="realtimeStore.notifications"
-            :embedded="true"
-            @notification-click="handleNotificationClick"
-            @remove-notification="removeNotification"
-          />
+          <NotificationList :notifications="realtimeStore.notifications" :embedded="true"
+            @notification-click="handleNotificationClick" @remove-notification="removeNotification" />
         </div>
       </v-navigation-drawer>
 
@@ -345,8 +300,8 @@
               <v-text-field v-model="loginForm.email" label="Kullanıcı Adı veya Email"
                 placeholder="Kullanıcı Adı veya Email" prepend-inner-icon="mdi-account" required autofocus
                 variant="outlined" color="#8D6E63" />
-              <v-text-field v-model="loginForm.password" label="Şifre" placeholder="Şifre"
-                prepend-inner-icon="mdi-lock" type="password" required variant="outlined" color="#8D6E63" />
+              <v-text-field v-model="loginForm.password" label="Şifre" placeholder="Şifre" prepend-inner-icon="mdi-lock"
+                type="password" required variant="outlined" color="#8D6E63" />
               <v-alert v-if="loginError" type="error" dense class="mt-2" style="border-radius: 8px;">{{ loginError
                 }}</v-alert>
             </v-card-text>
@@ -447,6 +402,41 @@ function onMenuClick() {
   if (isMobile.value) drawer.value = false;
 }
 
+// Güvenli navigasyon fonksiyonu - vnode hatalarını önler
+function safeNavigate(path) {
+  try {
+    console.log(`🧭 Safe Navigate: ${route.path} → ${path}`);
+
+    // Mevcut component'in temizlenmesini bekle
+    if (route.path !== path) {
+      // Navigation öncesi cleanup
+      if (window.vueVnodeError) {
+        console.warn('🔧 Vnode error flag aktif, sayfa yenileniyor...')
+        window.location.href = path
+        return
+      }
+
+      // Mobile drawer kapat
+      if (isMobile.value) drawer.value = false
+
+      // Router push
+      router.push(path).catch(error => {
+        console.error('🚨 Navigation Error:', error)
+
+        if (error.message && error.message.includes('vnode')) {
+          console.warn('🔧 Vnode navigation hatası, direct navigate yapılıyor...')
+          window.location.href = path
+        }
+      })
+    }
+  } catch (error) {
+    console.error('🚨 Safe Navigate Error:', error)
+
+    // Fallback - direct navigation
+    window.location.href = path
+  }
+}
+
 // Notification Drawer Functions
 function toggleNotificationDrawer() {
   notificationDrawer.value = !notificationDrawer.value;
@@ -462,7 +452,7 @@ function closeNotificationDrawer() {
 function toggleDrawerPin() {
   drawerPinned.value = !drawerPinned.value;
   localStorage.setItem('drawerPinned', drawerPinned.value.toString());
-  
+
   if (drawerPinned.value) {
     // When pinning, ensure drawer is open
     notificationDrawer.value = true;
@@ -477,9 +467,9 @@ function handleDrawerOutsideClick() {
 
 function handleNotificationClick(notification) {
   console.log('🔔 Notification tıklandı:', notification);
-  
+
   markAsRead(notification.id);
-  
+
   if (notification.navigationAction) {
     console.log('🧭 Navigation action var, yönlendiriliyor...');
     navigateToAction(notification);
@@ -490,12 +480,12 @@ function navigateToAction(notification) {
   if (notification.navigationAction) {
     try {
       console.log('🧭 Navigating to:', notification.navigationAction);
-      
+
       // Don't close drawer if it's pinned
       if (!drawerPinned.value) {
         notificationDrawer.value = false;
       }
-      
+
       // Navigate immediately
       router.push(notification.navigationAction)
         .then(() => {
@@ -532,10 +522,10 @@ function clearAll() {
 // Notification shake animation trigger
 function triggerNotificationShake(importance) {
   shouldShakeNotification.value = true;
-  
+
   // Duration based on importance
   const duration = importance === 'critical' ? 5000 : (importance === 'warning' ? 3000 : 2000);
-  
+
   setTimeout(() => {
     shouldShakeNotification.value = false;
   }, duration);
@@ -548,7 +538,7 @@ watch(
     if (newCount > oldCount && oldCount > 0) {
       const newestNotification = realtimeStore.notifications[0];
       const importance = newestNotification.type;
-      
+
       // Trigger shake animation
       triggerNotificationShake(importance);
     }
@@ -594,7 +584,7 @@ function startStockMonitoring() {
     console.log('⏭️ Stok monitoring zaten aktif');
     return;
   }
-  
+
   console.log('🚀 Stok monitoring başlatılıyor...');
   checkStockStatus();
   stockMonitoringInterval = setInterval(checkStockStatus, 2 * 60 * 1000);
@@ -611,7 +601,7 @@ function stopStockMonitoring() {
 async function checkStockStatus() {
   try {
     const response = await apiCall('/stok/alerts');
-    
+
     if (response.success) {
       const newState = {
         criticalCount: response.kritikUyariSayisi || 0,
@@ -636,7 +626,7 @@ async function checkStockStatus() {
       }
 
       const changes = detectStockChanges(lastStockState, newState);
-      
+
       if (changes.length > 0) {
         showStockNotifications(changes, response.uyarilar);
       }
@@ -762,7 +752,7 @@ function showStockNotifications(changes, stockData) {
     if (toastNotification.value) {
       toastNotification.value.addNotification(notification);
     }
-    
+
     realtimeStore.addNotification(notification);
   });
 }
@@ -817,7 +807,7 @@ onMounted(() => {
       actionText: 'Test Sayfası',
       autoRemove: false
     };
-    
+
     realtimeStore.addNotification(testNotification);
   };
 
@@ -837,7 +827,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScreen);
   stopStockMonitoring();
-  
+
   // Cleanup global functions
   delete window.showStockAlert;
   delete window.showToast;
@@ -928,27 +918,61 @@ onBeforeUnmount(() => {
 }
 
 @keyframes badgePulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 1; 
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
-  50% { 
-    transform: scale(1.1); 
-    opacity: 0.8; 
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
 @keyframes notificationShake {
-  0%, 100% { transform: translateX(0) translateY(0); }
-  10% { transform: translateX(-3px) translateY(-2px) rotate(-1deg); }
-  20% { transform: translateX(3px) translateY(-1px) rotate(1deg); }
-  30% { transform: translateX(-2px) translateY(-2px) rotate(-1deg); }
-  40% { transform: translateX(2px) translateY(-1px) rotate(1deg); }
-  50% { transform: translateX(-1px) translateY(-1px) rotate(-0.5deg); }
-  60% { transform: translateX(1px) translateY(-1px) rotate(0.5deg); }
-  70% { transform: translateX(-1px) translateY(0) rotate(-0.5deg); }
-  80% { transform: translateX(1px) translateY(0) rotate(0.5deg); }
-  90% { transform: translateX(-0.5px) translateY(0) rotate(-0.25deg); }
+
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  10% {
+    transform: translateX(-3px) translateY(-2px) rotate(-1deg);
+  }
+
+  20% {
+    transform: translateX(3px) translateY(-1px) rotate(1deg);
+  }
+
+  30% {
+    transform: translateX(-2px) translateY(-2px) rotate(-1deg);
+  }
+
+  40% {
+    transform: translateX(2px) translateY(-1px) rotate(1deg);
+  }
+
+  50% {
+    transform: translateX(-1px) translateY(-1px) rotate(-0.5deg);
+  }
+
+  60% {
+    transform: translateX(1px) translateY(-1px) rotate(0.5deg);
+  }
+
+  70% {
+    transform: translateX(-1px) translateY(0) rotate(-0.5deg);
+  }
+
+  80% {
+    transform: translateX(1px) translateY(0) rotate(0.5deg);
+  }
+
+  90% {
+    transform: translateX(-0.5px) translateY(0) rotate(-0.25deg);
+  }
 }
 
 /* ========= NOTIFICATION DRAWER ========= */
@@ -994,12 +1018,55 @@ onBeforeUnmount(() => {
   opacity: 0;
 }
 
+/* ========= APP & LAYOUT BASE STYLES ========= */
+.main-app {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.main-layout {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
 /* ========= MAIN CONTENT BACKGROUND ========= */
 .main-content-background {
   background: linear-gradient(135deg, #F8F4E6 0%, #E5C297 50%, #D4A574 100%);
-  min-height: 100vh;
   background-image: url('data:image/svg+xml;utf8,%3Csvg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"%3E%3Crect x="0" y="0" width="60" height="60" fill="%23F8F4E6"/%3E%3Cpath d="M0 30L30 0L60 30L30 60L0 30Z" fill="%23D4A574" fill-opacity="0.05"/%3E%3Cpath d="M15 30L30 15L45 30L30 45L15 30Z" fill="%23B8956A" fill-opacity="0.03"/%3E%3C/svg%3E');
   background-size: 60px 60px;
+}
+
+.scrollable-main {
+  height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(212, 165, 116, 0.3) transparent !important;
+}
+
+.scrollable-main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-main::-webkit-scrollbar-track {
+  background: rgba(212, 165, 116, 0.1);
+  border-radius: 4px;
+}
+
+.scrollable-main::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 116, 0.3);
+  border-radius: 4px;
+}
+
+.scrollable-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 165, 116, 0.5);
+}
+
+.main-container {
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* ========= CARD ENHANCEMENTS ========= */
@@ -1073,18 +1140,18 @@ onBeforeUnmount(() => {
     width: 100% !important;
     border-radius: 0;
   }
-  
+
   .notification-drawer-content {
     height: calc(100vh - 80px);
   }
-  
+
   .floating-drawer-button {
     right: 16px !important;
     bottom: 80px !important;
     top: auto !important;
     transform: none !important;
   }
-  
+
   .floating-drawer-button .v-btn {
     width: 56px !important;
     height: 56px !important;
@@ -1111,11 +1178,11 @@ onBeforeUnmount(() => {
   .notification-drawer {
     background: linear-gradient(180deg, #2C2C2C 0%, #1E1E1E 100%);
   }
-  
+
   .notification-drawer-header {
     background: linear-gradient(135deg, #3C3C3C 0%, #2C2C2C 100%);
   }
-  
+
   .v-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);

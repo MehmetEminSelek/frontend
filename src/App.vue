@@ -1,20 +1,15 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <Suspense>
+      <template #default>
+        <router-view />
+      </template>
+      <template #fallback>
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Yükleniyor...</p>
+        </div>
+      </template>
+    </Suspense>
   </div>
 </template>
-
-<script>
-export default {
-  name: 'App'
-}
-</script>
-
-<style>
-/* Global styles */
-#app {
-  font-family: 'Roboto', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-</style>
