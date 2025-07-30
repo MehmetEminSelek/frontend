@@ -14,6 +14,7 @@ import vuetify from './plugins/vuetify.js'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
+// Create app instance
 const app = createApp(App)
 const pinia = createPinia()
 
@@ -33,9 +34,14 @@ const toastOptions = {
     rtl: false
 }
 
-app
-    .use(pinia)
-    .use(router)
-    .use(vuetify)
-    .use(Toast, toastOptions)
-    .mount('#app')
+// Install plugins in correct order
+app.use(pinia)
+app.use(router)
+app.use(vuetify)
+app.use(Toast, toastOptions)
+
+// Wait for router to be ready before mounting
+router.isReady().then(() => {
+    app.mount('#app')
+    console.log('✅ Router ready and app mounted')
+})
