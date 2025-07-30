@@ -1,46 +1,36 @@
 <template>
   <v-card 
-    v-if="showWidget" 
-    class="stok-uyari-widget mb-4" 
+    v-if="showWidget"
     :color="widgetColor" 
-    elevation="4"
+    class="stok-uyari-widget"
     rounded="xl"
+    elevation="4"
   >
     <v-card-text class="pa-4">
       <v-row align="center">
-        <v-col cols="12" md="8">
-          <div class="d-flex align-center">
-            <v-avatar :color="iconColor" size="48" class="mr-4">
-              <v-icon color="white" size="28">{{ widgetIcon }}</v-icon>
-            </v-avatar>
-            <div>
-              <h3 class="text-h6 font-weight-bold text-white mb-1">
-                {{ uyariBilgisi.title }}
-              </h3>
-              <p class="text-body-2 text-white opacity-90 mb-0">
-                {{ uyariBilgisi.message }}
-              </p>
-              <div class="d-flex mt-2">
-                <v-chip 
-                  v-if="uyariBilgisi.negatifCount > 0" 
-                  size="small" 
-                  color="error" 
-                  class="mr-2"
-                >
-                  <v-icon start size="16">mdi-alert-circle</v-icon>
-                  {{ uyariBilgisi.negatifCount }} Negatif Stok
-                </v-chip>
-                <v-chip 
-                  v-if="uyariBilgisi.dusukCount > 0" 
-                  size="small" 
-                  color="warning" 
-                  class="mr-2"
-                >
-                  <v-icon start size="16">mdi-alert</v-icon>
-                  {{ uyariBilgisi.dusukCount }} Düşük Stok
-                </v-chip>
-              </div>
-            </div>
+        <v-col cols="auto">
+          <v-icon 
+            :icon="widgetIcon" 
+            size="40" 
+            color="white"
+            :class="{ 'mdi-spin': loading }"
+          />
+        </v-col>
+        <v-col>
+          <div class="text-h6 text-white font-weight-bold">
+            {{ loading ? 'Stok Kontrolü' : uyariBilgisi.text }}
+          </div>
+          <div v-if="!loading && uyariBilgisi.count > 0" class="text-body-2 text-white opacity-80">
+            {{ uyariBilgisi.count }} malzemede stok uyarısı var
+            <v-chip 
+              v-if="detailsOpen === false"
+              size="x-small" 
+              class="ml-2"
+              color="rgba(255,255,255,0.2)"
+              @click="toggleDetails"
+            >
+              Detayları Gör
+            </v-chip>
           </div>
         </v-col>
         
@@ -121,49 +111,30 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useApi } from '../composables/useApi.js'
 
 // State
-const loading = ref(false)
 const uyarilar = ref([])
+const showWidget = ref(true) // Başlangıçta göster
 const detailsOpen = ref(false)
-const showWidget = ref(false)
+const loading = ref(true) // Başlangıçta loading true
 const refreshInterval = ref(null)
+
+// Uyarı bilgisi
+const uyariBilgisi = ref({
+  count: 0,
+  text: 'Stok durumu kontrol ediliyor...',
+  severity: 'info'
+})
 
 // API
 const api = useApi()
 
 // Computed
-const uyariBilgisi = computed(() => {
-  const negatifCount = uyarilar.value.filter(m => m.mevcutStok <= 0).length
-  const dusukCount = uyarilar.value.filter(m => m.mevcutStok > 0).length
-  const totalCount = uyarilar.value.length
-
-  if (totalCount === 0) {
-    return {
-      title: '✅ Stok Durumu Normal',
-      message: 'Tüm malzemeler yeterli stok seviyesinde',
-      count: 0,
-      negatifCount: 0,
-      dusukCount: 0,
-      severity: 'success'
-    }
-  }
-
-  return {
-    title: negatifCount > 0 ? '🚨 Kritik Stok Uyarısı' : '⚠️ Düşük Stok Uyarısı',
-    message: negatifCount > 0 
-      ? `${negatifCount} malzemede negatif stok var!` 
-      : `${dusukCount} malzemede düşük stok uyarısı!`,
-    count: totalCount,
-    negatifCount,
-    dusukCount,
-    severity: negatifCount > 0 ? 'critical' : 'warning'
-  }
-})
-
 const widgetColor = computed(() => {
   switch (uyariBilgisi.value.severity) {
     case 'critical': return 'error'
+    case 'error': return 'error'
     case 'warning': return 'warning'
-    default: return 'success'
+    case 'success': return 'success'
+    default: return 'info'
   }
 })
 
@@ -176,10 +147,14 @@ const iconColor = computed(() => {
 })
 
 const widgetIcon = computed(() => {
+  if (loading.value) return 'mdi-loading'
+  
   switch (uyariBilgisi.value.severity) {
     case 'critical': return 'mdi-alert-circle'
+    case 'error': return 'mdi-alert-circle'
     case 'warning': return 'mdi-alert'
-    default: return 'mdi-check-circle'
+    case 'success': return 'mdi-check-circle'
+    default: return 'mdi-information'
   }
 })
 
@@ -188,27 +163,42 @@ const refreshUyarilar = async () => {
   loading.value = true
   try {
     // API base URL'i doğru kullan
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/stok/alerts`)
+    const apiUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/stok/alerts`
+    console.log('🔍 Stok uyarıları API çağrısı:', apiUrl)
+    
+    const response = await fetch(apiUrl)
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
     
     const data = await response.json()
+    console.log('📊 API Response:', data)
     
     if (data.success) {
       uyarilar.value = data.uyarilar.tumKritikStoklar || []
+      
+      // Özet bilgileri güncelle
+      if (data.ozet) {
+        uyariBilgisi.value = {
+          count: data.toplamUyari || 0,
+          text: data.ozet.uyariMesaji || 'Stok kontrolü yapılıyor...',
+          severity: data.ozet.seviyeRengi || 'info'
+        }
+      }
       
       // Widget'ı sadece uyarı varsa göster
       showWidget.value = uyarilar.value.length > 0 || uyariBilgisi.value.severity !== 'success'
       
       console.log(`📊 Stok uyarıları güncellendi: ${uyarilar.value.length} uyarı`)
+      console.log('🚨 Kritik stoklar:', uyarilar.value)
     } else {
+      console.error('❌ API başarısız response:', data)
       uyarilar.value = []
       showWidget.value = false
     }
   } catch (error) {
-    console.error('Stok uyarıları alınamadı:', error)
+    console.error('❌ Stok uyarıları alınamadı:', error)
     uyarilar.value = []
     showWidget.value = false
   } finally {
@@ -262,30 +252,14 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.stok-uyari-widget::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    rgba(255,255,255,0.05) 10px,
-    rgba(255,255,255,0.05) 20px
-  );
-  animation: slide 20s linear infinite;
+/* Loading animasyonu */
+.mdi-spin {
+  animation: spin 2s linear infinite;
 }
 
-@keyframes slide {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .stok-uyari-widget.success {

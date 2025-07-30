@@ -137,15 +137,15 @@
         item-value="id" class="elevation-0" hover density="comfortable" items-per-page="20"
         no-data-text="Transfer kaydı yok." loading-text="Transferler yükleniyor...">
         <template v-slot:item.kaynak="{ item }">
-          <span>{{ item.kaynakStok.hammadde?.ad || item.kaynakStok.yariMamul?.ad }}<br><small>{{
-            item.kaynakStok.operasyonBirimi?.ad }}</small></span>
+          <span>{{ item.kaynakStok?.ad || 'Bilinmiyor' }}<br><small>{{
+            item.kaynakStok?.kod || '' }}</small></span>
         </template>
         <template v-slot:item.hedef="{ item }">
-          <span>{{ item.hedefStok.hammadde?.ad || item.hedefStok.yariMamul?.ad }}<br><small>{{
-            item.hedefStok.operasyonBirimi?.ad }}</small></span>
+          <span>{{ item.hedefStok?.ad || 'Bilinmiyor' }}<br><small>{{
+            item.hedefStok?.kod || '' }}</small></span>
         </template>
         <template v-slot:item.miktarGram="{ item }">
-          <span>{{ item.miktarGram.toLocaleString() }} gr</span>
+          <span>{{ item.miktarGram?.toLocaleString() || 0 }} gr</span>
         </template>
         <template v-slot:item.createdAt="{ item }">
           <span>{{ formatDate(item.createdAt, true) }}</span>
@@ -169,15 +169,13 @@
           <span>{{ hareketTipLabel(item.tip) }}</span>
         </template>
         <template v-slot:item.miktarGram="{ item }">
-          <span
-            :class="item.tip === 'cikis' || item.tip === 'transfer' && item.aciklama?.includes('Çıkış') ? 'text-error font-weight-bold' : (item.tip === 'giris' || item.tip === 'transfer' && item.aciklama?.includes('Giriş') ? 'text-success font-weight-bold' : '')">{{
-              item.miktarGram.toLocaleString() }} gr</span>
+          <span>{{ item.miktar?.toLocaleString() || 0 }} {{ item.birim || 'gr' }}</span>
+        </template>
+        <template v-slot:item.user.ad="{ item }">
+          <span>{{ item.user?.ad || 'Sistem' }}</span>
         </template>
         <template v-slot:item.createdAt="{ item }">
           <span>{{ formatDate(item.createdAt, true) }}</span>
-        </template>
-        <template v-slot:item["user.ad"]="{ item }">
-          <span>{{ item.user?.ad || '-' }}</span>
         </template>
       </v-data-table>
     </v-card>
@@ -246,11 +244,26 @@
             <v-data-table :headers="raporStokHeaders" :items="rapor.enCokGiren" :loading="raporLoading"
               item-value="stokId" class="elevation-0" density="compact" hide-default-footer>
               <template v-slot:item.stok="{ item }">
-                <span>{{ item.stok?.hammadde?.ad || item.stok?.yariMamul?.ad }}<br><small>{{
-                  item.stok?.operasyonBirimi?.ad }}</small></span>
+                <span>{{ item.material?.ad || 'Bilinmiyor' }}<br><small>{{
+                  item.material?.kod || '' }}</small></span>
               </template>
               <template v-slot:item._sum.miktarGram="{ item }">
-                <span>{{ item._sum.miktarGram?.toLocaleString() }} gr</span>
+                <span>{{ item._sum?.miktarGram?.toLocaleString() || 0 }} gr</span>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-card class="pa-2">
+            <div class="text-subtitle-2 mb-2">En Çok Çıkış Yapılan Stoklar</div>
+            <v-data-table :headers="raporStokHeaders" :items="rapor.enCokCikan" :loading="raporLoading"
+              item-value="stokId" class="elevation-0" density="compact" hide-default-footer>
+              <template v-slot:item.stok="{ item }">
+                <span>{{ item.material?.ad || 'Bilinmiyor' }}<br><small>{{
+                  item.material?.kod || '' }}</small></span>
+              </template>
+              <template v-slot:item._sum.miktarGram="{ item }">
+                <span>{{ item._sum?.miktarGram?.toLocaleString() || 0 }} gr</span>
               </template>
             </v-data-table>
           </v-card>
@@ -322,6 +335,17 @@ const filteredStoklar = computed(() => {
 
 const kritikStoklar = computed(() => {
   return stoklar.value.filter(s => s.mevcutStok <= s.minStokSeviye);
+});
+
+// User bilgilerini al
+const user = computed(() => {
+  const userData = localStorage.getItem('user');
+  return userData ? JSON.parse(userData) : null;
+});
+
+// Admin kontrolü
+const isAdmin = computed(() => {
+  return user.value?.rol === 'ADMIN' || user.value?.rol === 'MUDUR';
 });
 
 async function fetchStoklar() {
@@ -499,21 +523,29 @@ async function fetchTransferHistory() {
 const hareketler = ref([]);
 const hareketlerLoading = ref(false);
 const hareketHeaders = [
-  { title: 'Stok', key: 'stok', sortable: false },
-  { title: 'Operasyon Birimi', key: 'stok.operasyonBirimi.ad', sortable: true },
-  { title: 'Kullanıcı', key: 'user.ad', sortable: true },
+  { title: 'Malzeme', key: 'stok', sortable: false },
   { title: 'Tip', key: 'tip', sortable: true },
   { title: 'Miktar', key: 'miktarGram', align: 'end', sortable: true },
+  { title: 'Kullanıcı', key: 'user.ad', sortable: true },
   { title: 'Açıklama', key: 'aciklama', sortable: false },
   { title: 'Tarih', key: 'createdAt', sortable: true },
 ];
 const hareketFilterStokId = ref(null);
 
 function hareketTipLabel(tip) {
-  if (tip === 'giris') return 'Giriş';
-  if (tip === 'cikis') return 'Çıkış';
-  if (tip === 'transfer') return 'Transfer';
-  return tip;
+  const labels = {
+    'GIRIS': 'Giriş',
+    'CIKIS': 'Çıkış',
+    'TRANSFER': 'Transfer',
+    'FIRE': 'Fire',
+    'SAYIM_FAZLA': 'Sayım Fazlası',
+    'SAYIM_EKSIK': 'Sayım Eksiği',
+    'URETIM_GIRDI': 'Üretim Girdisi',
+    'URETIM_CIKTI': 'Üretim Çıktısı',
+    'IADE': 'İade',
+    'DUZELTME': 'Düzeltme'
+  };
+  return labels[tip] || tip;
 }
 
 async function fetchHareketler() {
