@@ -1,253 +1,476 @@
-import axios from 'axios';
+/**
+ * =============================================
+ * ENHANCED API UTILITIES - SECURITY INTEGRATED
+ * =============================================
+ */
 
-// API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+import { securityErrorHandler, InputSanitizer, SECURITY_LEVELS } from './security'
 
-// Axios instance oluştur
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 30000, // 30 saniye timeout
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Request interceptor - Token ekle
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-
-        // Cache kontrolü için header ekle
-        if (config.method === 'get') {
-            config.headers['Cache-Control'] = 'max-age=300'; // 5 dakika cache
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor - Hata yönetimi
-api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        // Token expired kontrolü
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('userRole');
-            window.location.href = '/login';
-            return Promise.reject(new Error('Oturum süresi doldu. Lütfen tekrar giriş yapın.'));
-        }
-
-        // Rate limit kontrolü
-        if (error.response?.status === 429) {
-            const retryAfter = error.response.headers['retry-after'] || 60;
-            return Promise.reject(new Error(`Çok fazla istek gönderildi. ${retryAfter} saniye sonra tekrar deneyin.`));
-        }
-
-        // Network hatası
-        if (!error.response) {
-            return Promise.reject(new Error('Sunucuya bağlanılamıyor. İnternet bağlantınızı kontrol edin.'));
-        }
-
-        return Promise.reject(error);
-    }
-);
-
-// Cache sistemi
-const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
-
-// Cache'den veri al
-function getFromCache(key) {
-    const cached = cache.get(key);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        return cached.data;
-    }
-    return null;
+// API Configuration
+const API_CONFIG = {
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+    timeout: 30000, // 30 seconds
+    retryAttempts: 3,
+    retryDelay: 1000, // 1 second
+    maxRetryDelay: 5000 // 5 seconds
 }
 
-// Cache'e veri kaydet
-function setCache(key, data) {
-    cache.set(key, {
-        data,
-        timestamp: Date.now()
-    });
-}
-
-// Cache temizle
-function clearCache() {
-    cache.clear();
-}
-
-// Belirli bir key'i cache'den sil
-function removeFromCache(key) {
-    cache.delete(key);
-}
-
-// API çağrı fonksiyonu (cache ile)
-export async function apiCall(endpoint, options = {}) {
-    const {
-        method = 'GET',
-        data = null,
-        useCache = false,
-        cacheKey = null,
-        clearCacheOnSuccess = false
-    } = options;
-
-    // Cache key oluştur
-    const key = cacheKey || `${method}-${endpoint}-${JSON.stringify(data)}`;
-
-    // GET istekleri için cache kontrolü
-    if (method === 'GET' && useCache) {
-        const cachedData = getFromCache(key);
-        if (cachedData) {
-            return cachedData;
+/**
+ * Enhanced Axios Instance with Security Features
+ */
+const createSecureApiClient = () => {
+    const client = axios.create({
+        baseURL: API_CONFIG.baseURL,
+        timeout: API_CONFIG.timeout,
+        headers: {
+            'Content-Type': 'application/json'
         }
-    }
+    })
 
-    try {
-        const response = await api({
-            method,
-            url: endpoint,
-            data,
-            ...options
-        });
+    // Request Interceptor - Add Security Headers
+    client.interceptors.request.use(
+        async (config) => {
+            const authStore = useAuthStore()
 
-        // Başarılı response'u cache'e kaydet
-        if (method === 'GET' && useCache) {
-            setCache(key, response.data);
-        }
-
-        // Cache temizleme
-        if (clearCacheOnSuccess) {
-            clearCache();
-        }
-
-        return response.data;
-    } catch (error) {
-        // Hata durumunda cache'den veri döndür (fallback)
-        if (method === 'GET' && useCache) {
-            const cachedData = getFromCache(key);
-            if (cachedData) {
-                console.warn('API hatası, cache\'den veri döndürülüyor:', error.message);
-                return cachedData;
-            }
-        }
-        throw error;
-    }
-}
-
-// Lazy loading için pagination helper
-export function createPaginationHelper(endpoint, pageSize = 20) {
-    let currentPage = 1;
-    let hasMore = true;
-    let isLoading = false;
-    let allData = [];
-
-    return {
-        async loadNextPage() {
-            if (isLoading || !hasMore) return [];
-
-            isLoading = true;
             try {
-                const response = await apiCall(`${endpoint}?page=${currentPage}&limit=${pageSize}`, {
-                    useCache: true,
-                    cacheKey: `${endpoint}-page-${currentPage}`
-                });
+                // Add security headers
+                const securityHeaders = authStore.getSecurityHeaders()
+                config.headers = { ...config.headers, ...securityHeaders }
 
-                const newData = response.data || response;
-                allData = [...allData, ...newData];
+                // Add request timestamp
+                config.headers['X-Request-Timestamp'] = Date.now()
 
-                hasMore = newData.length === pageSize;
-                currentPage++;
+                // Add security level
+                config.headers['X-Security-Level'] = authStore.securityLevel || SECURITY_LEVELS.NORMAL
 
-                return newData;
+                // Input sanitization for POST/PUT requests
+                if (['post', 'put', 'patch'].includes(config.method.toLowerCase()) && config.data) {
+                    config.data = sanitizeRequestData(config.data)
+                }
+
+                // Cache control for GET requests
+                if (config.method.toLowerCase() === 'get') {
+                    config.headers['Cache-Control'] = 'max-age=300' // 5 minutes
+                }
+
+                // Update user activity
+                authStore.updateActivity()
+
+                return config
             } catch (error) {
-                console.error('Pagination hatası:', error);
-                return [];
-            } finally {
-                isLoading = false;
+                console.error('Request interceptor error:', error)
+                return Promise.reject(error)
             }
         },
-
-        reset() {
-            currentPage = 1;
-            hasMore = true;
-            allData = [];
-        },
-
-        get allData() {
-            return allData;
-        },
-
-        get hasMore() {
-            return hasMore;
-        },
-
-        get isLoading() {
-            return isLoading;
+        (error) => {
+            console.error('Request setup error:', error)
+            return Promise.reject(error)
         }
-    };
-}
+    )
 
-// Debounce fonksiyonu
-export function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+    // Response Interceptor - Handle Security Responses
+    client.interceptors.response.use(
+        (response) => {
+            // Handle successful responses
+            const authStore = useAuthStore()
 
-// Throttle fonksiyonu
-export function throttle(func, limit) {
-    let inThrottle;
-    return function () {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-// Retry mekanizması
-export async function retryApiCall(fn, maxRetries = 3, delay = 1000) {
-    for (let i = 0; i < maxRetries; i++) {
-        try {
-            return await fn();
-        } catch (error) {
-            if (i === maxRetries - 1) throw error;
-
-            // Sadece belirli hatalar için retry yap
-            if (error.response?.status >= 500 || !error.response) {
-                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-                continue;
+            // Update CSRF token if provided
+            const newCSRFToken = response.headers['x-csrf-token']
+            if (newCSRFToken && authStore.csrfToken !== newCSRFToken) {
+                authStore.csrfToken = newCSRFToken
             }
-            throw error;
+
+            // Check for security warnings
+            const securityWarning = response.headers['x-security-warning']
+            if (securityWarning) {
+                console.warn('Security Warning:', securityWarning)
+                securityErrorHandler.showSecurityAlert(securityWarning, 'warning')
+            }
+
+            return response
+        },
+        async (error) => {
+            const authStore = useAuthStore()
+
+            // Handle token refresh for 401 errors
+            if (error.response?.status === 401 && authStore.refreshToken) {
+                try {
+                    await authStore.refreshTokens()
+
+                    // Retry original request with new token
+                    const originalRequest = error.config
+                    if (!originalRequest._retry) {
+                        originalRequest._retry = true
+                        originalRequest.headers = {
+                            ...originalRequest.headers,
+                            ...authStore.getSecurityHeaders()
+                        }
+                        return client(originalRequest)
+                    }
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError)
+                    authStore.clearAuth()
+                }
+            }
+
+            // Handle security errors
+            const securityError = securityErrorHandler.handleApiError(error, {
+                url: error.config?.url,
+                method: error.config?.method,
+                userId: authStore.user?.id
+            })
+
+            return Promise.reject(securityError)
         }
+    )
+
+    return client
+}
+
+/**
+ * Sanitize request data
+ */
+function sanitizeRequestData(data) {
+    if (typeof data === 'string') {
+        return InputSanitizer.sanitizeString(data)
+    }
+
+    if (Array.isArray(data)) {
+        return data.map(item => sanitizeRequestData(item))
+    }
+
+    if (typeof data === 'object' && data !== null) {
+        const sanitized = {}
+        for (const [key, value] of Object.entries(data)) {
+            sanitized[key] = sanitizeRequestData(value)
+        }
+        return sanitized
+    }
+
+    return data
+}
+
+/**
+ * Enhanced API Client with Retry Logic
+ */
+class EnhancedApiClient {
+    constructor() {
+        this.client = createSecureApiClient()
+    }
+
+    /**
+     * Make API request with retry logic
+     */
+    async request(config, options = {}) {
+        const {
+            retryAttempts = API_CONFIG.retryAttempts,
+            retryDelay = API_CONFIG.retryDelay,
+            onRetry = null
+        } = options
+
+        let lastError = null
+
+        for (let attempt = 0; attempt <= retryAttempts; attempt++) {
+            try {
+                const response = await this.client(config)
+                return response.data
+            } catch (error) {
+                lastError = error
+
+                // Don't retry for certain errors
+                if (this.shouldNotRetry(error) || attempt === retryAttempts) {
+                    throw error
+                }
+
+                // Calculate delay with exponential backoff
+                const delay = Math.min(
+                    retryDelay * Math.pow(2, attempt),
+                    API_CONFIG.maxRetryDelay
+                )
+
+                console.warn(`API request failed (attempt ${attempt + 1}/${retryAttempts + 1}), retrying in ${delay}ms...`)
+
+                if (onRetry) {
+                    onRetry(attempt + 1, error)
+                }
+
+                await this.sleep(delay)
+            }
+        }
+
+        throw lastError
+    }
+
+    /**
+     * Check if error should not be retried
+     */
+    shouldNotRetry(error) {
+        const noRetryStatuses = [400, 401, 403, 404, 422, 429]
+        return noRetryStatuses.includes(error.response?.status)
+    }
+
+    /**
+     * Sleep utility for retry delays
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    /**
+     * GET request
+     */
+    async get(url, config = {}) {
+        return this.request({
+            method: 'GET',
+            url,
+            ...config
+        })
+    }
+
+    /**
+     * POST request
+     */
+    async post(url, data = {}, config = {}) {
+        return this.request({
+            method: 'POST',
+            url,
+            data,
+            ...config
+        })
+    }
+
+    /**
+     * PUT request
+     */
+    async put(url, data = {}, config = {}) {
+        return this.request({
+            method: 'PUT',
+            url,
+            data,
+            ...config
+        })
+    }
+
+    /**
+     * PATCH request
+     */
+    async patch(url, data = {}, config = {}) {
+        return this.request({
+            method: 'PATCH',
+            url,
+            data,
+            ...config
+        })
+    }
+
+    /**
+     * DELETE request
+     */
+    async delete(url, config = {}) {
+        return this.request({
+            method: 'DELETE',
+            url,
+            ...config
+        })
+    }
+
+    /**
+     * Upload file with progress tracking
+     */
+    async uploadFile(url, file, data = {}, onProgress = null) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // Add additional data
+        Object.keys(data).forEach(key => {
+            formData.append(key, data[key])
+        })
+
+        return this.request({
+            method: 'POST',
+            url,
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+                if (onProgress) {
+                    const percentCompleted = Math.round(
+                        (progressEvent.loaded * 100) / progressEvent.total
+                    )
+                    onProgress(percentCompleted, progressEvent)
+                }
+            }
+        })
+    }
+
+    /**
+     * Download file
+     */
+    async downloadFile(url, filename = null, config = {}) {
+        const response = await this.request({
+            method: 'GET',
+            url,
+            responseType: 'blob',
+            ...config
+        })
+
+        // Create download link
+        const blob = new Blob([response])
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = filename || 'download'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(downloadUrl)
+
+        return response
     }
 }
 
-// Export cache functions
-export { getFromCache, setCache, clearCache, removeFromCache };
+/**
+ * API Endpoints with Security Context
+ */
+class ApiEndpoints {
+    constructor(client) {
+        this.client = client
+    }
 
-// Export axios instance
-export { api };
+    // Authentication
+    async login(credentials) {
+        return this.client.post('/auth/login', credentials)
+    }
 
-export default apiCall; 
+    async logout() {
+        return this.client.post('/auth/logout')
+    }
+
+    async refreshToken(refreshToken) {
+        return this.client.post('/auth/refresh', { refreshToken })
+    }
+
+    async getCSRFToken() {
+        return this.client.get('/auth/csrf')
+    }
+
+    // Users
+    async getUsers(params = {}) {
+        return this.client.get('/auth/users', { params })
+    }
+
+    async createUser(userData) {
+        return this.client.post('/auth/users', userData)
+    }
+
+    async updateUser(id, userData) {
+        return this.client.put(`/auth/users/${id}`, userData)
+    }
+
+    async deleteUser(id) {
+        return this.client.delete(`/auth/users/${id}`)
+    }
+
+    // Orders
+    async getOrders(params = {}) {
+        return this.client.get('/siparis', { params })
+    }
+
+    async getOrder(id) {
+        return this.client.get(`/siparis/${id}`)
+    }
+
+    async createOrder(orderData) {
+        return this.client.post('/siparis', orderData)
+    }
+
+    async updateOrder(id, orderData) {
+        return this.client.put(`/siparis/${id}`, orderData)
+    }
+
+    async deleteOrder(id) {
+        return this.client.delete(`/siparis/${id}`)
+    }
+
+    // Customers
+    async getCustomers(params = {}) {
+        return this.client.get('/cari', { params })
+    }
+
+    async createCustomer(customerData) {
+        return this.client.post('/cari', customerData)
+    }
+
+    async updateCustomer(id, customerData) {
+        return this.client.put(`/cari/${id}`, customerData)
+    }
+
+    // Products
+    async getProducts(params = {}) {
+        return this.client.get('/urunler', { params })
+    }
+
+    async createProduct(productData) {
+        return this.client.post('/urunler', productData)
+    }
+
+    async updateProduct(id, productData) {
+        return this.client.put(`/urunler/${id}`, productData)
+    }
+
+    // Reports
+    async getSalesReport(params = {}) {
+        return this.client.get('/reports/sales', { params })
+    }
+
+    async getCRMReport(params = {}) {
+        return this.client.get('/reports/crm', { params })
+    }
+
+    // Dropdown data
+    async getDropdownData(category = null) {
+        const params = category ? { category } : {}
+        return this.client.get('/dropdown', { params })
+    }
+
+    // File operations
+    async uploadUserExcel(file, onProgress = null) {
+        return this.client.uploadFile('/excel/upload/kullanici', file, {}, onProgress)
+    }
+
+    async uploadCustomerExcel(file, onProgress = null) {
+        return this.client.uploadFile('/excel/upload/cari', file, {}, onProgress)
+    }
+
+    async downloadUserTemplate() {
+        return this.client.downloadFile('/excel/template/kullanici', 'kullanici-sablon.xlsx')
+    }
+
+    async downloadCustomerTemplate() {
+        return this.client.downloadFile('/excel/template/cari', 'cari-sablon.xlsx')
+    }
+
+    // Audit logs (admin only)
+    async getAuditLogs(params = {}) {
+        return this.client.get('/audit-logs', { params })
+    }
+}
+
+// Create singleton instances
+const apiClient = new EnhancedApiClient()
+const api = new ApiEndpoints(apiClient)
+
+// Legacy apiCall function for backward compatibility
+export function apiCall(url, options = {}) {
+    return apiClient.request(url, options)
+}
+
+// Export enhanced API client and endpoints
+export default api
+export { apiClient, EnhancedApiClient, ApiEndpoints }
+
+// Legacy support - keep existing api instance
+export const legacyApi = createSecureApiClient() 

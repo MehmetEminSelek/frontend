@@ -27,8 +27,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built app from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy assets separately to ensure they're available
-COPY --from=builder /app/src/assets /usr/share/nginx/html/assets
+# Copy logos (assets are included in dist)
 COPY --from=builder /app/src/logos /usr/share/nginx/html/logos
 
 # Create non-root user

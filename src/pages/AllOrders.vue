@@ -282,16 +282,34 @@ const activePricesMap = ref({});
 async function fetchActivePrices() {
   try {
     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/malzeme-fiyatlari`);
-    const allPrices = response.data;
+    const data = response.data;
+    
+    // API object döndürüyor, array'leri birleştir
+    const allPrices = [
+      ...(data.hammaddeler || []),
+      ...(data.yariMamuller || []),
+      ...(data.yardimciMaddeler || []),
+      ...(data.ambalajMalzemeleri || [])
+    ];
+    
     const latestMap = {};
+    
+    // Array check'i de ekle
+    if (Array.isArray(allPrices)) {
     allPrices.forEach(price => {
-      const key = `${price.urunId}-${price.birim}`;
-      if (!latestMap[key] || new Date(price.gecerliTarih) > new Date(latestMap[key].gecerliTarih)) {
-        latestMap[key] = price;
-      }
-    });
+        const key = `${price.kod}-${price.birim}`;
+        // Basit mapping: en son eklenen geçerli
+        latestMap[key] = {
+          urunId: price.kod,
+          birim: price.birim,
+          fiyat: price.fiyat || 0,
+          ad: price.ad
+        };
+      });
+    }
+    
     activePricesMap.value = latestMap;
-    console.log('✅ Aktif fiyatlar yüklendi:', Object.keys(latestMap).length, 'ürün');
+    console.log('✅ Aktif fiyatlar yüklendi:', Object.keys(latestMap).length, 'malzeme');
   } catch (err) {
     console.error('❌ Aktif fiyatlar çekilemedi:', err);
     activePricesMap.value = {};
