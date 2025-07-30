@@ -36,10 +36,26 @@ export const SECURITY_LEVELS = {
  */
 export class SecurityErrorHandler {
     constructor() {
-        this.authStore = useAuthStore()
-        this.router = useRouter()
+        // Lazy initialization - store'ları ilk kullanımda initialize et
+        this._authStore = null
+        this._router = null
         this.errorHistory = []
         this.maxErrorHistory = 50
+    }
+
+    // Getter methods for lazy initialization
+    get authStore() {
+        if (!this._authStore) {
+            this._authStore = useAuthStore()
+        }
+        return this._authStore
+    }
+
+    get router() {
+        if (!this._router) {
+            this._router = useRouter()
+        }
+        return this._router
     }
 
     /**
