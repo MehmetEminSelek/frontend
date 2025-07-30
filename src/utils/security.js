@@ -325,7 +325,7 @@ export class SecurityErrorHandler {
 /**
  * Input Sanitizer
  */
-export class InputSanitizer {
+class InputSanitizer {
     /**
      * Sanitize string input
      */
@@ -384,7 +384,7 @@ export class InputSanitizer {
 /**
  * Permission Utilities
  */
-export class PermissionUtils {
+class PermissionUtils {
     static checkPermission(permission) {
         const authStore = useAuthStore()
         return authStore.checkPermission(permission)
@@ -427,7 +427,7 @@ export class PermissionUtils {
 /**
  * Security Validator
  */
-export class SecurityValidator {
+class SecurityValidator {
     /**
      * Validate file upload
      */

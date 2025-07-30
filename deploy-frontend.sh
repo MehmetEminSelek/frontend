@@ -39,7 +39,7 @@ if [ ! -f ".env.production" ]; then
     cat > .env.production << EOL
 # OG Frontend - Production Environment
 VITE_API_BASE_URL=https://ogsiparis.com/api
-NODE_ENV=production
+# NODE_ENV=production - Vite config'de set edilir
 EOL
     echo -e "${GREEN}✅ .env.production oluşturuldu. Lütfen düzenleyin!${NC}"
 fi
@@ -121,9 +121,13 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose kurulu değil! Lütfen önce Docker Compose'u kurun.${NC}"
-    exit 1
+# Modern Docker Compose kontrol
+if ! docker compose version &> /dev/null; then
+    if ! command -v docker-compose &> /dev/null; then
+        echo -e "${RED}❌ Docker Compose kurulu değil! Lütfen önce Docker Compose'u kurun.${NC}"
+        echo "Kurulum için: sudo apt install docker-compose-plugin -y"
+        exit 1
+    fi
 fi
 
 # Docker servis kontrolü
@@ -133,22 +137,28 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
+# Docker Compose komut belirleme
+DOCKER_COMPOSE_CMD="docker compose"
+if ! docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+fi
+
 # Mevcut container'ları durdur
 echo "🛑 Mevcut frontend container'ları durduruluyor..."
-docker-compose down || true
+$DOCKER_COMPOSE_CMD down || true
 
 # Docker image'ları build et
 echo "🔨 Frontend Docker image'ı build ediliyor..."
-docker-compose build --no-cache
+$DOCKER_COMPOSE_CMD build --no-cache
 
 # Frontend servisini başlat
 echo "🚀 Frontend servisi başlatılıyor..."
-docker-compose up -d
+$DOCKER_COMPOSE_CMD up -d
 
 # Container durumlarını kontrol et
 echo "📊 Container durumları kontrol ediliyor..."
 sleep 10
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 
 # Health check
 echo "🏥 Frontend health check yapılıyor..."
@@ -182,9 +192,9 @@ echo "   - Frontend URL: https://ogsiparis.com (HTTPS)"
 echo "   - Health Check: http://localhost/health"
 echo ""
 echo "🔧 Yönetim Komutları:"
-echo "   - Logları görüntüle: docker-compose logs -f"
-echo "   - Restart: docker-compose restart"
-echo "   - Durdur: docker-compose down"
+echo "   - Logları görüntüle: $DOCKER_COMPOSE_CMD logs -f"
+echo "   - Restart: $DOCKER_COMPOSE_CMD restart"
+echo "   - Durdur: $DOCKER_COMPOSE_CMD down"
 echo ""
 echo "🔒 Güvenlik Önerileri:"
 echo "   1. SSL sertifikası kurun"

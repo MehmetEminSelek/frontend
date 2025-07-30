@@ -335,7 +335,7 @@ class EnhancedApiClient {
 /**
  * API Endpoints with Security Context
  */
-export class ApiEndpoints {
+class ApiEndpoints {
     constructor(client) {
         this.client = client
     }
@@ -462,6 +462,11 @@ export class ApiEndpoints {
 // Create singleton instances
 const apiClient = new EnhancedApiClient()
 const api = new ApiEndpoints(apiClient)
+
+// Legacy apiCall function for backward compatibility
+export function apiCall(url, options = {}) {
+    return apiClient.request(url, options)
+}
 
 // Export enhanced API client and endpoints
 export default api
