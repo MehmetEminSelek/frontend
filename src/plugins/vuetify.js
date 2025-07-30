@@ -5,10 +5,8 @@ import { createVuetify } from 'vuetify';
 // --- Gerekli Stiller ve İkonlar ---
 import 'vuetify/styles';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
-import '@mdi/font/css/materialdesignicons.css';
 
-// --- Sadece Kullanılan Bileşenleri Import Et ---
-// Bu yaklaşım daha güvenli ve performanslı
+// --- Sadece Kullanılan ve Mevcut Bileşenleri Import Et ---
 import {
     VApp,
     VAppBar,
@@ -57,7 +55,6 @@ import {
     VAutocomplete,
     VCombobox,
     VDatePicker,
-    VTimePicker,
     VFileInput,
     VRadioGroup,
     VRadio,
@@ -70,7 +67,11 @@ import {
     VToolbarTitle,
     VFadeTransition,
     VSlideXTransition,
-    VSlideYTransition
+    VSlideYTransition,
+    VImg,
+    VForm,
+    VWindow,
+    VWindowItem
 } from 'vuetify/components';
 
 import * as directives from 'vuetify/directives';
@@ -206,7 +207,6 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
             VAutocomplete,
             VCombobox,
             VDatePicker,
-            VTimePicker,
             VFileInput,
             VRadioGroup,
             VRadio,
@@ -219,7 +219,11 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
             VToolbarTitle,
             VFadeTransition,
             VSlideXTransition,
-            VSlideYTransition
+            VSlideYTransition,
+            VImg,
+            VForm,
+            VWindow,
+            VWindowItem
         },
         directives,
         defaults: {

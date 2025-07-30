@@ -30,7 +30,7 @@ export default defineConfig({
                 manualChunks: {
                     'vue-vendor': ['vue', 'vue-router', 'pinia'],
                     'vuetify-vendor': ['vuetify'],
-                    'ui-vendor': ['@mdi/font', 'vue-toastification'],
+                    'ui-vendor': ['vue-toastification'],
                     'utils-vendor': ['axios', '@vueuse/core']
                 },
                 // Better file naming for production
