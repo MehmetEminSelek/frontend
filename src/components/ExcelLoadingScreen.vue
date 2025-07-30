@@ -7,85 +7,114 @@
     content-class="d-flex align-center justify-center w-100 h-100"
   >
     <div class="loading-container">
-      <!-- Baklava Layers Animation -->
-      <div class="baklava-layers">
-        <div v-for="n in 5" :key="n" class="layer" :class="`layer-${n}`"></div>
-      </div>
-
       <!-- Main Loading Content -->
       <div class="loading-content">
-        <!-- Excel Icon Animation -->
+        <!-- Excel Icon -->
         <div class="excel-icon-container">
           <v-icon 
-            size="60" 
+            size="40" 
             color="primary" 
-            class="excel-icon"
           >
             mdi-file-excel
           </v-icon>
-          <div class="upload-arrows">
-            <v-icon 
-              v-for="n in 3" 
-              :key="n"
-              size="20" 
-              color="success" 
-              class="arrow"
-              :class="`arrow-${n}`"
-            >
-              mdi-arrow-up
-            </v-icon>
-          </div>
-        </div>
-
-        <!-- Progress Circle -->
-        <div class="progress-container">
-          <v-progress-circular
-            :model-value="progress"
-            size="120"
-            width="6"
-            color="primary"
-            class="main-progress"
-          >
-            <div class="progress-content">
-              <div class="progress-text">{{ Math.round(progress) }}%</div>
-              <div class="progress-subtitle">{{ currentStage }}</div>
-            </div>
-          </v-progress-circular>
         </div>
 
         <!-- Loading Text -->
         <div class="loading-text">
           <h2 class="main-title">{{ title }}</h2>
-          <p class="subtitle">{{ subtitle }}</p>
+          <p class="subtitle">Beklerken mini oyun! 🎯</p>
         </div>
 
-        <!-- Animation Dots -->
-        <div class="loading-dots">
-          <div v-for="n in 3" :key="n" class="dot" :class="`dot-${n}`"></div>
+        <!-- Memory Game -->
+        <div class="memory-game">
+          <div class="game-info">
+            <div class="score">
+              <v-icon size="16" color="amber">mdi-star</v-icon>
+              {{ score }}
+            </div>
+            <div class="moves">
+              <v-icon size="16" color="blue">mdi-gesture-tap</v-icon>
+              {{ moves }}
+            </div>
+            <div class="timer">
+              <v-icon size="16" color="green">mdi-timer</v-icon>
+              {{ formattedTime }}
+            </div>
+          </div>
+          
+          <div class="game-board">
+            <div
+              v-for="(card, index) in cards"
+              :key="`card-${index}`"
+              class="memory-card"
+              :class="{
+                'flipped': card.isFlipped || card.isMatched,
+                'matched': card.isMatched
+              }"
+              @click="flipCard(index)"
+            >
+              <div class="card-inner">
+                <div class="card-front">
+                  <v-icon size="24" color="white">mdi-help</v-icon>
+                </div>
+                <div class="card-back" :style="{ background: card.color }">
+                  <v-icon :size="24" color="white">{{ card.icon }}</v-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <transition name="fade">
+            <div v-if="gameCompleted" class="game-completed">
+              <v-icon size="24" color="success">mdi-trophy</v-icon>
+              Bravo! {{ moves }} hamlede tamamladın!
+            </div>
+          </transition>
+
+          <v-btn
+            size="x-small"
+            variant="text"
+            color="primary"
+            @click="resetGame"
+            class="mt-2"
+          >
+            <v-icon size="16" start>mdi-refresh</v-icon>
+            Yenile
+          </v-btn>
         </div>
 
         <!-- Stats Display -->
         <div v-if="stats" class="stats-container">
           <div class="stat-item">
-            <v-icon color="success" size="20">mdi-check-circle</v-icon>
-            <span>{{ stats.success || 0 }} Başarılı</span>
+            <v-icon color="success" size="16">mdi-check</v-icon>
+            <span>{{ stats.success || 0 }}</span>
           </div>
           <div class="stat-item">
-            <v-icon color="warning" size="20">mdi-alert-circle</v-icon>
-            <span>{{ stats.skipped || 0 }} Atlandı</span>
+            <v-icon color="warning" size="16">mdi-skip-next</v-icon>
+            <span>{{ stats.skipped || 0 }}</span>
           </div>
           <div class="stat-item">
-            <v-icon color="error" size="20">mdi-close-circle</v-icon>
-            <span>{{ stats.errors || 0 }} Hata</span>
+            <v-icon color="error" size="16">mdi-close</v-icon>
+            <span>{{ stats.errors || 0 }}</span>
           </div>
         </div>
+
+        <!-- Loading Progress Bar -->
+        <v-progress-linear
+          :model-value="uploadProgress"
+          color="primary"
+          height="3"
+          class="mt-3"
+          rounded
+          striped
+        ></v-progress-linear>
       </div>
     </div>
   </v-overlay>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   show: {
@@ -94,11 +123,11 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'Excel Yükleniyor'
+    default: 'Cariler Yükleniyor'
   },
   subtitle: {
     type: String,
-    default: 'Lütfen bekleyiniz, veriler işleniyor...'
+    default: 'Lütfen bekleyiniz...'
   },
   stats: {
     type: Object,
@@ -106,81 +135,218 @@ const props = defineProps({
   }
 })
 
-const progress = ref(0)
-const currentStage = ref('Başlatılıyor')
+// Game state
+const cards = ref([])
+const flippedCards = ref([])
+const score = ref(0)
+const moves = ref(0)
+const gameCompleted = ref(false)
+const timer = ref(0)
+const timerInterval = ref(null)
+const uploadProgress = ref(0)
+const isProcessing = ref(false)
 
-const stages = [
-  'Dosya okunuyor',
-  'Veriler ayrıştırılıyor',
-  'Doğrulama yapılıyor',
-  'Veritabanı güncelleniyor',
-  'Tamamlanıyor'
+// Card designs - Sadece 4 çift (8 kart + 1 boş = 9 kart için)
+const cardDesigns = [
+  { icon: 'mdi-food', color: '#FF6B6B' },      // Kırmızı
+  { icon: 'mdi-bee', color: '#4ECDC4' },       // Turkuaz
+  { icon: 'mdi-tree', color: '#45B7D1' },      // Mavi
+  { icon: 'mdi-water', color: '#96CEB4' }      // Yeşil
 ]
 
-// Progress simulation
-let progressInterval = null
-let stageInterval = null
+// Formatted time
+const formattedTime = computed(() => {
+  const minutes = Math.floor(timer.value / 60)
+  const seconds = timer.value % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+})
 
-const startProgress = () => {
-  progress.value = 0
-  currentStage.value = stages[0]
+// Initialize game
+const initGame = () => {
+  // 3x3 için 4 çift + 1 joker kart
+  const gameCards = []
   
-  // Progress animation
-  progressInterval = setInterval(() => {
-    if (progress.value < 95) {
-      progress.value += Math.random() * 15 + 5
+  // 4 çift kart ekle
+  for (let i = 0; i < 4; i++) {
+    const design = cardDesigns[i]
+    gameCards.push({
+      id: i,
+      icon: design.icon,
+      color: design.color,
+      isFlipped: false,
+      isMatched: false
+    })
+    gameCards.push({
+      id: i,
+      icon: design.icon,
+      color: design.color,
+      isFlipped: false,
+      isMatched: false
+    })
+  }
+  
+  // 1 joker kart ekle (eşi olmayan)
+  gameCards.push({
+    id: 999,
+    icon: 'mdi-star',
+    color: '#FFD93D',
+    isFlipped: false,
+    isMatched: false,
+    isJoker: true
+  })
+  
+  // Kartları karıştır
+  for (let i = gameCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [gameCards[i], gameCards[j]] = [gameCards[j], gameCards[i]]
+  }
+  
+  cards.value = gameCards
+}
+
+// Reset game
+const resetGame = () => {
+  score.value = 0
+  moves.value = 0
+  gameCompleted.value = false
+  timer.value = 0
+  flippedCards.value = []
+  isProcessing.value = false
+  initGame()
+}
+
+// Flip card
+const flipCard = (index) => {
+  if (isProcessing.value) return
+  
+  const card = cards.value[index]
+  
+  // Zaten eşleşmiş veya çevrilmişse tıklama
+  if (card.isMatched || card.isFlipped || flippedCards.value.length >= 2) {
+    return
+  }
+  
+  // Kartı çevir
+  card.isFlipped = true
+  flippedCards.value.push(index)
+  
+  // Joker kartsa bonus puan
+  if (card.isJoker) {
+    setTimeout(() => {
+      card.isMatched = true
+      score.value += 5
+      flippedCards.value = []
+      checkGameComplete()
+    }, 500)
+    return
+  }
+  
+  // 2 kart çevrildiyse kontrol et
+  if (flippedCards.value.length === 2) {
+    moves.value++
+    isProcessing.value = true
+    setTimeout(() => {
+      checkMatch()
+    }, 600)
+  }
+}
+
+// Check if cards match
+const checkMatch = () => {
+  const [first, second] = flippedCards.value
+  const firstCard = cards.value[first]
+  const secondCard = cards.value[second]
+  
+  if (firstCard.id === secondCard.id) {
+    // Eşleşme var!
+    firstCard.isMatched = true
+    secondCard.isMatched = true
+    score.value += 10
+    flippedCards.value = []
+    
+    checkGameComplete()
+  } else {
+    // Eşleşme yok - kartları geri çevir
+    setTimeout(() => {
+      firstCard.isFlipped = false
+      secondCard.isFlipped = false
+      flippedCards.value = []
+    }, 400)
+  }
+  
+  isProcessing.value = false
+}
+
+// Check if game is completed
+const checkGameComplete = () => {
+  if (cards.value.every(card => card.isMatched)) {
+    gameCompleted.value = true
+    if (timerInterval.value) {
+      clearInterval(timerInterval.value)
     }
-  }, 400)
-  
-  // Stage updates
-  let stageIndex = 0
-  stageInterval = setInterval(() => {
-    stageIndex = (stageIndex + 1) % stages.length
-    currentStage.value = stages[stageIndex]
-  }, 800)
-}
-
-const completeProgress = () => {
-  progress.value = 100
-  currentStage.value = 'Tamamlandı'
-  
-  if (progressInterval) {
-    clearInterval(progressInterval)
-    progressInterval = null
-  }
-  if (stageInterval) {
-    clearInterval(stageInterval)
-    stageInterval = null
   }
 }
 
+// Start timer
+const startTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+  }
+  timerInterval.value = setInterval(() => {
+    timer.value++
+  }, 1000)
+}
+
+// Stop timer
+const stopTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+}
+
+// Simulate upload progress
+const startUploadProgress = () => {
+  uploadProgress.value = 0
+  const interval = setInterval(() => {
+    if (uploadProgress.value < 100) {
+      uploadProgress.value += Math.random() * 20 + 5
+      if (uploadProgress.value > 100) uploadProgress.value = 100
+    } else {
+      clearInterval(interval)
+    }
+  }, 300)
+}
+
+// Watch show prop
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    startProgress()
+    resetGame()
+    startTimer()
+    startUploadProgress()
   } else {
-    completeProgress()
+    stopTimer()
   }
 })
 
+// Cleanup
+onUnmounted(() => {
+  stopTimer()
+})
+
+// Initialize on mount
 onMounted(() => {
   if (props.show) {
-    startProgress()
+    resetGame()
+    startTimer()
   }
 })
 </script>
 
 <style scoped>
 .excel-loading-overlay {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
 }
 
 .loading-container {
@@ -189,185 +355,148 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-}
-
-/* Baklava Layers Background Animation */
-.baklava-layers {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  opacity: 0.1;
-}
-
-.layer {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border: 2px solid #D4A574;
-  border-radius: 50%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.layer-1 { animation-delay: 0s; }
-.layer-2 { animation-delay: 0.2s; width: 240px; height: 240px; }
-.layer-3 { animation-delay: 0.4s; width: 180px; height: 180px; }
-.layer-4 { animation-delay: 0.6s; width: 120px; height: 120px; }
-.layer-5 { animation-delay: 0.8s; width: 60px; height: 60px; }
-
-@keyframes pulse {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.1;
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 0.3;
-  }
 }
 
 /* Main Content */
 .loading-content {
-  position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 3rem;
-  box-shadow: 0 20px 40px rgba(212, 165, 116, 0.2);
-  border: 1px solid rgba(212, 165, 116, 0.3);
-  min-width: 400px;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  min-width: 380px;
+  max-width: 420px;
 }
 
-/* Excel Icon Animation */
+/* Excel Icon */
 .excel-icon-container {
-  position: relative;
-  margin-bottom: 2rem;
-  display: inline-block;
-}
-
-.excel-icon {
-  animation: bounce 1.5s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-.upload-arrows {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-}
-
-.arrow {
-  position: absolute;
-  animation: float-up 1.2s ease-in-out infinite;
-}
-
-.arrow-1 { animation-delay: 0s; }
-.arrow-2 { animation-delay: 0.3s; left: 10px; }
-.arrow-3 { animation-delay: 0.6s; left: 20px; }
-
-@keyframes float-up {
-  0% {
-    opacity: 1;
-    transform: translateY(0px);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-}
-
-/* Progress Circle */
-.progress-container {
-  margin: 2rem 0;
-}
-
-.main-progress {
-  position: relative;
-}
-
-.progress-content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   text-align: center;
-}
-
-.progress-text {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #D4A574;
-  margin-bottom: 0.25rem;
-}
-
-.progress-subtitle {
-  font-size: 0.75rem;
-  color: #8B4513;
-  font-weight: 500;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
 }
 
 /* Loading Text */
 .main-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #5D4037;
-  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+  text-align: center;
 }
 
 .subtitle {
-  color: #8D6E63;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
-/* Loading Dots */
-.loading-dots {
+/* Memory Game */
+.memory-game {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.game-info {
   display: flex;
   justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #444;
+  font-weight: 500;
+}
+
+.game-info > div {
+  display: flex;
   align-items: center;
+  gap: 0.25rem;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin: 1.5rem 0;
+  margin: 1rem auto;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 12px;
+  width: fit-content;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #D4A574;
-  animation: loading-dots 1.4s ease-in-out infinite;
+.memory-card {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
 }
 
-.dot-1 { animation-delay: 0s; }
-.dot-2 { animation-delay: 0.2s; }
-.dot-3 { animation-delay: 0.4s; }
+.memory-card.flipped {
+  transform: rotateY(180deg);
+}
 
-@keyframes loading-dots {
-  0%, 80%, 100% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
+.memory-card.matched {
+  animation: matchBounce 0.4s ease;
+}
+
+@keyframes matchBounce {
+  0%, 100% { transform: rotateY(180deg) scale(1); }
+  50% { transform: rotateY(180deg) scale(1.15); }
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.card-front {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: rotateY(0deg);
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.memory-card:not(.flipped):hover .card-front {
+  transform: rotateY(0deg) scale(1.05);
+}
+
+.game-completed {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #2e7d32;
+  font-weight: 600;
+  margin: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 
 /* Stats Display */
@@ -375,50 +504,35 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   gap: 1.5rem;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(212, 165, 116, 0.3);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  gap: 0.3rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: #5D4037;
+  color: #555;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .loading-content {
-    min-width: 300px;
-    padding: 2rem;
+    min-width: 320px;
+    padding: 1.25rem;
   }
   
-  .stats-container {
-    flex-direction: column;
-    gap: 0.8rem;
+  .memory-card {
+    width: 60px;
+    height: 60px;
   }
   
-  .main-title {
-    font-size: 1.5rem;
-  }
-}
-
-/* Smooth entrance */
-.loading-content {
-  animation: fadeInScale 0.4s ease-out;
-}
-
-@keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+  .game-board {
+    gap: 6px;
+    padding: 0.5rem;
   }
 }
 </style> 

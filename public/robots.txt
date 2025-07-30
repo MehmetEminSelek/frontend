@@ -1,0 +1,19 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /config/
+Disallow: /.git/
+Disallow: /.env
+Disallow: /node_modules/
+Disallow: /src/
+Disallow: /docker/
+Disallow: /backup/
+Disallow: /logs/
+Disallow: /*.json
+Disallow: /*.lock
+Disallow: /*.log
+Disallow: /*.sql
+Disallow: /*.bak
+
+# Sitemap
+Sitemap: https://ogsiparis.com/sitemap.xml 
