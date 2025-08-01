@@ -558,9 +558,9 @@ async function handleLogin() {
       data: payload
     });
 
-    if (data && data.user && data.token) {
+    if (data && data.user && data.accessToken) {
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('token', data.accessToken);
       const mappedRole = data.user.role === 'GENEL_MUDUR' ? 'admin' : 'user';
       localStorage.setItem('userRole', mappedRole);
       currentUser.value = data.user;

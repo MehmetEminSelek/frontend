@@ -187,10 +187,10 @@ export const useAuthStore = defineStore('auth', () => {
      * Handle successful login
      */
     function handleLoginSuccess(data) {
-        // Store tokens
-        token.value = data.token
+        // Store tokens - Backend sends accessToken not token
+        token.value = data.accessToken
         refreshToken.value = data.refreshToken
-        localStorage.setItem('token', data.token)
+        localStorage.setItem('token', data.accessToken)
         localStorage.setItem('refreshToken', data.refreshToken)
 
         // Store user data
@@ -272,10 +272,10 @@ export const useAuthStore = defineStore('auth', () => {
 
             const data = await response.json()
 
-            // Update tokens
-            token.value = data.token
+            // Update tokens - Backend sends accessToken not token
+            token.value = data.accessToken
             refreshToken.value = data.refreshToken
-            localStorage.setItem('token', data.token)
+            localStorage.setItem('token', data.accessToken)
             localStorage.setItem('refreshToken', data.refreshToken)
 
             // Update session expiry
