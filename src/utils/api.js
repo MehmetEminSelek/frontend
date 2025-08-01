@@ -465,7 +465,10 @@ const api = new ApiEndpoints(apiClient)
 
 // Legacy apiCall function for backward compatibility
 export function apiCall(url, options = {}) {
-    return apiClient.request(url, options)
+    return apiClient.request({
+        url,
+        ...options
+    })
 }
 
 // Export enhanced API client and endpoints
