@@ -419,13 +419,13 @@ const handleLogin = async () => {
       deviceInfo: getDeviceInfo()
     }
 
-    // Attempt login
-    const response = await authApi.login(sanitizedCredentials)
-    
+        // Attempt login using auth store
+    const response = await authStore.login(sanitizedCredentials)
+
     // Success
     resetLoginAttempts()
     
-    // Redirect to intended page or dashboard
+    // Redirect to intended page or dashboard  
     const redirectTo = route.query.redirect || '/dashboard'
     await router.push(redirectTo)
     
