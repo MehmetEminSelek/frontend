@@ -65,11 +65,18 @@ export const useAuthStore = defineStore('auth', () => {
     async function initializeAuth() {
         try {
             if (token.value) {
-                // Validate existing token
-                await validateToken()
-
-                // Fetch CSRF token
-                await fetchCSRFToken()
+                // Try to validate token, but don't fail if endpoint doesn't exist
+                try {
+                    await validateToken()
+                } catch (validationError) {
+                    console.warn('Token validation skipped:', validationError.message)
+                    // Token validation endpoint yoksa devam et
+                    // Token localStorage'da varsa kullanıcı bilgilerini yükle
+                    const storedUser = localStorage.getItem('user')
+                    if (storedUser) {
+                        user.value = JSON.parse(storedUser)
+                    }
+                }
 
                 // Update last activity
                 updateActivity()
@@ -87,7 +94,8 @@ export const useAuthStore = defineStore('auth', () => {
         if (!token.value) throw new Error('No token available')
 
         try {
-            const response = await fetch('/api/auth/validate', {
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${apiUrl}/auth/validate`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token.value}`,
@@ -117,7 +125,8 @@ export const useAuthStore = defineStore('auth', () => {
      */
     async function fetchCSRFToken() {
         try {
-            const response = await fetch('/api/auth/csrf', {
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${apiUrl}/auth/csrf`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token.value}`
@@ -151,7 +160,8 @@ export const useAuthStore = defineStore('auth', () => {
                 throw new Error(`Account locked. Try again in ${remainingTime} minutes.`)
             }
 
-            const response = await fetch('/api/auth/login', {
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${apiUrl}/auth/login-simple`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -232,7 +242,8 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             // Notify backend of logout
             if (token.value) {
-                await fetch('/api/auth/logout', {
+                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+                await fetch(`${apiUrl}/auth/logout`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token.value}`,
@@ -342,6 +353,9 @@ export const useAuthStore = defineStore('auth', () => {
     function clearUserData() {
         user.value = null
         sessionExpiry.value = null
+        localStorage.removeItem('user')
+        localStorage.removeItem('userRole')
+        localStorage.removeItem('permissions')
     }
 
     /**

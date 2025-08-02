@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
 
 export const useCacheStore = defineStore('cache', () => {
     // Cache data
@@ -92,23 +91,28 @@ export const useCacheStore = defineStore('cache', () => {
 
     // Fetch dropdown data
     async function fetchDropdownData(force = false) {
-        // Check cache first
-        if (!force && isCacheValid.value && hasCachedData.value) {
-            console.log('🎯 Using cached dropdown data')
-            return dropdownData.value
-        }
-
-        // Try localStorage if cache is empty
-        if (!force && !hasCachedData.value && loadFromStorage()) {
-            return dropdownData.value
-        }
-
+        // ŞİMDİLİK CACHE'İ DEVRE DIŞI BIRAKIYORUZ
         console.log('🔄 Fetching fresh dropdown data...')
         cacheStatus.value.isLoading = true
         cacheStatus.value.error = null
 
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`)
+            // Token'ı localStorage'dan al
+            const token = localStorage.getItem('token')
+
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/dropdown`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
+            const data = await response.json()
 
             if (data && typeof data === 'object') {
                 dropdownData.value = {

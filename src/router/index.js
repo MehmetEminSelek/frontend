@@ -33,6 +33,7 @@ const routes = [
   {
     path: '/main',
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -138,22 +139,22 @@ const router = createRouter({
 // Güçlendirilmiş navigation guard'lar
 router.beforeEach(async (to, from, next) => {
   console.log(`🧭 Navigation START: ${from.path} → ${to.path}`);
-  
+
   try {
-  const token = localStorage.getItem('token')
-  const userRole = localStorage.getItem('userRole')
+    const token = localStorage.getItem('token')
+    const userRole = localStorage.getItem('userRole')
 
-  // Login sayfasına erişim kontrolü
-  if (to.name === 'Login' && token) {
-    next('/main/form')
-    return
-  }
+    // Login sayfasına erişim kontrolü
+    if (to.name === 'Login' && token) {
+      next('/main/form')
+      return
+    }
 
-  // Auth gerektiren sayfalar için kontrol
-  if (to.meta.requiresAuth && !token) {
-    next('/login')
-    return
-  }
+    // Auth gerektiren sayfalar için kontrol
+    if (to.meta.requiresAuth && !token) {
+      next('/login')
+      return
+    }
 
     // Vnode hatası durumunda force refresh
     if (window.vueVnodeError) {
@@ -165,31 +166,31 @@ router.beforeEach(async (to, from, next) => {
     next()
   } catch (error) {
     console.error('🚨 Navigation Error:', error)
-    
+
     // Kritik hata durumunda ana sayfaya yönlendir
     if (error.message && error.message.includes('vnode')) {
       window.location.href = '/main/form'
       return
     }
 
-  next()
+    next()
   }
 })
 
 router.afterEach((to, from) => {
   console.log(`🧭 Navigation COMPLETE: ${from.path} → ${to.path}`);
-  
+
   // Navigation sonrası cleanup
   try {
     // DOM cleanup
     const staleElements = document.querySelectorAll('[data-vue-stale]')
     staleElements.forEach(el => el.remove())
-    
+
     // Memory cleanup
     if (window.gc && typeof window.gc === 'function') {
       setTimeout(() => window.gc(), 1000)
     }
-    
+
     // Vue DevTools için
     if (window.__VUE_DEVTOOLS_GLOBAL_HOOK__) {
       window.__VUE_DEVTOOLS_GLOBAL_HOOK__.emit('router:transition-end', {
@@ -205,11 +206,11 @@ router.afterEach((to, from) => {
 // Router error handler
 router.onError((error) => {
   console.error('🚨 Router Error:', error)
-  
+
   if (error.message && error.message.includes('vnode')) {
     console.warn('🔧 Router vnode hatası, flag set ediliyor...')
     window.vueVnodeError = true
-    
+
     // 2 saniye sonra flag'i temizle
     setTimeout(() => {
       window.vueVnodeError = false

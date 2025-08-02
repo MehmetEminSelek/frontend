@@ -326,6 +326,7 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiCall } from '../utils/api.js';
 import { useRealtimeStore } from '../stores/realtime.js';
+import { useAuthStore } from '../stores/auth.js';
 import NotificationList from '../components/NotificationList.vue';
 import ToastNotification from '../components/ToastNotification.vue';
 
@@ -333,14 +334,17 @@ const drawer = ref(true);
 const isMobile = ref(false);
 const route = useRoute();
 const router = useRouter();
-const user = JSON.parse(localStorage.getItem('user') || '{}');
-const isAdmin = computed(() => user && (user.role === 'admin' || user.role === 'superadmin'));
+const authStore = useAuthStore();
+const realtimeStore = useRealtimeStore();
+
+// Auth store'dan reactive user bilgisi
+const currentUser = computed(() => authStore.user);
+const isAdmin = computed(() => authStore.userRole === 'ADMIN' || authStore.userRole === 'GENEL_MUDUR');
+
 const loginDialog = ref(false);
 const loginForm = ref({ email: '', password: '' });
 const loginError = ref('');
 const loginLoading = ref(false);
-const currentUser = ref(JSON.parse(localStorage.getItem('user') || 'null'));
-const realtimeStore = useRealtimeStore();
 const toastNotification = ref(null);
 
 // Notification Drawer State
@@ -549,26 +553,15 @@ async function handleLogin() {
   loginError.value = '';
   loginLoading.value = true;
   try {
-    const payload = {
-      kullaniciAdi: loginForm.value.email,
-      sifre: loginForm.value.password
-    };
-    const data = await apiCall('/auth/login', {
-      method: 'POST',
-      data: payload
+    // Auth store'un login metodunu kullan
+    await authStore.login({
+      email: loginForm.value.email,
+      password: loginForm.value.password
     });
 
-    if (data && data.user && data.accessToken) {
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.accessToken);
-      const mappedRole = data.user.role === 'GENEL_MUDUR' ? 'admin' : 'user';
-      localStorage.setItem('userRole', mappedRole);
-      currentUser.value = data.user;
-      loginDialog.value = false;
-      window.location.reload();
-    } else {
-      loginError.value = 'Giriş başarısız.';
-    }
+    loginDialog.value = false;
+    // Auth store zaten state'i güncelleyecek, reload'a gerek yok
+    router.push('/main/form');
   } catch (e) {
     loginError.value = e.response?.data?.message || e.message || 'Giriş başarısız.';
   } finally {
@@ -759,13 +752,14 @@ function showStockNotifications(changes, stockData) {
 
 function handleLogout() {
   stopStockMonitoring();
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-  currentUser.value = null;
-  window.location.reload();
+  authStore.logout();
+  router.push('/login');
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Auth store'u başlat
+  await authStore.initializeAuth();
+  
   updateScreen();
   window.addEventListener('resize', updateScreen);
 
