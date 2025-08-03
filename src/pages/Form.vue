@@ -91,12 +91,18 @@
                 label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" variant="outlined"
-                color="#388E3C" />
+              <v-select v-model="selectedPersonel" :items="dropdowns.personeller" 
+                item-title="displayName" item-value="id" return-object label="Gönderen Personel"
+                @update:modelValue="onPersonelSelect" :rules="[rules.required]"
+                variant="outlined" color="#388E3C" placeholder="Personel seçiniz..."
+                prepend-inner-icon="mdi-account" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11" :rules="[rules.phone]"
-                placeholder="5xxxxxxxxx" variant="outlined" color="#388E3C" />
+              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" 
+                :rules="[rules.phone]" readonly 
+                variant="outlined" color="#388E3C" 
+                placeholder="Personel seçilince otomatik doldurulur..."
+                prepend-inner-icon="mdi-phone" />
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
@@ -487,8 +493,18 @@ const form = reactive({
 
 const rules = {
   required: value => !!value || 'Bu alan zorunludur.',
-  phone: value => /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
-  optionalPhone: value => !value || /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
+  phone: value => {
+    if (!value) return 'Telefon numarası zorunludur.';
+    const cleanPhone = value.replace(/\s/g, '');
+    const phoneRegex = /^(\+90|0)?[5][0-9]{9}$/;
+    return phoneRegex.test(cleanPhone) || 'Geçerli Türk telefon formatı: 5XXXXXXXXX, 05XXXXXXXXX veya +905XXXXXXXXX';
+  },
+  optionalPhone: value => {
+    if (!value) return true;
+    const cleanPhone = value.replace(/\s/g, '');
+    const phoneRegex = /^(\+90|0)?[5][0-9]{9}$/;
+    return phoneRegex.test(cleanPhone) || 'Geçerli Türk telefon formatı: 5XXXXXXXXX, 05XXXXXXXXX veya +905XXXXXXXXX';
+  },
 };
 
 // Dropdown data management - cache kaldırıldı, direct API kullanılıyor
@@ -501,7 +517,8 @@ const dropdowns = ref({
   odemeYontemleri: [],
   subeler: [],
   tepsiTavalar: [],
-  kutular: []
+  kutular: [],
+  personeller: []
 })
 
 const orderPackages = ref([]);
@@ -524,6 +541,7 @@ const newItemInPackage = ref({
 });
 
 const selectedCari = ref(null);
+const selectedPersonel = ref(null);
 const searchQuery = ref('');
 const cariAdresler = ref([]);
 const selectedAdres = ref(null);
@@ -855,6 +873,18 @@ function onAliciTelInput(val) {
   }
 }
 
+// Personel seçim fonksiyonu
+function onPersonelSelect(personel) {
+  if (personel) {
+    form.gonderenAdi = personel.ad;
+    form.gonderenTel = personel.telefon;
+    console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon);
+  } else {
+    form.gonderenAdi = '';
+    form.gonderenTel = '';
+  }
+}
+
 async function submitForm() {
   const { valid: formIsValid } = await formRef.value.validate();
   if (!formIsValid || orderPackages.value.length === 0) {
@@ -1044,6 +1074,7 @@ function resetForm() {
   form.aciklama = '';
   orderPackages.value = [];
   selectedCari.value = null;
+  selectedPersonel.value = null;
   searchQuery.value = '';
   cariAdresler.value = [];
   selectedAdres.value = null;
