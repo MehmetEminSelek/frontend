@@ -535,19 +535,19 @@ async function fetchCariler() {
     try {
         console.log('🔄 Cariler yükleniyor...');
         const response = await apiCall('/cari', { method: 'GET', useCache: true });
-        
+
         // Response format: { success: true, customers: [...], pagination: {...} }
         const data = response.customers || response.data || response;
-        
+
         if (!Array.isArray(data)) {
-            console.error('❌ API Response format error:', { 
-                responseType: typeof response, 
+            console.error('❌ API Response format error:', {
+                responseType: typeof response,
                 isArray: Array.isArray(response),
                 keys: Object.keys(response || {})
             });
             throw new Error('Invalid response format from API');
         }
-        
+
         console.log('✅ Cariler yüklendi:', data.length, 'adet');
         cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
         console.log('📊 İşlenmiş cariler:', cariler.value.length);

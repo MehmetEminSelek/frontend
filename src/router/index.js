@@ -24,7 +24,7 @@ import ReceteYonetimi from '../pages/ReceteYonetimi.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/main'
+    redirect: '/main/form'  // Direkt form sayfasına
   },
   {
     path: '/login',
@@ -38,7 +38,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: { name: 'Dashboard' }
+        redirect: { name: 'SiparisFormu' }  // Form sayfasına yönlendir
       },
       {
         path: 'dashboard', // /main/dashboard
@@ -61,35 +61,38 @@ const routes = [
       {
         path: 'orders', // /main/orders - Onay Bekleyenler
         name: 'OnayBekleyenler',
-        component: Orders
+        component: Orders,
+        meta: { requiresAuth: true, page: 'onay-bekleyenler' }
       },
       {
         path: 'allorders', // /main/allorders
         name: 'TumSiparisler',
-        component: AllOrders
+        component: AllOrders,
+        meta: { requiresAuth: true, page: 'tum-siparisler' }
       },
       { // <<< YENİ ROTA TANIMI >>>
         path: 'hazirlanacak', // /main/hazirlanacak
         name: 'Hazirlanacaklar',
-        component: Hazirlanacaklar // Yeni oluşturulan bileşeni bağla
+        component: Hazirlanacaklar, // Yeni oluşturulan bileşeni bağla
+        meta: { requiresAuth: true, page: 'hazirlanacak' }
       },
       {
         path: 'cari-yonetimi',
         name: 'CariYonetimi',
         component: CariYonetimi,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, page: 'cari-yonetimi' }
       },
       {
         path: 'urun-yonetimi',
         name: 'UrunYonetimi',
         component: UrunYonetimi,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, page: 'urun-yonetimi' }
       },
       {
         path: 'stok-yonetimi',
         name: 'StokYonetimi',
         component: StokYonetimi,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, page: 'stok-yonetimi' }
       },
       {
         path: 'personel-yonetimi', // URL değiştirildi
@@ -113,23 +116,23 @@ const routes = [
         path: 'satis-raporu',
         name: 'SatisRaporu',
         component: SatisRaporu,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, page: 'satis-raporu' }
       },
       {
         path: 'crm-raporlama',
         name: 'CrmRaporlama',
         component: CrmRaporlama,
-        meta: { requiresAuth: true, adminOnly: true }
+        meta: { requiresAuth: true, page: 'crm-raporlama' }
       },
       {
         path: 'kargo-operasyon',
         name: 'KargoOperasyon',
         component: KargoOperasyon,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, page: 'kargo-operasyon' }
       }
     ]
   },
-  { path: '/:pathMatch(.*)*', redirect: '/main' }
+  { path: '/:pathMatch(.*)*', redirect: '/main/form' }
 ]
 
 const router = createRouter({
@@ -150,11 +153,11 @@ router.beforeEach(async (to, from, next) => {
   console.log(`🧭 Navigation START: ${from.path} → ${to.path}`);
 
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token') // Backward compatibility
 
-    // Login sayfasına erişim kontrolü
+    // Login sayfasına erişim kontrolü  
     if (to.name === 'Login' && token) {
-      next('/main/form')
+      next('/main/form')  // Herkesi direkt form sayfasına
       return
     }
 
@@ -186,25 +189,25 @@ router.beforeEach(async (to, from, next) => {
             return
           }
 
-          // Role'e göre uygun sayfaya yönlendir
-          const fallbackRoutes = {
-            'GENEL_MUDUR': '/main/dashboard',
-            'SUBE_MUDURU': '/main/dashboard',
-            'URETIM_MUDURU': '/main/dashboard',
-            'SEVKIYAT_MUDURU': '/main/dashboard',
-            'PERSONEL': '/main/dashboard',
-            'VIEWER': '/main/dashboard'
+          // Herkesi form sayfasına yönlendir
+          const fallbackRoute = '/main/form'
+
+          // Eğer zaten fallback route'daysan infinite redirect'i önle
+          if (to.path.startsWith(fallbackRoute.split('?')[0])) {
+            console.warn('🛑 Already at fallback route, allowing access to prevent infinite redirect')
+            next() // Access'e izin ver
+            return
           }
 
-          const fallbackRoute = fallbackRoutes[authStore.userRole] || '/main/dashboard'
           console.log(`🔄 Redirecting to fallback route: ${fallbackRoute}`)
-          next(`${fallbackRoute}?error=access_denied&denied_page=${to.meta.page}`)
+          next(fallbackRoute)
           return
         }
       } catch (authError) {
         console.error('🚨 Auth Store Error:', authError)
-        // Auth hatası durumunda login'e yönlendir
-        next('/login')
+        // Auth hatası durumunda form sayfasına yönlendir (logout etme!)
+        console.warn('🔄 Auth error, redirecting to form page instead of logout')
+        next('/main/form')
         return
       }
     }

@@ -10,7 +10,7 @@ import { ref, computed } from 'vue'
 export const useAuthStore = defineStore('auth', () => {
     // ===== STATE =====
     const user = ref(null)
-    const token = ref(localStorage.getItem('token'))
+    const accessToken = ref(localStorage.getItem('accessToken'))
     const refreshToken = ref(localStorage.getItem('refreshToken'))
     const csrfToken = ref(null)
     const sessionExpiry = ref(null)
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     const securityLevel = ref('NORMAL') // NORMAL, HIGH, CRITICAL
 
     // ===== COMPUTED =====
-    const isAuthenticated = computed(() => !!token.value && !!user.value)
+    const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
 
     const userRole = computed(() => user.value?.rol || 'VIEWER')
 
@@ -54,21 +54,90 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     const canAccess = computed(() => (page) => {
-        const pagePermissions = {
-            'dashboard': ['READ'], // Herkes dashboard'a erişebilir
-            'siparis-formu': ['WRITE'],
-            'kullanici-yonetimi': ['USER_MANAGEMENT'],
-            'uretim-plani': ['PRODUCTION'],
-            'kargo-operasyon': ['SHIPPING'],
-            'stok-yonetimi': ['INVENTORY'],
-            'satis-raporu': ['REPORTS'],
-            'crm-raporlara': ['REPORTS'],
-            'fiyat-yonetimi': ['ADMIN'],
-            'recete-yonetimi': ['ADMIN']
+        if (!user.value) return false;
+
+        const userRole = user.value.rol;
+
+        // GENEL_MUDUR ve ADMIN her şeye erişebilir (ADMIN'de CRM hariç)
+        if (userRole === 'GENEL_MUDUR') return true;
+        if (userRole === 'ADMIN' && page !== 'crm-raporlama') return true;
+
+        // Rol bazlı sayfa erişim hakları
+        const roleAccess = {
+            'VIEWER': [
+                'siparis-formu',
+                'hazirlanacak'
+            ],
+            'PERSONEL': [
+                'siparis-formu',
+                'hazirlanacak',
+                'onay-bekleyenler',
+                'tum-siparisler'
+            ],
+            'SUBE_MUDURU': [
+                'siparis-formu',
+                'hazirlanacak',
+                'onay-bekleyenler',
+                'tum-siparisler',
+                'cari-yonetimi',
+                'satis-raporu',
+                'kargo-operasyon'
+            ],
+            'URETIM_MUDURU': [
+                'siparis-formu',
+                'hazirlanacak',
+                'onay-bekleyenler',
+                'tum-siparisler',
+                'uretim-plani',
+                'recete-yonetimi',
+                'stok-yonetimi',
+                'urun-yonetimi'
+            ],
+            'SEVKIYAT_MUDURU': [
+                'siparis-formu',
+                'hazirlanacak',
+                'onay-bekleyenler',
+                'tum-siparisler',
+                'kargo-operasyon',
+                'stok-yonetimi'
+            ],
+            'ADMIN': [
+                'siparis-formu',
+                'hazirlanacak',
+                'onay-bekleyenler',
+                'tum-siparisler',
+                'cari-yonetimi',
+                'urun-yonetimi',
+                'stok-yonetimi',
+                'satis-raporu',
+                'kargo-operasyon',
+                'uretim-plani',
+                'recete-yonetimi',
+                'kullanici-yonetimi',
+                'fiyat-yonetimi'
+                // CRM raporlama hariç (sadece GENEL_MUDUR)
+            ]
+        };
+
+        // Admin-only sayfalar (GENEL_MUDUR ve ADMIN)
+        const adminOnlyPages = [
+            'kullanici-yonetimi',
+            'fiyat-yonetimi'
+        ];
+
+        // CRM sadece GENEL_MUDUR
+        if (page === 'crm-raporlama') {
+            return userRole === 'GENEL_MUDUR';
         }
 
-        const requiredPerms = pagePermissions[page] || ['READ']
-        return requiredPerms.some(perm => hasPermission.value(perm))
+        // Diğer admin sayfalar için ADMIN da erişebilir
+        if (adminOnlyPages.includes(page)) {
+            return userRole === 'GENEL_MUDUR' || userRole === 'ADMIN';
+        }
+
+        // Rol bazlı erişim kontrolü
+        const allowedPages = roleAccess[userRole] || [];
+        return allowedPages.includes(page);
     })
 
     const isSessionExpired = computed(() => {
@@ -100,7 +169,7 @@ export const useAuthStore = defineStore('auth', () => {
      */
     async function initializeAuth() {
         try {
-            if (token.value) {
+            if (accessToken.value) {
                 // Try to validate token, but don't fail if endpoint doesn't exist
                 try {
                     await validateToken()
@@ -127,14 +196,14 @@ export const useAuthStore = defineStore('auth', () => {
      * Validate current token with backend
      */
     async function validateToken() {
-        if (!token.value) throw new Error('No token available')
+        if (!accessToken.value) throw new Error('No token available')
 
         try {
             const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
             const response = await fetch(`${apiUrl}/auth/validate`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token.value}`,
+                    'Authorization': `Bearer ${accessToken.value}`,
                     'Content-Type': 'application/json'
                 }
             })
@@ -165,7 +234,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await fetch(`${apiUrl}/auth/csrf`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token.value}`
+                    'Authorization': `Bearer ${accessToken.value}`
                 }
             })
 
@@ -233,14 +302,15 @@ export const useAuthStore = defineStore('auth', () => {
      * Handle successful login
      */
     function handleLoginSuccess(data) {
-        // Store tokens - Backend sends accessToken not token
-        token.value = data.accessToken
+        // Store tokens - Backend sends accessToken
+        accessToken.value = data.accessToken
         refreshToken.value = data.refreshToken
-        localStorage.setItem('token', data.accessToken)
+        localStorage.setItem('accessToken', data.accessToken)
         localStorage.setItem('refreshToken', data.refreshToken)
 
         // Store user data
         user.value = data.user
+        localStorage.setItem('user', JSON.stringify(data.user))
         sessionExpiry.value = data.sessionExpiry
         csrfToken.value = data.csrfToken
 
@@ -278,12 +348,12 @@ export const useAuthStore = defineStore('auth', () => {
     async function logout() {
         try {
             // Notify backend of logout
-            if (token.value) {
+            if (accessToken.value) {
                 const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
                 await fetch(`${apiUrl}/auth/logout`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token.value}`,
+                        'Authorization': `Bearer ${accessToken.value}`,
                         'X-CSRF-Token': csrfToken.value
                     }
                 })
@@ -320,10 +390,10 @@ export const useAuthStore = defineStore('auth', () => {
 
             const data = await response.json()
 
-            // Update tokens - Backend sends accessToken not token
-            token.value = data.accessToken
+            // Update tokens - Backend sends accessToken
+            accessToken.value = data.accessToken
             refreshToken.value = data.refreshToken
-            localStorage.setItem('token', data.accessToken)
+            localStorage.setItem('accessToken', data.accessToken)
             localStorage.setItem('refreshToken', data.refreshToken)
 
             // Update session expiry
@@ -357,11 +427,11 @@ export const useAuthStore = defineStore('auth', () => {
      * Handle session expiry
      */
     function handleSessionExpiry() {
-        console.warn('Session expired')
+        console.warn('Session expired - clearing all auth data')
         clearAuth()
 
-        // Redirect to login or show modal
-        window.location.href = '/login'
+        // Force page reload to clear any cached state
+        window.location.href = '/login?reason=session_expired'
     }
 
     /**
@@ -377,11 +447,13 @@ export const useAuthStore = defineStore('auth', () => {
      * Clear stored tokens
      */
     function clearTokens() {
-        token.value = null
+        accessToken.value = null
         refreshToken.value = null
         csrfToken.value = null
-        localStorage.removeItem('token')
+        localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+        // Backward compatibility - eski token key'ini de temizle
+        localStorage.removeItem('token')
     }
 
     /**
@@ -393,6 +465,7 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('user')
         localStorage.removeItem('userRole')
         localStorage.removeItem('permissions')
+        localStorage.removeItem('sessionExpiry')
     }
 
     /**
@@ -433,8 +506,8 @@ export const useAuthStore = defineStore('auth', () => {
     function getSecurityHeaders() {
         const headers = {}
 
-        if (token.value) {
-            headers['Authorization'] = `Bearer ${token.value}`
+        if (accessToken.value) {
+            headers['Authorization'] = `Bearer ${accessToken.value}`
         }
 
         if (csrfToken.value) {
@@ -503,7 +576,8 @@ export const useAuthStore = defineStore('auth', () => {
     return {
         // State
         user,
-        token,
+        accessToken,
+        token: accessToken, // Backward compatibility
         csrfToken,
         loading,
         loginAttempts,

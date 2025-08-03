@@ -7,13 +7,14 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import {
-    securityErrorHandler,
-    InputSanitizer,
-    PermissionUtils,
-    SECURITY_LEVELS
-} from '@/utils/security'
 import api from '@/utils/api'
+
+// Basit security levels
+const SECURITY_LEVELS = {
+    NORMAL: 'NORMAL',
+    HIGH: 'HIGH',
+    CRITICAL: 'CRITICAL'
+}
 
 /**
  * Enhanced API Composable with Security Features
@@ -59,7 +60,7 @@ export function useApi() {
             throw authError
         }
 
-        if (requirePermission && !PermissionUtils.checkPermission(requirePermission)) {
+        if (requirePermission && !authStore.hasPermission(requirePermission)) {
             const permError = new Error(`Permission required: ${requirePermission}`)
             permError.type = 'PERMISSION_DENIED'
             throw permError
@@ -90,16 +91,8 @@ export function useApi() {
 
             return response
         } catch (err) {
-            // Error handling
-            if (!skipErrorHandling) {
-                error.value = securityErrorHandler.handleApiError(err, {
-                    requestId: requestId.value,
-                    securityLevel,
-                    requirePermission
-                })
-            } else {
-                error.value = err
-            }
+            // Basit error handling
+            error.value = err
 
             if (onError) {
                 await onError(error.value)

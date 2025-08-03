@@ -29,7 +29,7 @@
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
-            <CacheStatus />
+            <!-- Cache Status kaldırıldı -->
             <v-btn size="x-large" color="white" variant="elevated" @click="() => { }" class="font-weight-bold"
               style="color: #2E7D32 !important; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);">
               <v-icon left size="20">mdi-plus-circle</v-icon>
@@ -100,20 +100,10 @@
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
-                <v-autocomplete 
-                  v-model="selectedCari" 
-                  v-model:search="searchQuery"
-                  :items="filteredCariler"
-                  item-title="displayName"
-                  item-value="id"
-                  return-object
-                  label="Alıcı Adı" 
-                  clearable
-                  no-data-text="Müşteri bulunamadı" 
-                  placeholder="Müşteri adı arayın..."
-                  @update:model-value="onCariSelected" 
-                  @update:search="onSearchInput"
-                  variant="outlined" 
+                <v-autocomplete v-model="selectedCari" v-model:search="searchQuery" :items="filteredCariler"
+                  item-title="displayName" item-value="id" return-object label="Alıcı Adı" clearable
+                  no-data-text="Müşteri bulunamadı" placeholder="Müşteri adı arayın..."
+                  @update:model-value="onCariSelected" @update:search="onSearchInput" variant="outlined"
                   color="#388E3C">
                   <template v-slot:item="{ props, item }">
                     <v-list-item v-bind="props" :title="item.raw.displayName">
@@ -469,8 +459,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
-import { useCacheStoreWithInit } from '../stores/cache.js';
-import CacheStatus from '../components/CacheStatus.vue';
+import { useAuthStore } from '../stores/auth.js';
+// Cache sistemi kaldırıldı - artık direct API çağrıları kullanılıyor
+// import CacheStatus from '../components/CacheStatus.vue';
 // Custom Vuetify theme devre dışı (test için)
 // import { createCustomVuetify } from '../plugins/vuetify';
 // const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
@@ -500,10 +491,7 @@ const rules = {
   optionalPhone: value => !value || /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
 };
 
-// Cache store
-const cacheStore = useCacheStoreWithInit();
-
-// Reactive reference to cached data
+// Dropdown data management - cache kaldırıldı, direct API kullanılıyor
 const dropdowns = ref({
   cariler: [],
   urunler: [],
@@ -578,22 +566,31 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbar.value = true;
 }
 
-onMounted(async () => {
+// Dropdown refresh function - cache sisteminin yerine
+async function refreshDropdowns() {
   try {
-    const token = localStorage.getItem('token')
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    const authStore = useAuthStore();
+
     const response = await fetch(`${apiUrl}/dropdown`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${authStore.accessToken}`,
         'Content-Type': 'application/json'
       }
-    })
-    if (!response.ok) throw new Error('Dropdown fetch failed')
-    const data = await response.json()
-    Object.assign(dropdowns.value, data)
+    });
+
+    if (!response.ok) throw new Error('Dropdown fetch failed');
+
+    const result = await response.json();
+    Object.assign(dropdowns.value, result.data);
+    console.log('✅ Dropdown\'lar yenilendi');
   } catch (err) {
-    console.error('❌ Dropdown loading error:', err)
+    console.error('❌ Dropdown loading error:', err);
   }
+}
+
+onMounted(async () => {
+  await refreshDropdowns();
 })
 
 const selectedTeslimatTuru = computed(() => dropdowns.value.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
@@ -610,14 +607,14 @@ const adresEnabled = computed(() => {
 // Cari listesi için computed property
 const filteredCariler = computed(() => {
   if (!dropdowns.value.cariler || dropdowns.value.cariler.length === 0) return [];
-  
+
   // Her cari için displayName ekle
   return dropdowns.value.cariler.map(cari => ({
     ...cari,
     displayName: `${cari.ad} ${cari.soyad || ''}`.trim()
   })).filter(cari => {
     if (!searchQuery.value) return true;
-    
+
     const query = searchQuery.value.toLowerCase();
     const searchFields = [
       cari.ad || '',
@@ -626,8 +623,8 @@ const filteredCariler = computed(() => {
       cari.telefon || '',
       cari.musteriKodu || ''
     ];
-    
-    return searchFields.some(field => 
+
+    return searchFields.some(field =>
       field.toString().toLowerCase().includes(query)
     );
   });
@@ -738,7 +735,7 @@ function onSearchInput(value) {
 
 function onCariSelected(cari) {
   console.log('🎯 Cari selected:', cari);
-  
+
   if (cari && typeof cari === 'object') {
     // return-object kullandığımız için cari artık tam bir object
     form.aliciAdi = cari.displayName || `${cari.ad} ${cari.soyad || ''}`.trim();
@@ -790,7 +787,7 @@ async function onCariBlur() {
   if (!girilenAd || selectedCari.value) return; // Zaten seçili bir cari varsa işlem yapma
 
   // Basit arama - mevcut carilerde var mı kontrol et
-  const mevcutCari = filteredCariler.value.find(c => 
+  const mevcutCari = filteredCariler.value.find(c =>
     c.displayName.toLowerCase() === girilenAd.toLowerCase() ||
     c.ad.toLowerCase() === girilenAd.toLowerCase()
   );
@@ -798,7 +795,16 @@ async function onCariBlur() {
   if (!mevcutCari) {
     // Yeni müşteri oluştur
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`, { ad: girilenAd });
+      const authStore = useAuthStore();
+      const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`,
+        { cariAdi: girilenAd, telefon: '0000000000', musteriKodu: `AUTO-${Date.now()}` },
+        {
+          headers: {
+            'Authorization': `Bearer ${authStore.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       if (data && data.id) {
         // Tam ad bilgisini oluştur
         const newCariData = {
@@ -806,10 +812,9 @@ async function onCariBlur() {
           displayName: `${data.ad} ${data.soyad || ''}`.trim(),
           adresler: data.adresler || []
         };
-        
-        // Yeni cariyi cache'e ekle
-        // Trigger cache refresh to include new cari
-        cacheStore.refreshCache();
+
+        // Dropdown'ları yenile (yeni cari için)
+        await refreshDropdowns();
 
         // Yeni cariyi seç
         selectedCari.value = newCariData;
@@ -874,19 +879,25 @@ async function submitForm() {
     gonderenTipiId: form.gonderenTipiId,
     gonderenAdi: form.gonderenAdi,
     gonderenTel: form.gonderenTel,
-    aliciAdi: form.aliciAdi,
+    aliciAdi: form.aliciAdi || '',
     aliciTel: form.aliciTel,
     adres: form.adres,
     aciklama: form.aciklama,
-    siparisler: siparisPayload,
-    gorunecekAd: aliciGondericiAdi,
+    kalemler: siparisPayload,  // Backend 'kalemler' bekliyor
+    gorunecekAd: aliciGondericiAdi || form.gonderenAdi,
     subeNeredenId: form.subeNeredenId,
     subeNereyeId: form.subeNereyeId
   };
   console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
   try {
     console.log('🚀 Sipariş API çağrısı başlıyor...');
-    const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload);
+    const authStore = useAuthStore();
+    const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
     console.log('✅ Sipariş kaydedildi:', data);
     successDialog.value = true;
   } catch (err) {
@@ -937,9 +948,16 @@ async function saveAdres() {
   adresLoading.value = true;
 
   try {
+    const authStore = useAuthStore();
     const response = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/cari/${selectedCari.value}/adres`,
-      newAdres
+      `${import.meta.env.VITE_API_BASE_URL}/cari/${selectedCari.value?.id || selectedCari.value}/adres`,
+      newAdres,
+      {
+        headers: {
+          'Authorization': `Bearer ${authStore.accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
     const yeniAdres = response.data;
