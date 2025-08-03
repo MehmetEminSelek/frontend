@@ -504,7 +504,17 @@ const rules = {
 const cacheStore = useCacheStoreWithInit();
 
 // Reactive reference to cached data
-const dropdowns = computed(() => cacheStore.dropdownData);
+const dropdowns = ref({
+  cariler: [],
+  urunler: [],
+  kategoriler: [],
+  teslimatTurleri: [],
+  aliciTipleri: [],
+  odemeYontemleri: [],
+  subeler: [],
+  tepsiTavalar: [],
+  kutular: []
+})
 
 const orderPackages = ref([]);
 const isPackageDialogOpen = ref(false);
@@ -570,39 +580,21 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 
 onMounted(async () => {
   try {
-    // Check if user is authenticated
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('⚠️ No auth token found, trying test endpoint');
-      // Try test endpoint for unauthenticated users
-      await cacheStore.fetchDropdownData({ useTestEndpoint: true });
-      return;
-    }
-    
-    // Fetch dropdown data with smart caching
-    await cacheStore.fetchDropdownData();
-    
-    console.log('✅ Dropdown data ready:', {
-      cariler: cacheStore.getCariler?.length || 0,
-      urunler: cacheStore.getUrunler?.length || 0,
-      cached: cacheStore.isCacheValid,
-      health: cacheStore.cacheHealth
-    });
+    const token = localStorage.getItem('token')
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiUrl}/dropdown`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    if (!response.ok) throw new Error('Dropdown fetch failed')
+    const data = await response.json()
+    Object.assign(dropdowns.value, data)
   } catch (err) {
-    console.error('❌ Dropdown loading error:', err);
-    
-    // Show user-friendly error message
-    showSnackbar('Veri yüklenirken hata oluştu. Sayfa yenilenecek.', 'error');
-    
-    // Try fallback after delay
-    setTimeout(() => {
-      cacheStore.fetchDropdownData({ useTestEndpoint: true, force: true })
-        .catch(() => {
-          showSnackbar('Veri yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
-        });
-    }, 2000);
+    console.error('❌ Dropdown loading error:', err)
   }
-});
+})
 
 const selectedTeslimatTuru = computed(() => dropdowns.value.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
 const showSube = computed(() => selectedTeslimatTuru.value?.ad === 'Şubeden Teslim');
