@@ -113,16 +113,16 @@
                     Müşteri Listesi ({{ filteredCariler.length }} müşteri)
                 </span>
             </v-card-title>
-                    <div v-if="excelResults.length > 0" class="my-2">
-                        <v-alert type="info" border="left" prominent>
-                            <div v-for="(r, i) in excelResults" :key="i">
-                                <span v-if="r.status === 'ok'" class="text-success">✔</span>
-                                <span v-else-if="r.status === 'skipped'" class="text-warning">⏭</span>
-                                <span v-else class="text-error">✖</span>
-                                {{ r.musteriKodu }} - {{ r.ad }} <span v-if="r.message">({{ r.message }})</span>
-                            </div>
-                        </v-alert>
+            <div v-if="excelResults.length > 0" class="my-2">
+                <v-alert type="info" border="left" prominent>
+                    <div v-for="(r, i) in excelResults" :key="i">
+                        <span v-if="r.status === 'ok'" class="text-success">✔</span>
+                        <span v-else-if="r.status === 'skipped'" class="text-warning">⏭</span>
+                        <span v-else class="text-error">✖</span>
+                        {{ r.musteriKodu }} - {{ r.ad }} <span v-if="r.message">({{ r.message }})</span>
                     </div>
+                </v-alert>
+            </div>
             <v-data-table :headers="headers" :items="filteredCariler" item-key="id" class="elevation-0 modern-table">
                 <!-- Müşteri Adı -->
                 <template v-slot:item.ad="{ item }">
@@ -208,8 +208,8 @@
                             </template>
                         </v-tooltip>
                     </div>
-                                 </template>
-             </v-data-table>
+                </template>
+            </v-data-table>
         </v-card>
 
         <!-- Detay Dialog (Mobil) -->
@@ -418,11 +418,6 @@
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="2000"
             :location="isMobile ? 'top' : 'bottom'">{{
                 snackbar.text }}</v-snackbar>
-
-        <!-- Epic Excel Loading Screen -->
-        <ExcelLoadingScreen :show="loadingExcel" title="Cariler Yükleniyor"
-            subtitle="Excel dosyasından müşteri bilgileri okunuyor ve sisteme ekleniyor..."
-            :stats="excelLoadingStats" />
     </v-container>
 </template>
 
@@ -432,7 +427,6 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatDate } from '../utils/date';
-import ExcelLoadingScreen from '../components/ExcelLoadingScreen.vue';
 import { apiCall } from '@/utils/api';
 import axios from 'axios';
 
@@ -489,7 +483,7 @@ const vadeHeaders = [
 
 const filteredCariler = computed(() => {
     if (!search.value) return cariler.value;
-    return cariler.value.filter(c => 
+    return cariler.value.filter(c =>
         c.ad.toLowerCase().includes(search.value.toLowerCase()) ||
         c.musteriKodu.toLowerCase().includes(search.value.toLowerCase()) ||
         (c.telefon && c.telefon.includes(search.value)) ||
@@ -540,9 +534,22 @@ onBeforeUnmount(() => {
 async function fetchCariler() {
     try {
         console.log('🔄 Cariler yükleniyor...');
-        const data = await apiCall('/cari', { method: 'GET', useCache: true });
+        const response = await apiCall('/cari', { method: 'GET', useCache: true });
+        
+        // Response format: { success: true, customers: [...], pagination: {...} }
+        const data = response.customers || response.data || response;
+        
+        if (!Array.isArray(data)) {
+            console.error('❌ API Response format error:', { 
+                responseType: typeof response, 
+                isArray: Array.isArray(response),
+                keys: Object.keys(response || {})
+            });
+            throw new Error('Invalid response format from API');
+        }
+        
         console.log('✅ Cariler yüklendi:', data.length, 'adet');
-    cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
+        cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
         console.log('📊 İşlenmiş cariler:', cariler.value.length);
     } catch (error) {
         console.error('❌ Cariler çekilemedi:', error);
@@ -569,7 +576,7 @@ function vadeRengi(vadeTarihi) {
     const vadeDate = new Date(vadeTarihi);
     const today = new Date();
     const diffDays = Math.ceil((vadeDate - today) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return 'error'; // Gecikmiş
     if (diffDays <= 7) return 'warning'; // 7 gün içinde
     return 'success'; // Normal
@@ -686,9 +693,9 @@ async function fetchHareketler(cariId) {
     }
 }
 
-function openDialogOdeme(item = null) { 
+function openDialogOdeme(item = null) {
     if (item) detayCari.value = item;
-    dialogOdeme.value = true; 
+    dialogOdeme.value = true;
 }
 function closeDialogOdeme() {
     dialogOdeme.value = false;
@@ -785,7 +792,7 @@ function openVadeTakipDialog() {
         kalanBorc: cari.bakiye,
         vadeTarihi: cari.enYakinVade
     }));
-    
+
     vadeList.value = vadesiGecenler;
     selectedVade.value = [];
     dialogVadeTakip.value = true;
