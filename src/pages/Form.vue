@@ -91,18 +91,18 @@
                 label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-select v-model="selectedPersonel" :items="dropdowns.personeller" 
-                item-title="displayName" item-value="id" return-object label="Gönderen Personel"
-                @update:modelValue="onPersonelSelect" :rules="[rules.required]"
-                variant="outlined" color="#388E3C" placeholder="Personel seçiniz..."
+              <v-select v-model="selectedPersonel" :items="dropdowns.personeller" item-title="displayName"
+                item-value="id" return-object label="Gönderen Personel" @update:modelValue="onPersonelSelect"
+                :rules="[rules.required]" variant="outlined" color="#388E3C" placeholder="Personel seçiniz..."
                 prepend-inner-icon="mdi-account" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" 
-                :rules="[rules.phone]" readonly 
+              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" :rules="[rules.phone]" 
+                :readonly="form.gonderenTel && selectedPersonel" 
                 variant="outlined" color="#388E3C" 
-                placeholder="Personel seçilince otomatik doldurulur..."
-                prepend-inner-icon="mdi-phone" />
+                :placeholder="selectedPersonel && !form.gonderenTel ? 'Telefon numarası yok, manuel girin' : 'Personel seçilince otomatik doldurulur'"
+                prepend-inner-icon="mdi-phone"
+                @input="onGonderenTelInput" />
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
@@ -285,7 +285,7 @@
                   </template>
                   <template v-slot:append>
                     <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim
-                    }}</span>
+                      }}</span>
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
@@ -877,11 +877,26 @@ function onAliciTelInput(val) {
 function onPersonelSelect(personel) {
   if (personel) {
     form.gonderenAdi = personel.ad;
-    form.gonderenTel = personel.telefon;
-    console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon);
+    form.gonderenTel = personel.telefon || '';
+    console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon || 'telefon yok');
+    
+    if (!personel.telefon) {
+      showSnackbar('Bu personel için telefon numarası kayıtlı değil. Lütfen manuel girin.', 'warning');
+    }
   } else {
     form.gonderenAdi = '';
     form.gonderenTel = '';
+  }
+}
+
+// Gönderen telefon input fonksiyonu
+function onGonderenTelInput(val) {
+  // Türk telefon formatına uygun input temizleme
+  const cleanValue = val.replace(/[^\d+]/g, '');
+  
+  // Maksimum 13 karakter (+905XXXXXXXXX)
+  if (cleanValue.length <= 13) {
+    form.gonderenTel = cleanValue;
   }
 }
 
