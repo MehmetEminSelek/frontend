@@ -469,7 +469,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
-import { useCacheStore } from '../stores/cache.js';
+import { useCacheStoreWithInit } from '../stores/cache.js';
 import CacheStatus from '../components/CacheStatus.vue';
 // Custom Vuetify theme devre dışı (test için)
 // import { createCustomVuetify } from '../plugins/vuetify';
@@ -501,7 +501,7 @@ const rules = {
 };
 
 // Cache store
-const cacheStore = useCacheStore();
+const cacheStore = useCacheStoreWithInit();
 
 // Reactive reference to cached data
 const dropdowns = computed(() => cacheStore.dropdownData);
@@ -570,19 +570,37 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 
 onMounted(async () => {
   try {
-    // Initialize cache system
-    cacheStore.cleanup();
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('⚠️ No auth token found, trying test endpoint');
+      // Try test endpoint for unauthenticated users
+      await cacheStore.fetchDropdownData({ useTestEndpoint: true });
+      return;
+    }
     
-    // Fetch dropdown data (uses cache if available)
+    // Fetch dropdown data with smart caching
     await cacheStore.fetchDropdownData();
     
     console.log('✅ Dropdown data ready:', {
-      cariler: dropdowns.value.cariler?.length || 0,
-      urunler: dropdowns.value.urunler?.length || 0,
-      cached: cacheStore.isCacheValid
+      cariler: cacheStore.getCariler?.length || 0,
+      urunler: cacheStore.getUrunler?.length || 0,
+      cached: cacheStore.isCacheValid,
+      health: cacheStore.cacheHealth
     });
   } catch (err) {
     console.error('❌ Dropdown loading error:', err);
+    
+    // Show user-friendly error message
+    showSnackbar('Veri yüklenirken hata oluştu. Sayfa yenilenecek.', 'error');
+    
+    // Try fallback after delay
+    setTimeout(() => {
+      cacheStore.fetchDropdownData({ useTestEndpoint: true, force: true })
+        .catch(() => {
+          showSnackbar('Veri yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
+        });
+    }, 2000);
   }
 });
 
@@ -798,7 +816,8 @@ async function onCariBlur() {
         };
         
         // Yeni cariyi cache'e ekle
-        cacheStore.addCariToCache(newCariData);
+        // Trigger cache refresh to include new cari
+        cacheStore.refreshCache();
 
         // Yeni cariyi seç
         selectedCari.value = newCariData;

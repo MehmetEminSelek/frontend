@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth.js'
 
 // PAGE COMPONENTS
 import Login from '../pages/Login.vue'
@@ -37,17 +38,25 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: { name: 'SiparisFormu' }
+        redirect: { name: 'Dashboard' }
+      },
+      {
+        path: 'dashboard', // /main/dashboard
+        name: 'Dashboard',
+        component: Form, // Geçici olarak Form component'ini kullan
+        meta: { requiresAuth: true, page: 'dashboard' }
       },
       {
         path: 'form', // /main/form
         name: 'SiparisFormu',
-        component: Form
+        component: Form,
+        meta: { requiresAuth: true, page: 'siparis-formu' }
       },
       {
         path: 'FiyatYonetimi',
         name: 'FiyatYönetimi',
-        component: FiyatYönetimi // /main/form
+        component: FiyatYönetimi,
+        meta: { requiresAuth: true, page: 'fiyat-yonetimi' }
       },
       {
         path: 'orders', // /main/orders - Onay Bekleyenler
@@ -86,19 +95,19 @@ const routes = [
         path: 'personel-yonetimi', // URL değiştirildi
         name: 'PersonelYonetimi', // İsim değiştirildi
         component: PersonelYonetimi,
-        meta: { requiresAuth: true, adminOnly: true }
+        meta: { requiresAuth: true, page: 'kullanici-yonetimi' }
       },
       {
         path: 'recete-yonetimi',
         name: 'ReceteYonetimi',
         component: ReceteYonetimi,
-        meta: { requiresAuth: true, adminOnly: true }
+        meta: { requiresAuth: true, page: 'recete-yonetimi' }
       },
       {
         path: 'uretim-plani',
         name: 'UretimPlani',
         component: UretimPlani,
-        meta: { requiresAuth: true, adminOnly: true }
+        meta: { requiresAuth: true, page: 'uretim-plani' }
       },
       {
         path: 'satis-raporu',
@@ -142,7 +151,6 @@ router.beforeEach(async (to, from, next) => {
 
   try {
     const token = localStorage.getItem('token')
-    const userRole = localStorage.getItem('userRole')
 
     // Login sayfasına erişim kontrolü
     if (to.name === 'Login' && token) {
@@ -152,8 +160,53 @@ router.beforeEach(async (to, from, next) => {
 
     // Auth gerektiren sayfalar için kontrol
     if (to.meta.requiresAuth && !token) {
+      console.warn('🔒 Authentication required, redirecting to login')
       next('/login')
       return
+    }
+
+    // Permission kontrolü (token varsa)
+    if (token && to.meta.page) {
+      try {
+        const authStore = useAuthStore()
+
+        // Store'u initialize et
+        if (!authStore.isAuthenticated) {
+          await authStore.initializeAuth()
+        }
+
+        // Permission kontrolü
+        if (!authStore.canAccess(to.meta.page)) {
+          console.warn(`🚫 Access denied to ${to.meta.page} for role: ${authStore.userRole}`)
+
+          // Eğer zaten access denied page'e gidiyorsa infinite loop'u önle
+          if (to.path.includes('error=access_denied')) {
+            console.warn('🔄 Preventing infinite redirect loop')
+            next(false) // Cancel navigation
+            return
+          }
+
+          // Role'e göre uygun sayfaya yönlendir
+          const fallbackRoutes = {
+            'GENEL_MUDUR': '/main/dashboard',
+            'SUBE_MUDURU': '/main/dashboard',
+            'URETIM_MUDURU': '/main/dashboard',
+            'SEVKIYAT_MUDURU': '/main/dashboard',
+            'PERSONEL': '/main/dashboard',
+            'VIEWER': '/main/dashboard'
+          }
+
+          const fallbackRoute = fallbackRoutes[authStore.userRole] || '/main/dashboard'
+          console.log(`🔄 Redirecting to fallback route: ${fallbackRoute}`)
+          next(`${fallbackRoute}?error=access_denied&denied_page=${to.meta.page}`)
+          return
+        }
+      } catch (authError) {
+        console.error('🚨 Auth Store Error:', authError)
+        // Auth hatası durumunda login'e yönlendir
+        next('/login')
+        return
+      }
     }
 
     // Vnode hatası durumunda force refresh

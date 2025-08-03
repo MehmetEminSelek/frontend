@@ -1,223 +1,415 @@
+import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { useAuthStore } from './auth.js'
 
+/**
+ * Intelligent Cache Store
+ * Handles all dropdown data with smart caching, error recovery, and optimization
+ */
 export const useCacheStore = defineStore('cache', () => {
-    // Cache data
+    // ===== STATE =====
     const dropdownData = ref({
         cariler: [],
         urunler: [],
-        kategoriler: [],
         teslimatTurleri: [],
+        odemeSekilleri: [],
         aliciTipleri: [],
-        odemeYontemleri: [],
         subeler: [],
-        tepsiTavalar: [],
-        kutular: []
+        kategoriler: [],
+        personeller: []
     })
 
-    // Cache metadata
-    const cacheTimestamps = ref({})
     const cacheStatus = ref({
         isLoading: false,
-        lastUpdate: null,
-        error: null
+        isInitialized: false,
+        lastFetch: null,
+        error: null,
+        retryCount: 0,
+        version: 1
     })
 
-    // Cache settings
-    const CACHE_TTL = 5 * 60 * 1000 // 5 dakika (ms)
-    const STORAGE_KEY = 'og_dropdown_cache'
-    const STORAGE_TIMESTAMP_KEY = 'og_dropdown_cache_ts'
+    const cacheConfig = ref({
+        ttl: 15 * 60 * 1000, // 15 minutes
+        maxRetries: 3,
+        retryDelay: 1000,
+        enableLocalStorage: true,
+        enableOptimisticUpdates: true
+    })
 
-    // Cache validation
+    // ===== COMPUTED =====
     const isCacheValid = computed(() => {
-        const timestamp = cacheTimestamps.value.dropdown
-        if (!timestamp) return false
-        return (Date.now() - timestamp) < CACHE_TTL
+        if (!cacheStatus.value.lastFetch) return false
+        const now = Date.now()
+        const lastFetch = new Date(cacheStatus.value.lastFetch).getTime()
+        return (now - lastFetch) < cacheConfig.value.ttl
     })
 
-    const hasCachedData = computed(() => {
-        return dropdownData.value.cariler?.length > 0
+    const hasData = computed(() => {
+        return Object.values(dropdownData.value).some(arr => Array.isArray(arr) && arr.length > 0)
     })
 
-    // Load from localStorage
-    function loadFromStorage() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY)
-            const storedTimestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY)
-
-            if (stored && storedTimestamp) {
-                const parsedData = JSON.parse(stored)
-                const timestamp = parseInt(storedTimestamp)
-
-                // Check if still valid
-                if ((Date.now() - timestamp) < CACHE_TTL) {
-                    dropdownData.value = parsedData
-                    cacheTimestamps.value.dropdown = timestamp
-                    console.log('✅ Cache loaded from localStorage:', {
-                        cariler: parsedData.cariler?.length || 0,
-                        age: Math.round((Date.now() - timestamp) / 1000) + 's'
-                    })
-                    return true
-                } else {
-                    console.log('⏰ Cache expired, will fetch fresh data')
-                    clearStorage()
-                }
-            }
-        } catch (error) {
-            console.error('❌ Error loading cache from storage:', error)
-            clearStorage()
+    const cacheHealth = computed(() => {
+        const health = {
+            status: 'healthy',
+            dataQuality: 0,
+            issues: []
         }
-        return false
-    }
 
-    // Save to localStorage
-    function saveToStorage() {
+        // Check data quality
+        const dataPoints = Object.entries(dropdownData.value)
+        const validDataPoints = dataPoints.filter(([key, data]) => Array.isArray(data) && data.length > 0)
+        health.dataQuality = Math.round((validDataPoints.length / dataPoints.length) * 100)
+
+        // Check for issues
+        if (!cacheStatus.value.isInitialized) {
+            health.issues.push('Cache not initialized')
+            health.status = 'warning'
+        }
+
+        if (cacheStatus.value.error) {
+            health.issues.push('Last fetch failed')
+            health.status = 'error'
+        }
+
+        if (!isCacheValid.value && hasData.value) {
+            health.issues.push('Data is stale')
+            health.status = 'stale'
+        }
+
+        return health
+    })
+
+    // ===== STORAGE UTILITIES =====
+    const STORAGE_KEY = 'og_dropdown_cache'
+    const STORAGE_META_KEY = 'og_dropdown_cache_meta'
+
+    function saveToLocalStorage() {
+        if (!cacheConfig.value.enableLocalStorage) return
+
         try {
-            const timestamp = Date.now()
             localStorage.setItem(STORAGE_KEY, JSON.stringify(dropdownData.value))
-            localStorage.setItem(STORAGE_TIMESTAMP_KEY, timestamp.toString())
-            cacheTimestamps.value.dropdown = timestamp
+            localStorage.setItem(STORAGE_META_KEY, JSON.stringify({
+                lastFetch: cacheStatus.value.lastFetch,
+                version: cacheStatus.value.version,
+                timestamp: Date.now()
+            }))
+            console.log('💾 Cache saved to localStorage')
         } catch (error) {
-            console.error('❌ Error saving cache to storage:', error)
+            console.warn('Failed to save cache to localStorage:', error)
         }
     }
 
-    // Clear storage
-    function clearStorage() {
-        localStorage.removeItem(STORAGE_KEY)
-        localStorage.removeItem(STORAGE_TIMESTAMP_KEY)
-        delete cacheTimestamps.value.dropdown
-    }
-
-    // Fetch dropdown data
-    async function fetchDropdownData(force = false) {
-        // ŞİMDİLİK CACHE'İ DEVRE DIŞI BIRAKIYORUZ
-        console.log('🔄 Fetching fresh dropdown data...')
-        cacheStatus.value.isLoading = true
-        cacheStatus.value.error = null
+    function loadFromLocalStorage() {
+        if (!cacheConfig.value.enableLocalStorage) return false
 
         try {
-            // Token'ı localStorage'dan al
-            const token = localStorage.getItem('token')
+            const data = localStorage.getItem(STORAGE_KEY)
+            const meta = localStorage.getItem(STORAGE_META_KEY)
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/dropdown`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token ? `Bearer ${token}` : ''
-                }
+            if (!data || !meta) return false
+
+            const parsedData = JSON.parse(data)
+            const parsedMeta = JSON.parse(meta)
+
+            // Check if stored data is valid
+            const age = Date.now() - parsedMeta.timestamp
+            if (age > cacheConfig.value.ttl) {
+                console.log('📅 Stored cache is expired')
+                return false
+            }
+
+            // Load data
+            dropdownData.value = parsedData
+            cacheStatus.value.lastFetch = parsedMeta.lastFetch
+            cacheStatus.value.version = parsedMeta.version
+
+            console.log('📂 Cache loaded from localStorage', {
+                age: Math.round(age / 1000) + 's',
+                dataPoints: Object.keys(parsedData).length
             })
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
-            }
+            return true
+        } catch (error) {
+            console.warn('Failed to load cache from localStorage:', error)
+            return false
+        }
+    }
 
-            const data = await response.json()
+    function clearLocalStorage() {
+        try {
+            localStorage.removeItem(STORAGE_KEY)
+            localStorage.removeItem(STORAGE_META_KEY)
+            console.log('🗑️ Cache cleared from localStorage')
+        } catch (error) {
+            console.warn('Failed to clear cache from localStorage:', error)
+        }
+    }
 
-            if (data && typeof data === 'object') {
+    // ===== API UTILITIES =====
+    async function makeApiRequest(endpoint, options = {}) {
+        const authStore = useAuthStore()
+        const token = authStore.token || localStorage.getItem('token')
+
+        const defaultOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            credentials: 'include'
+        }
+
+        const mergedOptions = { ...defaultOptions, ...options }
+        const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}${endpoint}`
+
+        console.log(`🌐 API Request: ${mergedOptions.method} ${endpoint}`)
+
+        const response = await fetch(url, mergedOptions)
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`API Error ${response.status}: ${errorText}`)
+        }
+
+        return response.json()
+    }
+
+    // ===== MAIN FETCH FUNCTION =====
+    async function fetchDropdownData(options = {}) {
+        const {
+            force = false,
+            silent = false,
+            useTestEndpoint = false
+        } = options
+
+        // Check if we need to fetch
+        if (!force && isCacheValid.value && hasData.value) {
+            console.log('✅ Using cached dropdown data')
+            return dropdownData.value
+        }
+
+        if (!silent) {
+            cacheStatus.value.isLoading = true
+            cacheStatus.value.error = null
+        }
+
+        let attempt = 0
+        const maxAttempts = cacheConfig.value.maxRetries
+
+        while (attempt < maxAttempts) {
+            try {
+                console.log(`🔄 Fetching dropdown data (attempt ${attempt + 1}/${maxAttempts})`)
+
+                // Choose endpoint
+                const endpoint = useTestEndpoint ? '/dropdown-test' : '/dropdown'
+
+                // Make API call
+                const data = await makeApiRequest(endpoint)
+
+                // Validate response
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid response format')
+                }
+
+                // Update cache
                 dropdownData.value = {
                     cariler: data.cariler || [],
                     urunler: data.urunler || [],
-                    kategoriler: data.kategoriler || [],
                     teslimatTurleri: data.teslimatTurleri || [],
+                    odemeSekilleri: data.odemeSekilleri || [],
                     aliciTipleri: data.aliciTipleri || [],
-                    odemeYontemleri: data.odemeYontemleri || [],
                     subeler: data.subeler || [],
-                    tepsiTavalar: data.tepsiTavalar || [],
-                    kutular: data.kutular || []
+                    kategoriler: data.kategoriler || [],
+                    personeller: data.personeller || []
                 }
 
-                cacheStatus.value.lastUpdate = new Date()
-                saveToStorage()
+                // Update cache status
+                cacheStatus.value.lastFetch = new Date().toISOString()
+                cacheStatus.value.isInitialized = true
+                cacheStatus.value.retryCount = 0
+                cacheStatus.value.version++
 
-                console.log('✅ Dropdown data cached:', {
+                // Save to localStorage
+                saveToLocalStorage()
+
+                console.log('✅ Dropdown data fetched successfully', {
                     cariler: data.cariler?.length || 0,
                     urunler: data.urunler?.length || 0,
-                    categories: Object.keys(data).length
+                    teslimatTurleri: data.teslimatTurleri?.length || 0,
+                    cached: true
+                })
+
+                return dropdownData.value
+
+            } catch (error) {
+                attempt++
+                cacheStatus.value.retryCount = attempt
+
+                console.error(`❌ Dropdown fetch error (attempt ${attempt}):`, error.message)
+
+                if (attempt >= maxAttempts) {
+                    cacheStatus.value.error = error.message
+
+                    // Try to load from localStorage as fallback
+                    if (hasData.value) {
+                        console.log('📂 Using stale cache data as fallback')
+                        return dropdownData.value
+                    }
+
+                    throw new Error(`Failed to fetch dropdown data after ${maxAttempts} attempts: ${error.message}`)
+                }
+
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, cacheConfig.value.retryDelay * attempt))
+            }
+        }
+    }
+
+    // ===== SPECIFIC DATA GETTERS =====
+    const getCariler = computed(() => dropdownData.value.cariler || [])
+    const getUrunler = computed(() => dropdownData.value.urunler || [])
+    const getTeslimatTurleri = computed(() => dropdownData.value.teslimatTurleri || [])
+    const getOdemeSekilleri = computed(() => dropdownData.value.odemeSekilleri || [])
+    const getAliciTipleri = computed(() => dropdownData.value.aliciTipleri || [])
+
+    // ===== UTILITY FUNCTIONS =====
+    function findItemById(collection, id) {
+        const items = dropdownData.value[collection] || []
+        return items.find(item => item.id === id)
+    }
+
+    function findItemByCode(collection, code) {
+        const items = dropdownData.value[collection] || []
+        return items.find(item => item.kod === code)
+    }
+
+    function searchItems(collection, query, fields = ['ad', 'kod']) {
+        const items = dropdownData.value[collection] || []
+        const lowercaseQuery = query.toLowerCase()
+
+        return items.filter(item =>
+            fields.some(field =>
+                item[field]?.toLowerCase().includes(lowercaseQuery)
+            )
+        )
+    }
+
+    // ===== CACHE MANAGEMENT =====
+    function invalidateCache() {
+        cacheStatus.value.lastFetch = null
+        cacheStatus.value.isInitialized = false
+        clearLocalStorage()
+        console.log('🔄 Cache invalidated')
+    }
+
+    function clearCache() {
+        dropdownData.value = {
+            cariler: [],
+            urunler: [],
+            teslimatTurleri: [],
+            odemeSekilleri: [],
+            aliciTipleri: [],
+            subeler: [],
+            kategoriler: [],
+            personeller: []
+        }
+        invalidateCache()
+        console.log('🗑️ Cache cleared')
+    }
+
+    async function refreshCache() {
+        console.log('🔄 Refreshing cache...')
+        await fetchDropdownData({ force: true })
+    }
+
+    function warmupCache() {
+        console.log('🔥 Warming up cache...')
+
+        // Try to load from localStorage first
+        const loaded = loadFromLocalStorage()
+
+        if (loaded && isCacheValid.value) {
+            cacheStatus.value.isInitialized = true
+            console.log('🔥 Cache warmed up from localStorage')
+        } else {
+            // Fetch in background
+            fetchDropdownData({ silent: true }).catch(error => {
+                console.warn('Cache warmup failed:', error.message)
+            })
+        }
+    }
+
+    // ===== INITIALIZATION =====
+    function initializeCache() {
+        console.log('🚀 Initializing cache store...')
+
+        // Load from localStorage if available
+        warmupCache()
+
+        // Set up auto-refresh for stale data
+        setInterval(() => {
+            if (!isCacheValid.value && hasData.value) {
+                console.log('🕐 Auto-refreshing stale cache')
+                fetchDropdownData({ silent: true }).catch(() => {
+                    // Silent fail for background refresh
                 })
             }
+        }, 60000) // Check every minute
+    }
 
-            return dropdownData.value
-        } catch (error) {
-            console.error('❌ Dropdown fetch error:', error)
-            cacheStatus.value.error = error.message
-
-            // Return cached data if available, even if expired
-            if (hasCachedData.value) {
-                console.log('⚠️ Using stale cache due to error')
-                return dropdownData.value
-            }
-            throw error
-        } finally {
-            cacheStatus.value.isLoading = false
+    // ===== WATCHERS =====
+    watch(() => cacheStatus.value.error, (newError) => {
+        if (newError) {
+            console.error('💥 Cache error detected:', newError)
         }
-    }
+    })
 
-    // Add new cari to cache
-    function addCariToCache(newCari) {
-        if (!dropdownData.value.cariler) dropdownData.value.cariler = []
-
-        // Add display name for consistency
-        const cariWithDisplay = {
-            ...newCari,
-            displayName: `${newCari.ad} ${newCari.soyad || ''}`.trim()
-        }
-
-        dropdownData.value.cariler.push(cariWithDisplay)
-        saveToStorage()
-
-        console.log('✅ New cari added to cache:', cariWithDisplay.displayName)
-    }
-
-    // Update cari in cache
-    function updateCariInCache(updatedCari) {
-        const index = dropdownData.value.cariler.findIndex(c => c.id === updatedCari.id)
-        if (index !== -1) {
-            const cariWithDisplay = {
-                ...updatedCari,
-                displayName: `${updatedCari.ad} ${updatedCari.soyad || ''}`.trim()
-            }
-            dropdownData.value.cariler[index] = cariWithDisplay
-            saveToStorage()
-            console.log('✅ Cari updated in cache:', cariWithDisplay.displayName)
-        }
-    }
-
-    // Invalidate specific cache
-    function invalidateCache(type = 'all') {
-        if (type === 'all') {
-            clearStorage()
-            console.log('🗑️ All cache invalidated')
-        }
-        // Future: specific cache invalidation
-    }
-
-    // Force refresh
-    async function refreshCache() {
-        console.log('🔄 Force refreshing cache...')
-        return await fetchDropdownData(true)
-    }
-
-    // Cleanup expired cache on startup
-    function cleanup() {
-        loadFromStorage()
-    }
-
+    // ===== PUBLIC API =====
     return {
         // State
         dropdownData,
-        cacheStatus,
+        cacheStatus: computed(() => cacheStatus.value),
+        cacheConfig,
 
-        // Getters
+        // Computed
         isCacheValid,
-        hasCachedData,
+        hasData,
+        cacheHealth,
 
-        // Actions
+        // Data getters
+        getCariler,
+        getUrunler,
+        getTeslimatTurleri,
+        getOdemeSekilleri,
+        getAliciTipleri,
+
+        // Main functions
         fetchDropdownData,
-        addCariToCache,
-        updateCariInCache,
+
+        // Utility functions
+        findItemById,
+        findItemByCode,
+        searchItems,
+
+        // Cache management
         invalidateCache,
+        clearCache,
         refreshCache,
-        cleanup
+        warmupCache,
+        initializeCache
     }
-}) 
+})
+
+// Auto-initialize when store is first created
+let initialized = false
+export function useCacheStoreWithInit() {
+    const store = useCacheStore()
+
+    if (!initialized) {
+        store.initializeCache()
+        initialized = true
+    }
+
+    return store
+}

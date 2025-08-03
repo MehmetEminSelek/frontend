@@ -28,11 +28,47 @@ export const useAuthStore = defineStore('auth', () => {
 
     const roleLevel = computed(() => user.value?.roleLevel || 0)
 
-    const permissions = computed(() => user.value?.permissions || [])
+    // Role-based permissions mapping
+    const rolePermissions = {
+        'GENEL_MUDUR': ['READ', 'WRITE', 'DELETE', 'ADMIN', 'REPORTS', 'USER_MANAGEMENT'],
+        'SUBE_MUDURU': ['READ', 'WRITE', 'DELETE', 'REPORTS'],
+        'URETIM_MUDURU': ['READ', 'WRITE', 'PRODUCTION'],
+        'SEVKIYAT_MUDURU': ['READ', 'WRITE', 'SHIPPING'],
+        'CEP_DEPO_MUDURU': ['READ', 'WRITE', 'INVENTORY'],
+        'SUBE_PERSONELI': ['READ', 'WRITE'],
+        'URETIM_PERSONEL': ['READ', 'PRODUCTION'],
+        'SEVKIYAT_PERSONELI': ['READ', 'SHIPPING'],
+        'SOFOR': ['READ', 'SHIPPING'],
+        'PERSONEL': ['READ'],
+        'VIEWER': ['READ'] // Sadece görüntüleme yetkisi
+    }
+
+    const permissions = computed(() => {
+        if (!user.value?.rol) return []
+        return rolePermissions[user.value.rol] || ['READ']
+    })
 
     const hasPermission = computed(() => (permission) => {
         if (!user.value) return false
-        return permissions.value.includes(permission) || user.value.rol === 'ADMIN'
+        return permissions.value.includes(permission) || user.value.rol === 'GENEL_MUDUR'
+    })
+
+    const canAccess = computed(() => (page) => {
+        const pagePermissions = {
+            'dashboard': ['READ'], // Herkes dashboard'a erişebilir
+            'siparis-formu': ['WRITE'],
+            'kullanici-yonetimi': ['USER_MANAGEMENT'],
+            'uretim-plani': ['PRODUCTION'],
+            'kargo-operasyon': ['SHIPPING'],
+            'stok-yonetimi': ['INVENTORY'],
+            'satis-raporu': ['REPORTS'],
+            'crm-raporlara': ['REPORTS'],
+            'fiyat-yonetimi': ['ADMIN'],
+            'recete-yonetimi': ['ADMIN']
+        }
+
+        const requiredPerms = pagePermissions[page] || ['READ']
+        return requiredPerms.some(perm => hasPermission.value(perm))
     })
 
     const isSessionExpired = computed(() => {
@@ -161,7 +197,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
 
             const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-            const response = await fetch(`${apiUrl}/auth/login-simple`, {
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -214,7 +250,8 @@ export const useAuthStore = defineStore('auth', () => {
         lockExpiry.value = null
 
         // Set security level based on role
-        securityLevel.value = data.user.roleLevel >= 80 ? 'HIGH' : 'NORMAL'
+        const roleLevel = data.user.roleLevel || 30
+        securityLevel.value = roleLevel >= 80 ? 'HIGH' : 'NORMAL'
 
         // Update activity
         updateActivity()
@@ -479,6 +516,7 @@ export const useAuthStore = defineStore('auth', () => {
         roleLevel,
         permissions,
         hasPermission,
+        canAccess,
         isSessionExpired,
         isAccountLocked,
         sessionTimeRemaining,
