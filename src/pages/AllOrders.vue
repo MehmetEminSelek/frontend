@@ -4,10 +4,11 @@
       <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
         <span>📚 Tüm Siparişler</span>
         <div class="d-flex align-center gap-2">
-        <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify" variant="outlined"
-          density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
-          <v-btn icon="mdi-currency-try" variant="text" @click="refreshPrices" title="Fiyatları Yenile" color="blue"></v-btn>
-        <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
+          <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify"
+            variant="outlined" density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
+          <v-btn icon="mdi-currency-try" variant="text" @click="refreshPrices" title="Fiyatları Yenile"
+            color="blue"></v-btn>
+          <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
         </div>
       </v-card-title>
 
@@ -88,10 +89,10 @@
                                 <div class="d-flex flex-column align-end">
                                   <span class="text-body-2">{{ kalem.miktar }} {{ kalem.birim }}</span>
                                   <span class="text-caption text-grey">
-                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' : kalem.birim }}
-                                    <span v-if="getActivePrice(kalem) !== null" 
-                                          :class="getPriceDifferenceClass(kalem)"
-                                          class="font-weight-medium">
+                                    @ {{ kalem.birimFiyat?.toFixed(2) || '?' }} ₺/{{ kalem.birim === 'Gram' ? 'KG' :
+                                      kalem.birim }}
+                                    <span v-if="getActivePrice(kalem) !== null" :class="getPriceDifferenceClass(kalem)"
+                                      class="font-weight-medium">
                                       | Güncel: {{ getActivePrice(kalem) }} ₺
                                       <span v-if="hasPriceDifference(kalem)" class="text-caption">
                                         ({{ getPriceDifferenceText(kalem) }})
@@ -116,6 +117,40 @@
                     </v-row>
                   </v-col>
                   <v-col cols="12" md="4">
+                    <h4 class="text-subtitle-1 mb-3">Teslimat ve Kargo</h4>
+                    <v-list density="compact" class="mb-3 elevation-1 rounded">
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Teslimat Türü</v-list-item-title>
+                        <template v-slot:append>{{ item.teslimatTuru?.ad || '-' }}</template>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Teslim Adresi</v-list-item-title>
+                        <v-list-item-subtitle class="text-wrap">{{ item.teslimatAdresi || '-' }}</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Teslim Şehir/İlçe</v-list-item-title>
+                        <template v-slot:append>{{ [item.il, item.ilce].filter(Boolean).join(' / ') || '-' }}</template>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Teslim Tarih/Saat</v-list-item-title>
+                        <template v-slot:append>{{ item.teslimTarihi ? formatDate(item.teslimTarihi, true) : '-' }} {{
+                          item.teslimSaati || '' }}</template>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Kargo Durumu</v-list-item-title>
+                        <template v-slot:append>{{ item.kargoDurumu || '-' }}</template>
+                      </v-list-item>
+                      <v-list-item>
+                        <v-list-item-title class="text-body-2">Kargo Şirketi/Takip</v-list-item-title>
+                        <template v-slot:append>{{ [item.kargoSirketi, item.kargoTakipNo].filter(Boolean).join(' - ') ||
+                          '-' }}</template>
+                      </v-list-item>
+                      <v-list-item v-if="item.subeNereden || item.subeNereye">
+                        <v-list-item-title class="text-body-2">Şube Transfer</v-list-item-title>
+                        <v-list-item-subtitle>{{ item.subeNereden?.ad || '-' }} → {{ item.subeNereye?.ad || '-'
+                        }}</v-list-item-subtitle>
+                      </v-list-item>
+                    </v-list>
                     <h4 class="text-subtitle-1 mb-3">Ödemeler ve Toplamlar</h4>
                     <v-list density="compact" class="mb-2 elevation-1 rounded">
                       <v-list-subheader>Yapılan Ödemeler</v-list-subheader>
@@ -146,8 +181,10 @@
                           Hizmet:</v-list-item-title> <template v-slot:append>{{ item.digerHizmetTutari?.toFixed(2) }}
                           ₺</template>
                       </v-list-item>
-                      <v-list-item class="text-caption"> <v-list-item-title class="text-right">KDV Toplamı:</v-list-item-title>
-                        <template v-slot:append>{{ (item.kdvToplam || calculateKdvTotal(item.kalemler)).toFixed(2) }} ₺</template>
+                      <v-list-item class="text-caption"> <v-list-item-title class="text-right">KDV
+                          Toplamı:</v-list-item-title>
+                        <template v-slot:append>{{ (item.kdvToplam || calculateKdvTotal(item.kalemler)).toFixed(2) }}
+                          ₺</template>
                       </v-list-item>
                       <v-divider class="my-1"></v-divider>
                       <v-list-item class="font-weight-bold"> <v-list-item-title
@@ -219,7 +256,7 @@
 
 <script setup>
 import { ref, computed, onMounted, provide, reactive } from 'vue';
-import axios from 'axios';
+import { apiCall } from '../utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 
@@ -277,39 +314,54 @@ const rules = { required: value => !!value || 'Bu alan zorunludur.', positiveNum
 
 // Active Prices Map
 const activePricesMap = ref({});
+function normalizeUnit(u) {
+  const s = String(u || '').toLowerCase();
+  if (s === 'kg' || s === 'kilogram') return 'KG';
+  if (s === 'gram' || s === 'gr' || s === 'g') return 'Gram';
+  if (s === 'adet' || s === 'piece') return 'ADET';
+  if (s === 'paket') return 'PAKET';
+  if (s === 'kutu') return 'KUTU';
+  if (s === 'tepsi') return 'TEPSI';
+  if (s === 'litre' || s === 'ltr' || s === 'lt') return 'LITRE';
+  if (s === 'ml' || s === 'mililitre') return 'ML';
+  return u;
+}
 
 // Fetch active prices (latest for each product/unit)
 async function fetchActivePrices() {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/malzeme-fiyatlari`);
-    const data = response.data;
-    
-    // API object döndürüyor, array'leri birleştir
-    const allPrices = [
-      ...(data.hammaddeler || []),
-      ...(data.yariMamuller || []),
-      ...(data.yardimciMaddeler || []),
-      ...(data.ambalajMalzemeleri || [])
-    ];
-    
+    const resp = await apiCall('/fiyatlar', { method: 'GET', useCache: false });
+    const pricing = Array.isArray(resp?.pricing)
+      ? resp.pricing
+      : Array.isArray(resp?.data?.pricing)
+        ? resp.data.pricing
+        : Array.isArray(resp) ? resp : [];
+
+    const latestByProduct = new Map();
+    pricing.forEach(p => {
+      if (!p || !p.urunId) return;
+      const existing = latestByProduct.get(p.urunId);
+      const thisStart = p.baslangicTarihi ? new Date(p.baslangicTarihi).getTime() : 0;
+      const existStart = existing?.baslangicTarihi ? new Date(existing.baslangicTarihi).getTime() : -1;
+      if (!existing || thisStart > existStart) latestByProduct.set(p.urunId, p);
+    });
+
     const latestMap = {};
-    
-    // Array check'i de ekle
-    if (Array.isArray(allPrices)) {
-    allPrices.forEach(price => {
-        const key = `${price.kod}-${price.birim}`;
-        // Basit mapping: en son eklenen geçerli
-        latestMap[key] = {
-          urunId: price.kod,
-          birim: price.birim,
-          fiyat: price.fiyat || 0,
-          ad: price.ad
-        };
-      });
-    }
-    
+    latestByProduct.forEach(p => {
+      const urunId = p.urunId;
+      const kgPrice = Number(p.kgFiyati) || 0;
+      // Anahtarları KG ve Gram için yaz
+      latestMap[`${urunId}-KG`] = { urunId, birim: 'KG', fiyat: kgPrice, ad: p.urun?.ad };
+      latestMap[`${urunId}-Gram`] = { urunId, birim: 'Gram', fiyat: kgPrice / 1000, ad: p.urun?.ad };
+      // Eğer fiyat birimi ADET ise onu da ekle
+      const unit = normalizeUnit(p.birim);
+      if (unit === 'ADET' && kgPrice > 0) {
+        latestMap[`${urunId}-ADET`] = { urunId, birim: 'ADET', fiyat: kgPrice, ad: p.urun?.ad };
+      }
+    });
+
     activePricesMap.value = latestMap;
-    console.log('✅ Aktif fiyatlar yüklendi:', Object.keys(latestMap).length, 'malzeme');
+    console.log('✅ Aktif ürün fiyatları yüklendi:', Object.keys(latestMap).length);
   } catch (err) {
     console.error('❌ Aktif fiyatlar çekilemedi:', err);
     activePricesMap.value = {};
@@ -320,8 +372,10 @@ async function fetchActivePrices() {
 async function fetchOrders() {
   loading.value = true; error.value = null; console.log('Fetching all orders...');
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`); // Ödemeleri de içermeli
-    allOrders.value = response.data;
+    const response = await apiCall('/orders');
+    allOrders.value = Array.isArray(response?.orders) ? response.orders
+      : Array.isArray(response) ? response
+        : [];
     console.log('All orders loaded:', JSON.parse(JSON.stringify(allOrders.value)));
   } catch (err) { console.error('❌ Tüm Siparişler çekilemedi:', err.response?.data || err.message || err); error.value = `Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`; allOrders.value = []; }
   finally { loading.value = false; }
@@ -341,10 +395,12 @@ async function refreshPrices() {
 
 // --- Hesaplama Fonksiyonları ---
 function calculateItemTotal(kalem) {
-  if (!kalem || typeof kalem.miktar !== 'number' || typeof kalem.birimFiyat !== 'number' || !kalem.birim) return 0;
-  let unitPrice = kalem.birimFiyat;
-  // Gram birimli ürünler için 1000'e bölme işlemi kaldırıldı - fiyat zaten gram başına
-  return kalem.miktar * unitPrice;
+  if (!kalem || !kalem.birim) return 0;
+  const qty = typeof kalem.miktar === 'number' ? kalem.miktar : parseFloat(kalem.miktar) || 0;
+  let unitPrice = typeof kalem.birimFiyat === 'number' && kalem.birimFiyat > 0
+    ? kalem.birimFiyat
+    : (parseFloat(getActivePrice(kalem)) || 0);
+  return qty * unitPrice;
 }
 
 function calculatePackageProductTotal(kalemler) {
@@ -385,6 +441,11 @@ function getPaymentStatus(order) {
   const remaining = grandTotal - totalPaid;
   const epsilon = 0.01;
 
+  // Özel durumlar: toplam tutar yoksa veya ürün kalemi yoksa “Ödenmedi” göster
+  if (grandTotal <= epsilon) {
+    return { text: 'Ödenmedi', color: 'grey', icon: 'mdi-help-circle-outline', textColor: 'text-grey' };
+  }
+
   if (totalPaid <= epsilon && grandTotal > epsilon) {
     return { text: 'Ödenmedi', color: 'error', icon: 'mdi-credit-card-off-outline', textColor: 'text-error' };
   }
@@ -423,12 +484,12 @@ async function savePayment() {
 
   paymentLoading.value = true;
   const orderId = orderForPayment.value.id;
-  const payload = { tutar: newPayment.tutar, odemeYontemi: newPayment.odemeYontemi, aciklama: newPayment.aciklama };
+  const payload = { tutar: newPayment.tutar, odemeYontemi: 'NAKIT', aciklama: newPayment.aciklama };
   console.log(`POST /api/siparis/${orderId}/odemeler gönderiliyor:`, payload);
 
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}/odemeler`, payload);
-    const yeniOdeme = response.data;
+    const resp = await apiCall(`/siparis/${orderId}/odemeler`, payload, 'POST');
+    const yeniOdeme = resp?.payment || resp;
     const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
     if (orderIndex > -1) {
       if (!allOrders.value[orderIndex].odemeler) { allOrders.value[orderIndex].odemeler = []; }
@@ -453,7 +514,7 @@ async function deleteOrder(id) {
   // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
-    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/siparis/${id}`);
+    await apiCall(`/siparis/${id}`, {}, 'DELETE');
     showSnackbar('Sipariş başarıyla silindi.', 'success'); // Snackbar kullanıldı
     if (itemIndex > -1) { allOrders.value.splice(itemIndex, 1); }
   } catch (err) {
@@ -487,7 +548,7 @@ function groupItemsByPackage(kalemler) {
       let ambalajAdi = 'Bilinmiyor';
       if (kalem.kutu?.ad) ambalajAdi = 'Kutu';
       else if (kalem.tepsiTava?.ad) ambalajAdi = 'Tepsi/Tava';
-      
+
       grouped[key] = {
         key,
         ambalajAdi,
@@ -532,10 +593,17 @@ function calculateGrandTotal(order) {
 }
 
 function getActivePrice(kalem) {
-  if (!kalem.urunId || !kalem.birim) return null;
-  const key = `${kalem.urunId}-${kalem.birim}`;
-  const priceObj = activePricesMap.value[key];
-  return priceObj ? priceObj.fiyat?.toFixed(2) : null;
+  const urunId = kalem?.urunId || kalem?.urun?.id;
+  if (!urunId || !kalem?.birim) return null;
+  const unit = normalizeUnit(kalem.birim);
+  const directKey = `${urunId}-${unit}`;
+  let priceObj = activePricesMap.value[directKey];
+  if (!priceObj) {
+    // KG/Gram dönüşümü dene
+    if (unit === 'Gram') priceObj = activePricesMap.value[`${urunId}-KG`]?.fiyat ? { fiyat: activePricesMap.value[`${urunId}-KG`].fiyat / 1000 } : null;
+    else if (unit === 'KG') priceObj = activePricesMap.value[`${urunId}-Gram`]?.fiyat ? { fiyat: activePricesMap.value[`${urunId}-Gram`].fiyat * 1000 } : null;
+  }
+  return priceObj ? Number(priceObj.fiyat).toFixed(2) : null;
 }
 
 function getPriceDifferenceClass(kalem) {

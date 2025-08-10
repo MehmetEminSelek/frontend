@@ -2,7 +2,7 @@
     <v-container class="py-6 px-2 px-md-8" fluid>
         <!-- Hero Section -->
         <div class="hero-section mb-6">
-            <v-card class="pa-6 rounded-xl elevation-4" 
+            <v-card class="pa-6 rounded-xl elevation-4"
                 style="background: linear-gradient(135deg, #FFE0B2 0%, #FFCC80 50%, #FFB74D 100%); color: #5D4037; position: relative; overflow: hidden;">
                 <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
                     <v-icon size="120">mdi-chef-hat</v-icon>
@@ -13,7 +13,8 @@
                             <v-icon size="48" class="mr-3" color="#8D6E63">mdi-food-variant</v-icon>
                             <div>
                                 <h1 class="text-h3 font-weight-bold mb-1" style="color: #5D4037;">Reçete Yönetimi</h1>
-                                <p class="text-h6 mb-0" style="color: #6D4C41; opacity: 0.8;">Yemek tariflerinizi ve malzemelerinizi kolayca yönetin</p>
+                                <p class="text-h6 mb-0" style="color: #6D4C41; opacity: 0.8;">Yemek tariflerinizi ve
+                                    malzemelerinizi kolayca yönetin</p>
                             </div>
                         </div>
                         <div class="d-flex align-center">
@@ -28,8 +29,9 @@
                         </div>
                     </v-col>
                     <v-col cols="12" md="4" class="text-center">
-                        <v-btn size="x-large" color="white" variant="elevated" @click="openAddDialog" 
-                            class="font-weight-bold" style="color: #8D6E63 !important; box-shadow: 0 4px 12px rgba(141, 110, 99, 0.2);">
+                        <v-btn size="x-large" color="white" variant="elevated" @click="openAddDialog"
+                            class="font-weight-bold"
+                            style="color: #8D6E63 !important; box-shadow: 0 4px 12px rgba(141, 110, 99, 0.2);">
                             <v-icon left size="20">mdi-plus-circle</v-icon>
                             Yeni Reçete Ekle
                         </v-btn>
@@ -47,41 +49,25 @@
             <v-card-text class="pt-0">
                 <v-row>
                     <v-col cols="12" md="4">
-                        <v-text-field 
-                            v-model="search" 
-                            label="Reçete ara..." 
-                            prepend-inner-icon="mdi-magnify"
-                            variant="outlined" 
-                            density="comfortable"
-                            clearable 
-                            @keyup.enter="fetchReceteler" 
-                            color="#A1887F"
-                            hide-details />
+                        <v-text-field v-model="search" label="Reçete ara..." prepend-inner-icon="mdi-magnify"
+                            variant="outlined" density="comfortable" clearable @keyup.enter="fetchReceteler"
+                            color="#A1887F" hide-details />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-select 
-                            v-model="filterUrunId" 
-                            :items="urunler" 
-                            item-title="ad" 
-                            item-value="id"
-                            label="Ürüne göre filtrele" 
-                            prepend-inner-icon="mdi-package-variant"
-                            variant="outlined"
-                            density="comfortable"
-                            clearable 
-                            @update:model-value="fetchReceteler"
-                            color="#A1887F"
+                        <v-select v-model="filterUrunId" :items="urunler" item-title="ad" item-value="id"
+                            label="Ürüne göre filtrele" prepend-inner-icon="mdi-package-variant" variant="outlined"
+                            density="comfortable" clearable @update:model-value="fetchReceteler" color="#A1887F"
                             hide-details />
-                </v-col>
+                    </v-col>
                     <v-col cols="12" md="4" class="d-flex align-center gap-2">
-                        <v-btn color="#A1887F" variant="outlined" @click="fetchReceteler" 
-                            prepend-icon="mdi-refresh" class="flex-grow-1">
+                        <v-btn color="#A1887F" variant="outlined" @click="fetchReceteler" prepend-icon="mdi-refresh"
+                            class="flex-grow-1">
                             Yenile
                         </v-btn>
-                        <v-btn color="#81C784" variant="outlined" prepend-icon="mdi-download">
+                        <v-btn color="#81C784" variant="outlined" prepend-icon="mdi-download" @click="exportReceteler">
                             Dışa Aktar
                         </v-btn>
-                </v-col>
+                    </v-col>
                 </v-row>
             </v-card-text>
         </v-card>
@@ -103,11 +89,12 @@
 
         <v-row v-else>
             <v-col v-for="recete in filteredReceteler" :key="recete.id" cols="12" sm="6" lg="4" xl="3">
-                <v-card class="recipe-card rounded-xl h-100" elevation="2" 
+                <v-card class="recipe-card rounded-xl h-100" elevation="2"
                     style="background: linear-gradient(145deg, #FFFFFF 0%, #FFF8E1 100%); border: 1px solid #EFEBE9; transition: all 0.3s ease;">
-                    
+
                     <!-- Card Header -->
-                    <v-card-title class="pa-4" style="background: linear-gradient(135deg, #BCAAA4 0%, #A1887F 100%); color: white;">
+                    <v-card-title class="pa-4"
+                        style="background: linear-gradient(135deg, #BCAAA4 0%, #A1887F 100%); color: white;">
                         <div class="d-flex align-center justify-space-between w-100">
                             <div class="d-flex align-center">
                                 <v-avatar color="rgba(255,255,255,0.2)" size="32" class="mr-3">
@@ -115,23 +102,24 @@
                                 </v-avatar>
                                 <div>
                                     <h4 class="text-subtitle-1 font-weight-bold">{{ recete.urunAd || recete.name }}</h4>
-                                    <p class="text-caption opacity-80 ma-0">{{ recete.ingredients?.length || 0 }} malzeme</p>
+                                    <p class="text-caption opacity-80 ma-0">{{ recete.ingredients?.length || 0 }}
+                                        malzeme</p>
                                 </div>
                             </div>
-                            
+
                             <!-- Action Buttons -->
                             <div class="d-flex">
-                                <v-btn icon size="small" variant="text" @click="hesaplaMaliyet(recete)" 
+                                <v-btn icon size="small" variant="text" @click="hesaplaMaliyet(recete)"
                                     title="Maliyet Hesapla" style="color: rgba(255,255,255,0.9);">
                                     <v-icon size="18">mdi-calculator</v-icon>
                                 </v-btn>
-                                <v-btn icon size="small" variant="text" @click="copyRecete(recete)" 
-                                    title="Kopyala" style="color: rgba(255,255,255,0.9);">
+                                <v-btn icon size="small" variant="text" @click="copyRecete(recete)" title="Kopyala"
+                                    style="color: rgba(255,255,255,0.9);">
                                     <v-icon size="18">mdi-content-copy</v-icon>
                                 </v-btn>
                             </div>
                         </div>
-                        </v-card-title>
+                    </v-card-title>
 
                     <!-- Ingredients Table -->
                     <div class="pa-0">
@@ -147,8 +135,10 @@
                                 <tr v-for="ing in recete.ingredients?.slice(0, 4)" :key="ing.id" class="ingredient-row">
                                     <td class="py-2">
                                         <div class="d-flex align-center">
-                                            <v-avatar size="20" class="mr-2" :color="ing.stokTip === 'Hammadde' ? '#C8E6C9' : '#FFE0B2'">
-                                                <v-icon size="12" :color="ing.stokTip === 'Hammadde' ? '#388E3C' : '#F57C00'">
+                                            <v-avatar size="20" class="mr-2"
+                                                :color="ing.stokTip === 'Hammadde' ? '#C8E6C9' : '#FFE0B2'">
+                                                <v-icon size="12"
+                                                    :color="ing.stokTip === 'Hammadde' ? '#388E3C' : '#F57C00'">
                                                     {{ ing.stokTip === 'Hammadde' ? 'mdi-leaf' : 'mdi-cog' }}
                                                 </v-icon>
                                             </v-avatar>
@@ -156,7 +146,7 @@
                                         </div>
                                     </td>
                                     <td class="text-center py-2">
-                                        <v-chip size="x-small" variant="flat" 
+                                        <v-chip size="x-small" variant="flat"
                                             :color="ing.stokTip === 'Hammadde' ? '#E8F5E9' : '#FFF3E0'"
                                             :style="{ color: ing.stokTip === 'Hammadde' ? '#2E7D32' : '#E65100' }">
                                             {{ ing.stokTip === 'Hammadde' ? 'HM' : 'YM' }}
@@ -164,11 +154,13 @@
                                     </td>
                                     <td class="text-end py-2">
                                         <span class="text-body-2 font-weight-medium">
-                                            {{ ing.miktarGram ? ing.miktarGram.toLocaleString() + 'g' : '-' }}
+                                            {{ (ing.miktarGram != null ? ing.miktarGram : (ing.miktarKg != null ? ing.miktarKg * 1000 : null)) != null
+                                                ? ((ing.miktarGram ?? (ing.miktarKg * 1000)).toLocaleString() + 'g')
+                                                : '-' }}
                                         </span>
                                     </td>
                                 </tr>
-                                
+
                                 <!-- Show more indicator -->
                                 <tr v-if="recete.ingredients?.length > 4">
                                     <td colspan="3" class="text-center py-2">
@@ -191,17 +183,17 @@
 
                     <!-- Card Actions -->
                     <v-card-actions class="pa-3" style="background: rgba(161, 136, 127, 0.05);">
-                        <v-btn variant="outlined" size="small" color="#A1887F" @click="openEditDialog(recete)" 
+                        <v-btn variant="outlined" size="small" color="#A1887F" @click="openEditDialog(recete)"
                             prepend-icon="mdi-pencil" class="flex-grow-1">
                             Düzenle
                         </v-btn>
-                        <v-btn variant="outlined" size="small" color="#E57373" @click="confirmDelete(recete)" 
+                        <v-btn variant="outlined" size="small" color="#E57373" @click="confirmDelete(recete)"
                             icon="mdi-delete" class="ml-2">
                         </v-btn>
                     </v-card-actions>
-                    </v-card>
-                </v-col>
-            </v-row>
+                </v-card>
+            </v-col>
+        </v-row>
 
         <v-dialog v-model="dialog" max-width="600px">
             <v-card class="rounded-xl">
@@ -313,13 +305,15 @@
 
 <script setup>
 import { ref, onMounted, computed, provide } from 'vue';
-import axios from 'axios';
+import { apiCall } from '../utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 
 const receteler = ref([]);
 const loading = ref(true);
 const urunler = ref([]);
 const stokOptions = ref([]);
+const materials = ref([]);
+const kodToId = ref({});
 const dialog = ref(false);
 const deleteDialog = ref(false);
 const maliyetDialog = ref(false);
@@ -352,8 +346,31 @@ provide('vuetify', receteVuetify);
 async function fetchReceteler() {
     loading.value = true;
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/receteler`);
-        receteler.value = response.data;
+        const data = await apiCall('/receteler?limit=500');
+        const list = Array.isArray(data?.legacy)
+            ? data.legacy
+            : Array.isArray(data?.recipes)
+                ? data.recipes.map(r => ({
+                    id: r.id,
+                    name: r.ad,
+                    urunId: r.urunId,
+                    urunAd: r.urun?.ad || null,
+                    ingredients: Array.isArray(r.icerikelek)
+                        ? r.icerikelek.map(k => {
+                            const kg = Number(k.miktar) || 0;
+                            return {
+                                stokKod: k.material?.kod,
+                                stokAd: k.material?.ad,
+                                miktarKg: kg,
+                                miktarGram: kg * 1000
+                            };
+                        })
+                        : []
+                }))
+                : Array.isArray(data)
+                    ? data
+                    : [];
+        receteler.value = list;
     } catch (err) {
         receteler.value = [];
     } finally {
@@ -362,15 +379,25 @@ async function fetchReceteler() {
 }
 async function fetchDropdowns() {
     try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dropdown`);
-        urunler.value = res.data.urunler;
+        const res = await apiCall('/dropdown');
+        urunler.value = Array.isArray(res?.urunler) ? res.urunler : [];
+        const hm = Array.isArray(res?.hammaddeler) ? res.hammaddeler : [];
+        const ym = Array.isArray(res?.yariMamuller) ? res.yariMamuller : [];
+        const mats = Array.isArray(res?.materials) ? res.materials : [...hm, ...ym];
+        materials.value = mats;
+        // kod -> id map
+        const m = {};
+        mats.forEach(x => { if (x?.kod && x?.id) m[x.kod] = x.id; });
+        kodToId.value = m;
         stokOptions.value = [
-            ...res.data.hammaddeler.map(x => ({ kod: x.kod, label: x.ad + ' (Hammadde)' })),
-            ...res.data.yariMamuller.map(x => ({ kod: x.kod, label: x.ad + ' (Yarı Mamul)' }))
+            ...hm.map(x => ({ kod: x.kod, label: x.ad + ' (Hammadde)' })),
+            ...ym.map(x => ({ kod: x.kod, label: x.ad + ' (Yarı Mamul)' }))
         ];
     } catch (err) {
         urunler.value = [];
         stokOptions.value = [];
+        materials.value = [];
+        kodToId.value = {};
     }
 }
 function openAddDialog() {
@@ -384,7 +411,10 @@ function openEditDialog(recete) {
         id: recete.id,
         name: recete.name,
         urunId: urunler.value.find(u => u.ad === recete.urunAd)?.id || null,
-        ingredients: recete.ingredients.map(ing => ({ stokKod: ing.stokKod, miktarGram: ing.miktarGram }))
+        ingredients: recete.ingredients.map(ing => ({
+            stokKod: ing.stokKod,
+            miktarGram: ing.miktarGram != null ? ing.miktarGram : (ing.miktarKg != null ? ing.miktarKg * 1000 : null)
+        }))
     };
     dialog.value = true;
 }
@@ -403,11 +433,32 @@ async function saveRecete() {
         return;
     }
     try {
+        // Backend şemasına dönüştür
+        const receteKalemleri = form.value.ingredients
+            .map(ing => ({
+                materialId: kodToId.value[ing.stokKod] || null,
+                miktar: (Number(ing.miktarGram) || 0) / 1000,
+                birim: 'KG'
+            }))
+            .filter(x => x.materialId && x.miktar > 0);
+
         if (editMode.value) {
-            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/receteler`, form.value);
+            // PUT allowedFields'ta urunId yok; göndermeyelim
+            const payload = { id: form.value.id, ad: form.value.name, porsiyon: 1 };
+            if (receteKalemleri.length > 0) Object.assign(payload, { receteKalemleri });
+            await apiCall('/receteler', payload, 'PUT');
             snackbar.value = { show: true, text: 'Reçete güncellendi.', color: 'success' };
         } else {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/receteler`, form.value);
+            if (!form.value.urunId) {
+                snackbar.value = { show: true, text: 'Lütfen bir ürün seçin.', color: 'error' };
+                return;
+            }
+            await apiCall('/receteler', {
+                ad: form.value.name,
+                urunId: form.value.urunId,
+                porsiyon: 1,
+                receteKalemleri
+            }, 'POST');
             snackbar.value = { show: true, text: 'Reçete eklendi.', color: 'success' };
         }
         dialog.value = false;
@@ -422,7 +473,7 @@ function confirmDelete(recete) {
 }
 async function deleteRecete() {
     try {
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/receteler`, { data: { id: deleteId.value } });
+        await apiCall('/receteler', { id: deleteId.value }, 'DELETE');
         snackbar.value = { show: true, text: 'Reçete silindi.', color: 'success' };
         deleteDialog.value = false;
         fetchReceteler();
@@ -436,23 +487,59 @@ function copyRecete(recete) {
         id: null,
         name: recete.name + ' (Kopya)',
         urunId: urunler.value.find(u => u.ad === recete.urunAd)?.id || null,
-        ingredients: recete.ingredients.map(ing => ({ stokKod: ing.stokKod, miktarGram: ing.miktarGram }))
+        ingredients: recete.ingredients.map(ing => ({
+            stokKod: ing.stokKod,
+            miktarGram: ing.miktarGram != null ? ing.miktarGram : (ing.miktarKg != null ? ing.miktarKg * 1000 : null)
+        }))
     };
     dialog.value = true;
 }
 async function hesaplaMaliyet(recete) {
     try {
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/receteler/maliyet`, {
-            ingredients: recete.ingredients
-        });
-        seciliMaliyet.value = {
-            recete: recete,
-            maliyet: response.data
+        // Recipe bazında maliyet analizi (GET)
+        const response = await apiCall(`/receteler/maliyet?recipeId=${recete.id}&includeBreakdown=true`);
+        const data = response?.data;
+        // Beklenen UI şemasına dönüştür
+        const breakdown = Array.isArray(data?.currentCostBreakdown?.items) ? data.currentCostBreakdown.items : [];
+        const detaylar = breakdown.map(it => ({
+            stokAd: it.materialName,
+            stokKod: it.materialCode,
+            miktarGram: (Number(it.quantity) || 0) * 1000,
+            birimFiyat: Number(it.unitPrice) || 0,
+            toplamFiyat: Number(it.totalCost) || 0
+        }));
+        const toplamAgirlik = detaylar.reduce((s, d) => s + (Number(d.miktarGram) || 0), 0);
+        const maliyet = {
+            toplamMaliyet: Number(data?.currentCostBreakdown?.totalCost) || 0,
+            toplamAgirlik,
+            detaylar
         };
+        seciliMaliyet.value = { recete, maliyet };
         maliyetDialog.value = true;
     } catch (err) {
         snackbar.value = { show: true, text: 'Maliyet hesaplanırken hata oluştu.', color: 'error' };
     }
+}
+
+function exportReceteler() {
+    const rows = [
+        ['Reçete Adı', 'Ürün', 'Malzeme Sayısı']
+    ];
+    filteredReceteler.value.forEach(r => {
+        rows.push([r.name, r.urunAd || '', Array.isArray(r.ingredients) ? r.ingredients.length : 0]);
+        if (Array.isArray(r.ingredients)) {
+            rows.push(['', 'Malzeme', 'Miktar (gr)']);
+            r.ingredients.forEach(i => rows.push(['', `${i.stokAd || i.stokKod || '-'}`, `${i.miktarGram || 0}`]));
+        }
+    });
+    const csv = rows.map(cols => cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'receteler.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 const filteredReceteler = computed(() => {
     let list = receteler.value;
@@ -523,7 +610,7 @@ onMounted(() => { fetchReceteler(); fetchDropdowns(); });
 .ingredients-table::-webkit-scrollbar-thumb {
     background: #BCAAA4;
     border-radius: 2px;
-    }
+}
 
 .ingredients-table::-webkit-scrollbar-thumb:hover {
     background: #A1887F;

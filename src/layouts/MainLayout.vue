@@ -104,8 +104,8 @@
             </template>
           </v-list-item>
 
-          <v-list-item to="/main/FiyatYonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-currency-usd"
-            :active="isActive('/main/FiyatYonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
+          <v-list-item to="/main/fiyat-yonetimi" title="Fiyat Yönetimi" link prepend-icon="mdi-currency-usd"
+            :active="isActive('/main/fiyat-yonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
             style="border-radius: 8px; color: white;">
             <template v-slot:prepend>
               <v-icon color="rgba(255,255,255,0.9)">mdi-currency-usd</v-icon>
@@ -303,7 +303,7 @@
               <v-text-field v-model="loginForm.password" label="Şifre" placeholder="Şifre" prepend-inner-icon="mdi-lock"
                 type="password" required variant="outlined" color="#8D6E63" />
               <v-alert v-if="loginError" type="error" dense class="mt-2" style="border-radius: 8px;">{{ loginError
-                }}</v-alert>
+              }}</v-alert>
             </v-card-text>
             <v-card-actions class="pa-4">
               <v-spacer />
@@ -370,7 +370,7 @@ const getCurrentPageTitle = () => {
     '/main/stok-yonetimi': 'Stok Yönetimi',
     '/main/kargo-operasyon': 'Kargo Operasyon',
     '/main/personel-yonetimi': 'Personel Yönetimi',
-    '/main/FiyatYonetimi': 'Fiyat Yönetimi',
+    '/main/fiyat-yonetimi': 'Fiyat Yönetimi',
     '/main/recete-yonetimi': 'Reçete Yönetimi',
     '/main/uretim-plani': 'Üretim Planı',
     '/main/satis-raporu': 'Satış Raporu',
@@ -759,7 +759,7 @@ function handleLogout() {
 onMounted(async () => {
   // Auth store'u başlat
   await authStore.initializeAuth();
-  
+
   updateScreen();
   window.addEventListener('resize', updateScreen);
 

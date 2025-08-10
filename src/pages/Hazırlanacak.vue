@@ -77,6 +77,7 @@
 <script setup>
 import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '../stores/auth';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 import { useRealtimeStore } from '../stores/realtime.js';
@@ -122,13 +123,30 @@ async function fetchOrdersToPrepare() {
     loading.value = true; error.value = null; orders.value = [];
     console.log('Fetching orders to prepare...');
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/hazirlanacak`);
-        // Gelen veriyi doğrudan kullanıyoruz, miktar alanları düzenlenebilir olacak
-        orders.value = response.data;
+        const authStore = useAuthStore();
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/hazirlanacak`, {
+            headers: {
+                'Authorization': `Bearer ${authStore.accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        // Backend response: {success: true, count: 4, orders: [...]}
+        // Template needs orders to be an array, not the whole response object
+        if (response.data.orders) {
+            orders.value = response.data.orders; // ✅ CORRECT: Extract orders array
+        } else {
+            orders.value = response.data; // Fallback for simple array response
+        }
         console.log('Fetched orders for preparation:', orders.value);
+        console.log('Orders count:', orders.value.length);
     } catch (err) {
         console.error('❌ Hazırlanacak siparişler çekilemedi:', err.response?.data || err.message || err);
-        showSnackbar(`Hazırlanacak siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`, 'error', 6000);
+        if (err.response?.status === 401) {
+            showSnackbar('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'warning', 6000);
+            authStore.logout();
+        } else {
+            showSnackbar(`Hazırlanacak siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`, 'error', 6000);
+        }
     } finally { loading.value = false; }
 }
 
@@ -161,14 +179,20 @@ async function saveAndMarkAsPrepared(order, index) {
     console.log(`PUT /api/siparis/${orderId} gönderiliyor (Gramaj & Hazırlandı):`, payload);
 
     try {
+        const authStore = useAuthStore();
         // PUT isteği ile hem kalem miktarlarını hem de durumu güncelle
-        const response = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
+        const response = await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload, {
+            headers: {
+                'Authorization': `Bearer ${authStore.accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
         // 🐍 Stok düşümü uyarılarını kontrol et ve global toast notifications göster
         if (response.data && response.data.stokUyarilari && response.data.stokUyarilari.length > 0) {
             // Store'a stok uyarılarını ekle (yılan efektli border için)
             realtimeStore.addStockWarnings(response.data.stokUyarilari, orderId);
-            
+
             // Her uyarı için ayrı toast notification göster
             response.data.stokUyarilari.forEach((uyari, index) => {
                 setTimeout(() => {
@@ -185,11 +209,11 @@ async function saveAndMarkAsPrepared(order, index) {
                     }
                 }, index * 500); // 500ms aralıklarla göster
             });
-            
+
             // Genel başarı mesajı (snackbar olarak)
             showSnackbar(
-                `Sipariş ${orderId} güncellendi! ${response.data.stokUyarilari.length} ürün için reçete eksik. ⚠️`, 
-                'warning', 
+                `Sipariş ${orderId} güncellendi! ${response.data.stokUyarilari.length} ürün için reçete eksik. ⚠️`,
+                'warning',
                 4000
             );
         } else {
@@ -204,7 +228,7 @@ async function saveAndMarkAsPrepared(order, index) {
                 });
             }
 
-        showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
+            showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve "Hazırlandı" olarak işaretlendi!`, 'success');
         }
 
         // Başarılı olursa listeden kaldır

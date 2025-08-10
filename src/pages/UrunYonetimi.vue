@@ -16,10 +16,7 @@
                     <v-icon left>mdi-plus</v-icon>
                     Yeni Ürün
                 </v-btn>
-                <v-btn color="secondary" size="large" @click="kategoriDialog = true">
-                    <v-icon left>mdi-folder-plus</v-icon>
-                    Kategori Yönet
-                </v-btn>
+                <!-- Kategori yönetimi kaldırıldı -->
             </v-col>
         </v-row>
 
@@ -30,7 +27,7 @@
                     <div class="d-flex align-center">
                         <v-icon size="40" class="mr-3">mdi-package-variant</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ istatistikler.toplamUrun }}</div>
+                            <div class="text-h4 font-weight-bold">{{ pagination.total }}</div>
                             <div class="text-subtitle-2">Toplam Ürün</div>
                         </div>
                     </div>
@@ -41,7 +38,7 @@
                     <div class="d-flex align-center">
                         <v-icon size="40" class="mr-3">mdi-check-circle</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ istatistikler.aktifUrun }}</div>
+                            <div class="text-h4 font-weight-bold">{{ aktifUrunSayisi }}</div>
                             <div class="text-subtitle-2">Aktif Ürün</div>
                         </div>
                     </div>
@@ -52,7 +49,7 @@
                     <div class="d-flex align-center">
                         <v-icon size="40" class="mr-3">mdi-star</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ istatistikler.ozelUrun }}</div>
+                            <div class="text-h4 font-weight-bold">{{ ozelUrunSayisi }}</div>
                             <div class="text-subtitle-2">Özel Ürün</div>
                         </div>
                     </div>
@@ -63,8 +60,8 @@
                     <div class="d-flex align-center">
                         <v-icon size="40" class="mr-3">mdi-folder</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ kategoriler.length }}</div>
-                            <div class="text-subtitle-2">Kategori</div>
+                            <div class="text-h4 font-weight-bold">—</div>
+                            <div class="text-subtitle-2">Kategori (kaldırıldı)</div>
                         </div>
                     </div>
                 </v-card>
@@ -83,11 +80,7 @@
                         <v-text-field v-model="filtreler.arama" label="Ürün Ara..." prepend-inner-icon="mdi-magnify"
                             clearable @input="aramaYap" variant="outlined" density="compact" />
                     </v-col>
-                    <v-col cols="12" md="3">
-                        <v-select v-model="filtreler.kategori" :items="kategoriSecenekleri" label="Kategori"
-                            prepend-inner-icon="mdi-folder" clearable @update:model-value="urunleriYukle"
-                            variant="outlined" density="compact" />
-                    </v-col>
+                    
                     <v-col cols="12" md="2">
                         <v-select v-model="filtreler.aktif" :items="[
                             { title: 'Tümü', value: '' },
@@ -117,12 +110,12 @@
                     <v-icon class="mr-2">mdi-view-list</v-icon>
                     Ürün Listesi ({{ pagination.total }} ürün)
                 </span>
-                <v-btn-toggle v-model="gorunumModu" mandatory>
-                    <v-btn value="liste" size="small">
-                        <v-icon>mdi-view-list</v-icon>
+                <v-btn-toggle v-model="gorunumModu" mandatory density="compact">
+                    <v-btn value="liste" size="small" variant="tonal">
+                        <v-icon size="18">mdi-view-list</v-icon>
                     </v-btn>
-                    <v-btn value="kart" size="small">
-                        <v-icon>mdi-view-grid</v-icon>
+                    <v-btn value="kart" size="small" variant="tonal">
+                        <v-icon size="18">mdi-view-grid</v-icon>
                     </v-btn>
                 </v-btn-toggle>
             </v-card-title>
@@ -130,58 +123,56 @@
             <!-- Liste Görünümü -->
             <v-data-table v-if="gorunumModu === 'liste'" :headers="headers" :items="urunler" :loading="yukleniyor"
                 :items-per-page="pagination.limit" :page="pagination.page" :server-items-length="pagination.total"
-                @update:page="sayfaDegistir" class="elevation-0">
+                :items-per-page-options="[20,50,100,200]" hide-default-footer density="compact"
+                @update:page="sayfaDegistir" @update:items-per-page="(n)=>{ pagination.limit=n; pagination.page=1; urunleriYukle(); }" class="elevation-0">
                 <!-- Ürün Adı -->
                 <template v-slot:item.ad="{ item }">
                     <div class="d-flex align-center">
-                        <v-avatar size="40" class="mr-3" color="grey-lighten-3">
+                        <v-avatar size="32" class="mr-3" color="grey-lighten-3">
                             <v-img v-if="item.anaGorsel" :src="item.anaGorsel" :alt="item.ad" />
                             <v-icon v-else>mdi-package-variant</v-icon>
                         </v-avatar>
                         <div>
-                            <div class="font-weight-medium">{{ item.ad }}</div>
-                            <div class="text-caption text-grey-600">{{ item.kodu }}</div>
+                            <div class="font-weight-medium truncate">{{ item.ad }}</div>
+                            <div class="text-caption text-grey-600 truncate">{{ item.kodu }}</div>
                         </div>
                     </div>
                 </template>
 
-                <!-- Kategori -->
-                <template v-slot:item.kategori="{ item }">
-                    <v-chip v-if="item.kategori" :color="item.kategori.renk" size="small" variant="tonal">
-                        <v-icon left size="16">{{ item.kategori.ikon }}</v-icon>
-                        {{ item.kategori.ad }}
-                    </v-chip>
-                    <span v-else class="text-grey-500">-</span>
-                </template>
+                <!-- Kategori sütunu kaldırıldı -->
 
                 <!-- Fiyat -->
                 <template v-slot:item.guncelFiyat="{ item }">
-                    <div v-if="item.guncelFiyat">
-                        <div class="font-weight-medium">
-                            {{ formatFiyat(item.guncelFiyat.kgFiyati) }} / {{ item.guncelFiyat.birim }}
+                    <div class="text-right">
+                        <div v-if="item.guncelFiyat">
+                            <div class="font-weight-medium">
+                                {{ formatFiyat(item.guncelFiyat.kgFiyati) }} <span class="text-caption">/ {{ item.guncelFiyat.birim }}</span>
+                            </div>
+                            <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'NORMAL'" size="x-small" color="orange" variant="tonal">
+                                {{ item.guncelFiyat.fiyatTipi }}
+                            </v-chip>
                         </div>
-                        <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'NORMAL'" size="x-small" color="orange"
-                            variant="tonal">
-                            {{ item.guncelFiyat.fiyatTipi }}
-                        </v-chip>
+                        <span v-else class="text-grey-500">Fiyat yok</span>
                     </div>
-                    <span v-else class="text-grey-500">Fiyat yok</span>
                 </template>
 
                 <!-- Reçete -->
                 <template v-slot:item.recete="{ item }">
-                    <div v-if="item.receteAdedi > 0" class="d-flex align-center">
-                        <v-icon size="small" color="success" class="mr-1">mdi-food-variant</v-icon>
-                        <span class="text-body-2">{{ item.receteAdedi }} reçete</span>
-                        <v-btn icon="mdi-eye" size="x-small" variant="text" color="info" 
-                               @click="receteDetayGoster(item)" class="ml-1" title="Reçete Detayı"></v-btn>
+                    <div class="d-flex align-center">
+                        <template v-if="(item.recipeCount ?? item.receteAdedi ?? 0) > 0">
+                            <v-chip size="small" color="success" variant="tonal" class="mr-2">
+                                <v-icon start size="16">mdi-food-variant</v-icon>
+                                {{ item.recipeCount ?? item.receteAdedi }} reçete
+                            </v-chip>
+                            <v-btn icon="mdi-eye" size="x-small" variant="text" color="info" @click="receteDetayGoster(item)" />
+                        </template>
+                        <span v-else class="text-grey-500">Reçete yok</span>
                     </div>
-                    <span v-else class="text-grey-500">Reçete yok</span>
                 </template>
 
                 <!-- Durum -->
                 <template v-slot:item.durum="{ item }">
-                    <div class="d-flex flex-column gap-1">
+                    <div class="d-flex flex-column gap-1 align-center">
                         <v-chip :color="item.aktif ? 'success' : 'error'" size="small" variant="tonal">
                             {{ item.aktif ? 'Aktif' : 'Pasif' }}
                         </v-chip>
@@ -280,17 +271,17 @@
 
                 <!-- Sayfalama -->
                 <div class="d-flex justify-center mt-4">
-                    <v-pagination v-model="pagination.page" :length="pagination.totalPages"
+                    <v-pagination v-model="pagination.page" :length="Math.max(pagination.totalPages,1)" density="compact"
                         @update:model-value="sayfaDegistir" />
                 </div>
             </div>
         </v-card>
 
         <!-- Yeni Ürün Dialog -->
-        <UrunFormDialog v-model="yeniUrunDialog" :kategoriler="kategoriler" @kaydet="urunKaydet" />
+        <UrunFormDialog v-model="yeniUrunDialog" @kaydet="urunKaydet" />
 
         <!-- Ürün Düzenleme Dialog -->
-        <UrunFormDialog v-model="duzenleDialog" :kategoriler="kategoriler" :urun="seciliUrun" @kaydet="urunGuncelle" />
+        <UrunFormDialog v-model="duzenleDialog" :urun="seciliUrun" @kaydet="urunGuncelle" />
 
         <!-- Ürün Detay Dialog -->
         <UrunDetayDialog v-model="detayDialog" :urun="seciliUrun" />
@@ -315,7 +306,7 @@
                                 </v-list-item-subtitle>
                                 <template v-slot:append>
                                     <v-btn icon="mdi-eye" size="small" variant="text" color="info"
-                                           @click="receteMalzemeGoster(recete)" title="Malzemeleri Göster"></v-btn>
+                                        @click="receteMalzemeGoster(recete)" title="Malzemeleri Göster"></v-btn>
                                 </template>
                             </v-list-item>
                         </v-list>
@@ -353,7 +344,7 @@
                                 <td>{{ malzeme.stokAd || malzeme.stokKod }}</td>
                                 <td>
                                     <v-chip :color="malzeme.stokTip === 'Hammadde' ? 'success' : 'warning'"
-                                           size="x-small" variant="tonal">
+                                        size="x-small" variant="tonal">
                                         {{ malzeme.stokTip }}
                                     </v-chip>
                                 </td>
@@ -372,7 +363,7 @@
         </v-dialog>
 
         <!-- Kategori Yönetimi Dialog -->
-        <KategoriYonetimDialog v-model="kategoriDialog" @guncelle="kategorileriYukle" />
+        <!-- Kategori yönetim dialogu kaldırıldı -->
 
         <!-- Silme Onay Dialog -->
         <v-dialog v-model="silmeDialog" max-width="400">
@@ -470,29 +461,18 @@ export default {
 
         // Tablo başlıkları
         const headers = [
-            { title: 'Ürün', key: 'ad', sortable: false },
-            { title: 'Kategori', key: 'kategori', sortable: false },
-            { title: 'Fiyat', key: 'guncelFiyat', sortable: false },
-            { title: 'Reçete', key: 'recete', sortable: false, width: 120 },
-            { title: 'Durum', key: 'durum', sortable: false },
+            { title: 'Ürün', key: 'ad', sortable: false, width: 340 },
+            { title: 'Fiyat', key: 'guncelFiyat', sortable: false, align: 'end', width: 180 },
+            { title: 'Reçete', key: 'recete', sortable: false, width: 140 },
+            { title: 'Durum', key: 'durum', sortable: false, width: 140 },
             { title: 'İşlemler', key: 'islemler', sortable: false, width: 120 }
         ]
 
         // Computed
-        const kategoriSecenekleri = computed(() => {
-            return kategoriler.value.map(k => ({
-                title: k.ad,
-                value: k.id
-            }))
-        })
+        const kategoriSecenekleri = computed(() => [])
 
-        const istatistikler = computed(() => {
-            return {
-                toplamUrun: urunler.value.length,
-                aktifUrun: urunler.value.filter(u => u.aktif).length,
-                ozelUrun: urunler.value.filter(u => u.ozelUrun).length
-            }
-        })
+        const aktifUrunSayisi = computed(() => urunler.value.filter(u => u.aktif).length)
+        const ozelUrunSayisi = computed(() => urunler.value.filter(u => u.ozelUrun).length)
 
         // Methods
         const snackbarGoster = (text, color = 'success') => {
@@ -508,15 +488,7 @@ export default {
             }).format(fiyat)
         }
 
-        const kategorileriYukle = async () => {
-            try {
-                const data = await apiCall('/kategoriler')
-                kategoriler.value = data.kategoriler
-            } catch (error) {
-                console.error('Kategoriler yüklenirken hata:', error)
-                snackbarGoster('Kategoriler yüklenirken hata oluştu', 'error')
-            }
-        }
+        const kategorileriYukle = async () => { kategoriler.value = [] }
 
         const urunleriYukle = async () => {
             yukleniyor.value = true
@@ -527,7 +499,7 @@ export default {
                 })
 
                 if (filtreler.arama) params.append('search', filtreler.arama)
-                if (filtreler.kategori) params.append('kategori', filtreler.kategori)
+                // kategori filtresi kaldırıldı
                 if (filtreler.aktif !== '') params.append('aktif', filtreler.aktif)
 
                 if (filtreler.siralama) {
@@ -538,9 +510,13 @@ export default {
 
                 const data = await apiCall(`/urunler?${params}`)
 
-                urunler.value = data.urunler
-                pagination.total = data.pagination.total
-                pagination.totalPages = data.pagination.totalPages
+                const list = Array.isArray(data?.products) ? data.products
+                    : Array.isArray(data?.urunler) ? data.urunler
+                        : Array.isArray(data) ? data
+                            : []
+                urunler.value = list
+                pagination.total = data?.pagination?.total ?? list.length
+                pagination.totalPages = data?.pagination?.pages ?? Math.ceil((pagination.total || 0) / (pagination.limit || 20))
 
             } catch (error) {
                 console.error('Ürünler yüklenirken hata:', error)
@@ -556,6 +532,7 @@ export default {
         }
 
         const sayfaDegistir = (yeniSayfa) => {
+            if (!yeniSayfa || yeniSayfa === pagination.page) return
             pagination.page = yeniSayfa
             urunleriYukle()
         }
@@ -567,9 +544,10 @@ export default {
 
         const receteDetayGoster = async (urun) => {
             try {
-                // Ürünün reçetelerini getir
-                const response = await apiCall(`/receteler?urunId=${urun.id}`)
-                seciliRecete.value = response
+                const response = await apiCall(`/receteler?urunId=${urun.id}`, { method: 'GET' })
+                // Beklenen format: { recipes: [...] }
+                const list = Array.isArray(response?.recipes) ? response.recipes : Array.isArray(response) ? response : []
+                seciliRecete.value = list
                 seciliUrun.value = urun
                 receteDialog.value = true
             } catch (error) {
@@ -595,10 +573,20 @@ export default {
 
         const urunKaydet = async (urunData) => {
             try {
-                await apiCall('/urunler', 'POST', urunData)
-                    snackbarGoster('Ürün başarıyla oluşturuldu')
-                    yeniUrunDialog.value = false
-                    urunleriYukle()
+                // Backend POST /urunler ad ve kod ister (kod uppercase).
+                const payload = {
+                    ad: urunData.ad,
+                    kod: (urunData.kod || urunData.ad || '').toString().toUpperCase().replace(/\s+/g, '_'),
+                    kategoriId: null,
+                    aciklama: urunData.aciklama || null,
+                    birim: urunData.birim || 'KG',
+                    minStokSeviye: urunData.minStokSeviye || 0,
+                    satisaUygun: urunData.satisaUygun !== false
+                }
+                await apiCall('/urunler', payload, 'POST')
+                snackbarGoster('Ürün başarıyla oluşturuldu')
+                yeniUrunDialog.value = false
+                urunleriYukle()
             } catch (error) {
                 console.error('Ürün kaydetme hatası:', error)
                 snackbarGoster(error.message || 'Ürün kaydedilirken hata oluştu', 'error')
@@ -607,10 +595,12 @@ export default {
 
         const urunGuncelle = async (urunData) => {
             try {
-                await apiCall(`/urunler/${seciliUrun.value.id}`, 'PUT', urunData)
-                    snackbarGoster('Ürün başarıyla güncellendi')
-                    duzenleDialog.value = false
-                    urunleriYukle()
+                const payload = { ...urunData }
+                if (payload.kategori) { delete payload.kategori }
+                await apiCall(`/urunler`, { id: seciliUrun.value.id, ...payload }, 'PUT')
+                snackbarGoster('Ürün başarıyla güncellendi')
+                duzenleDialog.value = false
+                urunleriYukle()
             } catch (error) {
                 console.error('Ürün güncelleme hatası:', error)
                 snackbarGoster(error.message || 'Ürün güncellenirken hata oluştu', 'error')
@@ -620,10 +610,10 @@ export default {
         const urunSilOnayla = async () => {
             silmeYukleniyor.value = true
             try {
-                await apiCall(`/urunler/${seciliUrun.value.id}`, 'DELETE')
-                    snackbarGoster('Ürün başarıyla silindi')
-                    silmeDialog.value = false
-                    urunleriYukle()
+                await apiCall(`/urunler`, { id: seciliUrun.value.id }, 'DELETE')
+                snackbarGoster('Ürün başarıyla silindi')
+                silmeDialog.value = false
+                urunleriYukle()
             } catch (error) {
                 console.error('Ürün silme hatası:', error)
                 snackbarGoster(error.message || 'Ürün silinirken hata oluştu', 'error')
@@ -634,7 +624,6 @@ export default {
 
         // Lifecycle
         onMounted(() => {
-            kategorileriYukle()
             urunleriYukle()
         })
 
@@ -662,7 +651,8 @@ export default {
 
             // Computed
             kategoriSecenekleri,
-            istatistikler,
+            aktifUrunSayisi,
+            ozelUrunSayisi,
 
             // Methods
             formatFiyat,

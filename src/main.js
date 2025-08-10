@@ -40,8 +40,20 @@ app.use(router)
 app.use(vuetify)
 app.use(Toast, toastOptions)
 
+// Initialize auth store
+import { useAuthStore } from '@/stores/auth'
+
 // Wait for router to be ready before mounting
-router.isReady().then(() => {
+router.isReady().then(async () => {
     app.mount('#app')
     console.log('✅ Router ready and app mounted')
+
+    // Initialize auth after mount
+    const authStore = useAuthStore()
+    try {
+        await authStore.initializeAuth()
+        console.log('✅ Auth store initialized')
+    } catch (error) {
+        console.warn('⚠️ Auth initialization failed:', error)
+    }
 })

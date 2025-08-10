@@ -163,7 +163,7 @@
         loading-text="Hareketler yükleniyor...">
         <template v-slot:item.stok="{ item }">
           <span>{{ item.stok.hammadde?.ad || item.stok.yariMamul?.ad }}<br><small>{{ item.stok.operasyonBirimi?.ad
-          }}</small></span>
+              }}</small></span>
         </template>
         <template v-slot:item.tip="{ item }">
           <span>{{ hareketTipLabel(item.tip) }}</span>
@@ -353,7 +353,10 @@ async function fetchStoklar() {
   error.value = null;
   try {
     const response = await apiCall('/stok');
-    stoklar.value = response;
+    const list = Array.isArray(response?.materials) ? response.materials
+      : Array.isArray(response) ? response
+        : []
+    stoklar.value = list;
   } catch (err) {
     error.value = 'Malzemeler yüklenirken hata oluştu.';
     stoklar.value = [];
@@ -376,7 +379,7 @@ onMounted(() => {
 
   // Backend'den gelen alan adı 'rol', frontend'te 'role' olarak kullanılıyor
   const userRole = user.rol || user.role;
-  const isAdmin = user && yetkiliRoller.includes(userRole);
+  const isAdmin = user && yetkiliRoller.map(r => r.toUpperCase()).includes((userRole || '').toUpperCase());
 
   // GEÇİCİ OLARAK YETKİ KONTROLÜ KAPALI - GELIŞTIRME İÇİN
   if (!user || !userRole) {
@@ -512,7 +515,7 @@ async function fetchTransferHistory() {
   transferHistoryLoading.value = true;
   try {
     const res = await apiCall('/stok/transfer');
-    transferHistory.value = res;
+    transferHistory.value = Array.isArray(res) ? res : [];
   } catch (err) {
     transferHistory.value = [];
   } finally {
@@ -553,7 +556,7 @@ async function fetchHareketler() {
   try {
     const params = hareketFilterStokId.value ? { stokId: hareketFilterStokId.value } : {};
     const res = await apiCall('/stok/hareket', { params });
-    hareketler.value = res;
+    hareketler.value = Array.isArray(res) ? res : [];
   } catch (err) {
     hareketler.value = [];
   } finally {
@@ -615,7 +618,7 @@ async function fetchRapor() {
   try {
     const params = { start: raporStart.value, end: raporEnd.value };
     const res = await apiCall('/stok/rapor', { params });
-    rapor.value = res;
+    rapor.value = res && typeof res === 'object' ? res : {};
   } catch (err) {
     rapor.value = {};
   } finally {

@@ -14,10 +14,7 @@
                         <v-col cols="12" md="6">
                             <v-text-field v-model="urunData.kodu" label="Ürün Kodu" required></v-text-field>
                         </v-col>
-                        <v-col cols="12" md="6">
-                            <v-select v-model="urunData.kategoriId" :items="kategoriler" item-title="ad" item-value="id"
-                                label="Kategori" required></v-select>
-                        </v-col>
+                        <!-- Kategori alanını kaldırıldı -->
                         <v-col cols="12" md="6">
                             <v-text-field v-model="urunData.fiyat" label="Fiyat" type="number" required></v-text-field>
                         </v-col>
@@ -58,10 +55,7 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
     modelValue: Boolean,
-    kategoriler: {
-        type: Array,
-        default: () => []
-    },
+    // kategoriler kaldırıldı
     urun: {
         type: Object,
         default: null

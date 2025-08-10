@@ -29,7 +29,7 @@
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
-            <CacheStatus />
+            <!-- Cache Status kaldırıldı -->
             <v-btn size="x-large" color="white" variant="elevated" @click="() => { }" class="font-weight-bold"
               style="color: #2E7D32 !important; box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);">
               <v-icon left size="20">mdi-plus-circle</v-icon>
@@ -91,29 +91,25 @@
                 label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenAdi" label="Gönderen Adı" :rules="[rules.required]" variant="outlined"
-                color="#388E3C" />
+              <v-select v-model="selectedPersonel" :items="dropdowns.personeller" item-title="displayName"
+                item-value="id" return-object label="Gönderen Personel" @update:modelValue="onPersonelSelect"
+                :rules="[rules.required]" variant="outlined" color="#388E3C" placeholder="Personel seçiniz..."
+                prepend-inner-icon="mdi-account" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" maxlength="11" :rules="[rules.phone]"
-                placeholder="5xxxxxxxxx" variant="outlined" color="#388E3C" />
+              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" :rules="[rules.phone]"
+                :readonly="selectedPersonel && selectedPersonel.telefon" variant="outlined" color="#388E3C"
+                :placeholder="selectedPersonel && !selectedPersonel.telefon ? 'Telefon numarası yok, manuel girin' : 'Personel seçilince otomatik doldurulur'"
+                prepend-inner-icon="mdi-phone" @input="onGonderenTelInput"
+                :hint="selectedPersonel && !selectedPersonel.telefon ? 'Bu personel için telefon kayıtlı değil' : ''"
+                persistent-hint />
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
-                <v-autocomplete 
-                  v-model="selectedCari" 
-                  v-model:search="searchQuery"
-                  :items="filteredCariler"
-                  item-title="displayName"
-                  item-value="id"
-                  return-object
-                  label="Alıcı Adı" 
-                  clearable
-                  no-data-text="Müşteri bulunamadı" 
-                  placeholder="Müşteri adı arayın..."
-                  @update:model-value="onCariSelected" 
-                  @update:search="onSearchInput"
-                  variant="outlined" 
+                <v-autocomplete v-model="selectedCari" v-model:search="searchQuery" :items="filteredCariler"
+                  item-title="displayName" item-value="id" return-object label="Alıcı Adı" clearable
+                  no-data-text="Müşteri bulunamadı" placeholder="Müşteri adı arayın..."
+                  @update:model-value="onCariSelected" @update:search="onSearchInput" variant="outlined"
                   color="#388E3C">
                   <template v-slot:item="{ props, item }">
                     <v-list-item v-bind="props" :title="item.raw.displayName">
@@ -469,8 +465,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
-import { useCacheStoreWithInit } from '../stores/cache.js';
-import CacheStatus from '../components/CacheStatus.vue';
+import { useAuthStore } from '../stores/auth.js';
+// Cache sistemi kaldırıldı - artık direct API çağrıları kullanılıyor
+// import CacheStatus from '../components/CacheStatus.vue';
 // Custom Vuetify theme devre dışı (test için)
 // import { createCustomVuetify } from '../plugins/vuetify';
 // const siparisVuetify = createCustomVuetify({ themeName: 'siparisTheme' });
@@ -496,15 +493,33 @@ const form = reactive({
 
 const rules = {
   required: value => !!value || 'Bu alan zorunludur.',
-  phone: value => /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
-  optionalPhone: value => !value || /^\d{11}$/.test(value) || 'Telefon numarası 11 haneli sayı olmalıdır.',
+  phone: value => {
+    if (!value) return 'Telefon numarası zorunludur.';
+    const cleanPhone = value.replace(/\s/g, '');
+    const phoneRegex = /^(\+90|0)?[5][0-9]{9}$/;
+    return phoneRegex.test(cleanPhone) || 'Geçerli Türk telefon formatı: 5XXXXXXXXX, 05XXXXXXXXX veya +905XXXXXXXXX';
+  },
+  optionalPhone: value => {
+    if (!value) return true;
+    const cleanPhone = value.replace(/\s/g, '');
+    const phoneRegex = /^(\+90|0)?[5][0-9]{9}$/;
+    return phoneRegex.test(cleanPhone) || 'Geçerli Türk telefon formatı: 5XXXXXXXXX, 05XXXXXXXXX veya +905XXXXXXXXX';
+  },
 };
 
-// Cache store
-const cacheStore = useCacheStoreWithInit();
-
-// Reactive reference to cached data
-const dropdowns = computed(() => cacheStore.dropdownData);
+// Dropdown data management - cache kaldırıldı, direct API kullanılıyor
+const dropdowns = ref({
+  cariler: [],
+  urunler: [],
+  kategoriler: [],
+  teslimatTurleri: [],
+  aliciTipleri: [],
+  odemeYontemleri: [],
+  subeler: [],
+  tepsiTavalar: [],
+  kutular: [],
+  personeller: []
+})
 
 const orderPackages = ref([]);
 const isPackageDialogOpen = ref(false);
@@ -526,6 +541,7 @@ const newItemInPackage = ref({
 });
 
 const selectedCari = ref(null);
+const selectedPersonel = ref(null);
 const searchQuery = ref('');
 const cariAdresler = ref([]);
 const selectedAdres = ref(null);
@@ -568,41 +584,32 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbar.value = true;
 }
 
-onMounted(async () => {
+// Dropdown refresh function - cache sisteminin yerine
+async function refreshDropdowns() {
   try {
-    // Check if user is authenticated
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('⚠️ No auth token found, trying test endpoint');
-      // Try test endpoint for unauthenticated users
-      await cacheStore.fetchDropdownData({ useTestEndpoint: true });
-      return;
-    }
-    
-    // Fetch dropdown data with smart caching
-    await cacheStore.fetchDropdownData();
-    
-    console.log('✅ Dropdown data ready:', {
-      cariler: cacheStore.getCariler?.length || 0,
-      urunler: cacheStore.getUrunler?.length || 0,
-      cached: cacheStore.isCacheValid,
-      health: cacheStore.cacheHealth
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    const authStore = useAuthStore();
+
+    const response = await fetch(`${apiUrl}/dropdown`, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      }
     });
+
+    if (!response.ok) throw new Error('Dropdown fetch failed');
+
+    const result = await response.json();
+    Object.assign(dropdowns.value, result.data);
+    console.log('✅ Dropdown\'lar yenilendi');
   } catch (err) {
     console.error('❌ Dropdown loading error:', err);
-    
-    // Show user-friendly error message
-    showSnackbar('Veri yüklenirken hata oluştu. Sayfa yenilenecek.', 'error');
-    
-    // Try fallback after delay
-    setTimeout(() => {
-      cacheStore.fetchDropdownData({ useTestEndpoint: true, force: true })
-        .catch(() => {
-          showSnackbar('Veri yüklenemedi. Lütfen internet bağlantınızı kontrol edin.', 'error');
-        });
-    }, 2000);
   }
-});
+}
+
+onMounted(async () => {
+  await refreshDropdowns();
+})
 
 const selectedTeslimatTuru = computed(() => dropdowns.value.teslimatTurleri.find(t => t.id === form.teslimatTuruId));
 const showSube = computed(() => selectedTeslimatTuru.value?.ad === 'Şubeden Teslim');
@@ -616,17 +623,17 @@ const adresEnabled = computed(() => {
 });
 
 // Cari listesi için computed property
+function trLower(text) { return (text || '').toLocaleLowerCase('tr-TR'); }
+
 const filteredCariler = computed(() => {
   if (!dropdowns.value.cariler || dropdowns.value.cariler.length === 0) return [];
-  
-  // Her cari için displayName ekle
+
+  const query = trLower(searchQuery.value || '');
   return dropdowns.value.cariler.map(cari => ({
     ...cari,
     displayName: `${cari.ad} ${cari.soyad || ''}`.trim()
   })).filter(cari => {
-    if (!searchQuery.value) return true;
-    
-    const query = searchQuery.value.toLowerCase();
+    if (!query) return true;
     const searchFields = [
       cari.ad || '',
       cari.soyad || '',
@@ -634,10 +641,7 @@ const filteredCariler = computed(() => {
       cari.telefon || '',
       cari.musteriKodu || ''
     ];
-    
-    return searchFields.some(field => 
-      field.toString().toLowerCase().includes(query)
-    );
+    return searchFields.some(field => trLower(field.toString()).includes(query));
   });
 });
 
@@ -746,7 +750,7 @@ function onSearchInput(value) {
 
 function onCariSelected(cari) {
   console.log('🎯 Cari selected:', cari);
-  
+
   if (cari && typeof cari === 'object') {
     // return-object kullandığımız için cari artık tam bir object
     form.aliciAdi = cari.displayName || `${cari.ad} ${cari.soyad || ''}`.trim();
@@ -798,15 +802,24 @@ async function onCariBlur() {
   if (!girilenAd || selectedCari.value) return; // Zaten seçili bir cari varsa işlem yapma
 
   // Basit arama - mevcut carilerde var mı kontrol et
-  const mevcutCari = filteredCariler.value.find(c => 
-    c.displayName.toLowerCase() === girilenAd.toLowerCase() ||
-    c.ad.toLowerCase() === girilenAd.toLowerCase()
+  const mevcutCari = filteredCariler.value.find(c =>
+    trLower(c.displayName) === trLower(girilenAd) ||
+    trLower(c.ad) === trLower(girilenAd)
   );
 
   if (!mevcutCari) {
     // Yeni müşteri oluştur
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`, { ad: girilenAd });
+      const authStore = useAuthStore();
+      const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/cari`,
+        { cariAdi: girilenAd, telefon: '0000000000', musteriKodu: `AUTO-${Date.now()}` },
+        {
+          headers: {
+            'Authorization': `Bearer ${authStore.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       if (data && data.id) {
         // Tam ad bilgisini oluştur
         const newCariData = {
@@ -814,10 +827,9 @@ async function onCariBlur() {
           displayName: `${data.ad} ${data.soyad || ''}`.trim(),
           adresler: data.adresler || []
         };
-        
-        // Yeni cariyi cache'e ekle
-        // Trigger cache refresh to include new cari
-        cacheStore.refreshCache();
+
+        // Dropdown'ları yenile (yeni cari için)
+        await refreshDropdowns();
 
         // Yeni cariyi seç
         selectedCari.value = newCariData;
@@ -858,6 +870,33 @@ function onAliciTelInput(val) {
   }
 }
 
+// Personel seçim fonksiyonu
+function onPersonelSelect(personel) {
+  if (personel) {
+    form.gonderenAdi = personel.ad;
+    form.gonderenTel = personel.telefon || '';
+    console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon || 'telefon yok');
+
+    if (!personel.telefon) {
+      showSnackbar('Bu personel için telefon numarası kayıtlı değil. Lütfen manuel girin.', 'warning');
+    }
+  } else {
+    form.gonderenAdi = '';
+    form.gonderenTel = '';
+  }
+}
+
+// Gönderen telefon input fonksiyonu
+function onGonderenTelInput(val) {
+  // Türk telefon formatına uygun input temizleme
+  const cleanValue = val.replace(/[^\d+]/g, '');
+
+  // Maksimum 13 karakter (+905XXXXXXXXX)
+  if (cleanValue.length <= 13) {
+    form.gonderenTel = cleanValue;
+  }
+}
+
 async function submitForm() {
   const { valid: formIsValid } = await formRef.value.validate();
   if (!formIsValid || orderPackages.value.length === 0) {
@@ -882,19 +921,25 @@ async function submitForm() {
     gonderenTipiId: form.gonderenTipiId,
     gonderenAdi: form.gonderenAdi,
     gonderenTel: form.gonderenTel,
-    aliciAdi: form.aliciAdi,
+    aliciAdi: form.aliciAdi || '',
     aliciTel: form.aliciTel,
     adres: form.adres,
     aciklama: form.aciklama,
-    siparisler: siparisPayload,
-    gorunecekAd: aliciGondericiAdi,
+    kalemler: siparisPayload,  // Backend 'kalemler' bekliyor
+    gorunecekAd: aliciGondericiAdi || form.gonderenAdi,
     subeNeredenId: form.subeNeredenId,
     subeNereyeId: form.subeNereyeId
   };
   console.log('Gönderilecek Payload:', JSON.stringify(payload, null, 2));
   try {
     console.log('🚀 Sipariş API çağrısı başlıyor...');
-    const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload);
+    const authStore = useAuthStore();
+    const { data } = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/siparis`, payload, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
     console.log('✅ Sipariş kaydedildi:', data);
     successDialog.value = true;
   } catch (err) {
@@ -945,12 +990,8 @@ async function saveAdres() {
   adresLoading.value = true;
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/cari/${selectedCari.value}/adres`,
-      newAdres
-    );
-
-    const yeniAdres = response.data;
+    const response = await apiCall(`/cari/${selectedCari.value?.id || selectedCari.value}/adres`, newAdres, 'POST');
+    const yeniAdres = response;
 
     // Adres listesini güncelle
     cariAdresler.value.push(yeniAdres);
@@ -967,7 +1008,7 @@ async function saveAdres() {
     form.adres = yeniAdres.adres;
 
     // Cari dropdown'ındaki veriyi de güncelle
-    const cari = dropdowns.value.cariler.find(c => c.id === selectedCari.value);
+    const cari = dropdowns.value.cariler.find(c => c.id === (selectedCari.value?.id || selectedCari.value));
     if (cari) {
       if (!cari.adresler) cari.adresler = [];
       cari.adresler.push(yeniAdres);
@@ -979,7 +1020,7 @@ async function saveAdres() {
   } catch (error) {
     console.error('Adres ekleme hatası:', error);
     showSnackbar(
-      `Adres eklenirken hata oluştu: ${error.response?.data?.error || error.message}`,
+      `Adres eklenirken hata oluştu: ${error?.error || error?.message}`,
       'error'
     );
   } finally {
@@ -1034,6 +1075,7 @@ function resetForm() {
   form.aciklama = '';
   orderPackages.value = [];
   selectedCari.value = null;
+  selectedPersonel.value = null;
   searchQuery.value = '';
   cariAdresler.value = [];
   selectedAdres.value = null;

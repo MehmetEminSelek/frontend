@@ -6,7 +6,13 @@
 
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import { securityErrorHandler, InputSanitizer, SECURITY_LEVELS } from './security'
+
+// Basit security levels
+const SECURITY_LEVELS = {
+    NORMAL: 'NORMAL',
+    HIGH: 'HIGH',
+    CRITICAL: 'CRITICAL'
+}
 
 // API Configuration
 const API_CONFIG = {
@@ -45,9 +51,9 @@ const createSecureApiClient = () => {
                 // Add security level
                 config.headers['X-Security-Level'] = authStore.securityLevel || SECURITY_LEVELS.NORMAL
 
-                // Input sanitization for POST/PUT requests
+                // Basit input sanitization
                 if (['post', 'put', 'patch'].includes(config.method.toLowerCase()) && config.data) {
-                    config.data = sanitizeRequestData(config.data)
+                    config.data = basicSanitizeData(config.data)
                 }
 
                 // Cache control for GET requests
@@ -86,7 +92,6 @@ const createSecureApiClient = () => {
             const securityWarning = response.headers['x-security-warning']
             if (securityWarning) {
                 console.warn('Security Warning:', securityWarning)
-                securityErrorHandler.showSecurityAlert(securityWarning, 'warning')
             }
 
             return response
@@ -115,14 +120,15 @@ const createSecureApiClient = () => {
                 }
             }
 
-            // Handle security errors
-            const securityError = securityErrorHandler.handleApiError(error, {
+            // Basit error handling
+            console.error('API Error:', {
                 url: error.config?.url,
                 method: error.config?.method,
-                userId: authStore.user?.id
+                status: error.response?.status,
+                message: error.message
             })
 
-            return Promise.reject(securityError)
+            return Promise.reject(error)
         }
     )
 
@@ -130,21 +136,22 @@ const createSecureApiClient = () => {
 }
 
 /**
- * Sanitize request data
+ * Basit input sanitization
  */
-function sanitizeRequestData(data) {
+function basicSanitizeData(data) {
     if (typeof data === 'string') {
-        return InputSanitizer.sanitizeString(data)
+        // XSS koruması için basit temizlik
+        return data.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     }
 
     if (Array.isArray(data)) {
-        return data.map(item => sanitizeRequestData(item))
+        return data.map(item => basicSanitizeData(item))
     }
 
     if (typeof data === 'object' && data !== null) {
         const sanitized = {}
         for (const [key, value] of Object.entries(data)) {
-            sanitized[key] = sanitizeRequestData(value)
+            sanitized[key] = basicSanitizeData(value)
         }
         return sanitized
     }
@@ -464,11 +471,25 @@ const apiClient = new EnhancedApiClient()
 const api = new ApiEndpoints(apiClient)
 
 // Legacy apiCall function for backward compatibility
-export function apiCall(url, options = {}) {
-    return apiClient.request({
-        url,
-        ...options
-    })
+export function apiCall(url, options = {}, method = undefined) {
+    // Support signature: apiCall(url, data, 'POST'|'PUT'|'PATCH'|'DELETE')
+    if (typeof method === 'string') {
+        const upper = method.toUpperCase()
+        const config = { url, method: upper }
+        if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(upper)) {
+            if (options && typeof options === 'object' && (options.data !== undefined || options.params || options.headers)) {
+                Object.assign(config, options)
+            } else {
+                config.data = options
+            }
+        } else {
+            Object.assign(config, options)
+        }
+        return apiClient.request(config)
+    }
+
+    // Default behavior
+    return apiClient.request({ url, ...options })
 }
 
 // Export enhanced API client and endpoints

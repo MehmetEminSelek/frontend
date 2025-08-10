@@ -47,35 +47,31 @@
         <!-- Statistics Cards -->
         <v-row class="mb-6">
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2"
-                    style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); color: white; border: 1px solid #BBDEFB;">
-                    <v-icon size="40" class="mb-2">mdi-package-variant</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoyaVerilecek }}</div>
-                    <div class="text-body-2">Kargoya Verilecek</div>
+                <v-card class="text-center pa-4 rounded-xl soft-card">
+                    <v-icon size="32" class="mb-2" color="primary">mdi-package-variant</v-icon>
+                    <div class="text-h5 font-weight-bold">{{ kargoIstatistikleri.kargoyaVerilecek }}</div>
+                    <div class="text-body-2 text-grey-700">Kargoya Verilecek</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2"
-                    style="background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%); color: white; border: 1px solid #C8E6C9;">
-                    <v-icon size="40" class="mb-2">mdi-truck-fast</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.kargoda }}</div>
-                    <div class="text-body-2">Kargoda</div>
+                <v-card class="text-center pa-4 rounded-xl soft-card">
+                    <v-icon size="32" class="mb-2" color="success">mdi-truck-fast</v-icon>
+                    <div class="text-h5 font-weight-bold">{{ kargoIstatistikleri.kargoda }}</div>
+                    <div class="text-body-2 text-grey-700">Kargoda</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2"
-                    style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white; border: 1px solid #E8F5E9;">
-                    <v-icon size="40" class="mb-2">mdi-check-circle</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.teslimEdildi }}</div>
-                    <div class="text-body-2">Teslim Edildi</div>
+                <v-card class="text-center pa-4 rounded-xl soft-card">
+                    <v-icon size="32" class="mb-2" color="teal">mdi-swap-horizontal</v-icon>
+                    <div class="text-h5 font-weight-bold">{{ kargoIstatistikleri.transferde }}</div>
+                    <div class="text-body-2 text-grey-700">Transferde</div>
                 </v-card>
             </v-col>
             <v-col cols="12" md="3">
-                <v-card class="text-center pa-4 rounded-xl" elevation="2"
-                    style="background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%); color: white; border: 1px solid #FFE0B2;">
-                    <v-icon size="40" class="mb-2">mdi-store</v-icon>
-                    <div class="text-h4 font-weight-bold">{{ kargoIstatistikleri.subeyeGonderilecek }}</div>
-                    <div class="text-body-2">Şubeye Gönderilecek</div>
+                <v-card class="text-center pa-4 rounded-xl soft-card">
+                    <v-icon size="32" class="mb-2" color="orange">mdi-store</v-icon>
+                    <div class="text-h5 font-weight-bold">{{ kargoIstatistikleri.subeyeGonderilecek }}</div>
+                    <div class="text-body-2 text-grey-700">Şubeye Gönderilecek</div>
                 </v-card>
             </v-col>
         </v-row>
@@ -103,6 +99,7 @@
 
                 <v-tabs v-model="tab" grow style="border-radius: 8px;">
                     <v-tab value="kargoyaVerilecek" style="color: #1565C0;">Kargoya Verilecek</v-tab>
+                    <v-tab value="kargoda" style="color: #1565C0;">Kargoda</v-tab>
                     <v-tab value="subeyeGonderilecek" style="color: #1565C0;">Şubeye Gönderilecek</v-tab>
                     <v-tab value="subedenSubeye" style="color: #1565C0;">Şubeden Şubeye</v-tab>
                 </v-tabs>
@@ -124,6 +121,23 @@
                                 <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)"
                                     variant="outlined">Etiket
                                     Yazdır</v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-window-item>
+
+                    <v-window-item value="kargoda">
+                        <v-data-table :headers="headers" :items="kargodaList" :loading="loading" item-value="id"
+                            class="cargo-table rounded-lg" hover density="comfortable" items-per-page="20"
+                            no-data-text="Kargoda sipariş yok." loading-text="Yükleniyor...">
+                            <template v-slot:item.tarih="{ item }">{{ formatDate(item.tarih, true) }}</template>
+                            <template v-slot:item.kargoDurumu="{ item }">
+                                <v-chip :color="getKargoDurumuColor(item.kargoDurumu)" size="small" variant="flat">
+                                    {{ item.kargoDurumu || 'Bekliyor' }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.actions="{ item }">
+                                <v-btn color="#66BB6A" size="small" class="ml-2" @click="openEtiketDialog(item)"
+                                    variant="outlined">Etiket Yazdır</v-btn>
                             </template>
                         </v-data-table>
                     </v-window-item>
@@ -393,6 +407,7 @@ const subeTransferHeaders = [
     { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
 ];
 const kargoyaVerilecek = ref([]);
+const kargodaList = ref([]);
 const subeyeGonderilecek = ref([]);
 const subedenSubeye = ref([]);
 const subeler = ref([]);
@@ -410,7 +425,8 @@ const kargoIstatistikleri = ref({
     kargoyaVerilecek: 0,
     kargoda: 0,
     teslimEdildi: 0,
-    subeyeGonderilecek: 0
+    subeyeGonderilecek: 0,
+    transferde: 0
 });
 
 // Watch showOnlyHazirlandi değişimini
@@ -483,12 +499,20 @@ async function fetchKargoSiparisler() {
         console.log('🚚 Kargo siparişleri yükleniyor...');
 
         // Siparişleri ve dropdown verilerini paralel olarak çek
-        const [siparisler, dropdownData] = await Promise.all([
+        const [ordersResp, dropdownData] = await Promise.all([
             apiCall('/siparis'),
             apiCall('/dropdown')
         ]);
 
-        console.log('🚚 Toplam sipariş sayısı:', siparisler?.length || 0);
+        const siparisler = Array.isArray(ordersResp?.orders)
+            ? ordersResp.orders
+            : Array.isArray(ordersResp?.data?.orders)
+                ? ordersResp.data.orders
+                : Array.isArray(ordersResp)
+                    ? ordersResp
+                    : [];
+
+        console.log('🚚 Toplam sipariş sayısı:', siparisler.length);
 
         // Şubeler listesini dropdown'dan al
         subeler.value = dropdownData?.subeler || [];
@@ -496,6 +520,7 @@ async function fetchKargoSiparisler() {
         if (!siparisler || siparisler.length === 0) {
             console.log('🚚 Hiç sipariş bulunamadı');
             kargoyaVerilecek.value = [];
+            kargodaList.value = [];
             subeyeGonderilecek.value = [];
             subedenSubeye.value = [];
             return;
@@ -506,58 +531,53 @@ async function fetchKargoSiparisler() {
             const kargoDurumu = siparis.kargoDurumu;
             const teslimatKodu = siparis.teslimatTuru?.kod;
 
-            // Adrese teslimat türleri için kargoya verilecek olanlar
             const adreseTeslimatKodlari = ['TT001', 'TT003', 'TT004', 'TT006', 'TT007'];
-            const isAdreseTeslimat = adreseTeslimatKodlari.includes(teslimatKodu);
+            const isAdreseTeslimat = teslimatKodu ? adreseTeslimatKodlari.includes(teslimatKodu) : false;
 
-            const kargoyaUygun = [
-                'KARGOYA_VERILECEK',
-                'ADRESE_TESLIMAT',
-                null,
-                undefined,
-                ''
-            ].includes(kargoDurumu);
+            // Kargo kategorisine dahil eden durumlar
+            const kargoyaUygunDurum = ['KARGOYA_VERILECEK', 'ADRESE_TESLIMAT'].includes(kargoDurumu);
 
-            return isAdreseTeslimat && kargoyaUygun;
+            // Eğer teslimat kodu yoksa ama kargoDurumu bu kategorideyse yine dahil et
+            return (isAdreseTeslimat && ['KARGOYA_VERILECEK', 'ADRESE_TESLIMAT', null, undefined, ''].includes(kargoDurumu))
+                || (!teslimatKodu && kargoyaUygunDurum);
         });
+
+        const kargodaOlanlar = siparisler.filter(s => s.kargoDurumu === 'KARGODA');
 
         const subeyeGonderilecekList = siparisler.filter(siparis => {
             const kargoDurumu = siparis.kargoDurumu;
             const teslimatKodu = siparis.teslimatTuru?.kod;
 
-            // Şubeye teslimat türleri
             const subeTeslimatKodlari = ['TT002', 'TT005'];
-            const isSubeTeslimat = subeTeslimatKodlari.includes(teslimatKodu);
+            const isSubeTeslimat = teslimatKodu ? subeTeslimatKodlari.includes(teslimatKodu) : false;
 
-            const subeyeUygun = [
-                'SUBEYE_GONDERILECEK',
-                'SUBEDE_TESLIM',
-                null,
-                undefined,
-                ''
-            ].includes(kargoDurumu);
+            const subeyeUygunDurum = ['SUBEYE_GONDERILECEK', 'SUBEDE_TESLIM'].includes(kargoDurumu);
 
-            return isSubeTeslimat && subeyeUygun;
+            return (isSubeTeslimat && ['SUBEYE_GONDERILECEK', 'SUBEDE_TESLIM', null, undefined, ''].includes(kargoDurumu))
+                || (!teslimatKodu && subeyeUygunDurum);
         });
 
         const subedenSubeyeList = siparisler.filter(siparis => {
             const teslimatKodu = siparis.teslimatTuru?.kod;
-            return teslimatKodu === 'TT008'; // Şubeden şubeye teslimat türü
+            return teslimatKodu === 'TT008' || siparis.kargoDurumu === 'SUBEDEN_SUBEYE';
         });
 
         // Sadece hazırlandı filtresi
         if (showOnlyHazirlandi.value) {
             kargoyaVerilecek.value = kargoyaVerilecekList.filter(s => s.durum === 'HAZIRLANDI');
+            kargodaList.value = kargodaOlanlar.filter(s => s.durum === 'HAZIRLANDI');
             subeyeGonderilecek.value = subeyeGonderilecekList.filter(s => s.durum === 'HAZIRLANDI');
             subedenSubeye.value = subedenSubeyeList.filter(s => s.durum === 'HAZIRLANDI');
         } else {
             kargoyaVerilecek.value = kargoyaVerilecekList;
+            kargodaList.value = kargodaOlanlar;
             subeyeGonderilecek.value = subeyeGonderilecekList;
             subedenSubeye.value = subedenSubeyeList;
         }
 
-        console.log('🚚 Kategorize edilmiş siparişler:');
+        console.log('�� Kategorize edilmiş siparişler:');
         console.log('   - Kargoya Verilecek:', kargoyaVerilecek.value.length);
+        console.log('   - Kargoda:', kargodaList.value.length);
         console.log('   - Şubeye Gönderilecek:', subeyeGonderilecek.value.length);
         console.log('   - Şubeden Şubeye:', subedenSubeye.value.length);
 
@@ -571,6 +591,7 @@ async function fetchKargoSiparisler() {
 
         // Hata durumunda boş listeler göster
         kargoyaVerilecek.value = [];
+        kargodaList.value = [];
         subeyeGonderilecek.value = [];
         subedenSubeye.value = [];
         subeler.value = [];
@@ -704,9 +725,9 @@ async function saveSubeTransferDialog() {
             subeNeredenId: parseInt(subeTransferForm.value.subeNeredenId),
             subeNereyeId: parseInt(subeTransferForm.value.subeNereyeId),
         };
-        
+
         console.log('🚀 API Payload:', payload);
-        
+
         await apiCall(`/siparis/${selectedSiparis.value.id}/sube-transfer`, {
             method: 'PATCH',
             data: payload
@@ -826,11 +847,13 @@ function getKargoSirketiAdi(kargoSirketi) {
     return sirketler[kargoSirketi] || 'KARGO';
 }
 function hesaplaKargoIstatistikleri(siparisler) {
+    const get = (k) => siparisler.filter(s => s.kargoDurumu === k).length;
     kargoIstatistikleri.value = {
-        kargoyaVerilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'KARGOYA_VERILECEK').length,
-        kargoda: siparisler.filter(siparis => siparis.kargoDurumu === 'KARGODA').length,
-        teslimEdildi: siparisler.filter(siparis => siparis.kargoDurumu === 'TESLIM_EDILDI').length,
-        subeyeGonderilecek: siparisler.filter(siparis => siparis.kargoDurumu === 'SUBEYE_GONDERILECEK').length
+        kargoyaVerilecek: get('KARGOYA_VERILECEK') + get('ADRESE_TESLIMAT'),
+        kargoda: get('KARGODA'),
+        teslimEdildi: get('TESLIM_EDILDI'),
+        subeyeGonderilecek: get('SUBEYE_GONDERILECEK') + get('SUBEDE_TESLIM'),
+        transferde: get('SUBEDEN_SUBEYE')
     };
 }
 onMounted(fetchKargoSiparisler);
@@ -868,5 +891,11 @@ onMounted(fetchKargoSiparisler);
 .v-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.soft-card {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 </style>

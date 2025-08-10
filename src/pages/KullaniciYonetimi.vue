@@ -257,7 +257,7 @@
                 <div class="text-caption text-grey mb-1">Durum</div>
                 <v-chip :color="selectedPersonel.aktif ? 'success' : 'warning'" size="small" variant="flat">
                   <v-icon start size="16">{{ selectedPersonel.aktif ? 'mdi-check-circle' : 'mdi-pause-circle'
-                    }}</v-icon>
+                  }}</v-icon>
                   {{ selectedPersonel.aktif ? 'Aktif' : 'Pasif' }}
                 </v-chip>
               </div>
@@ -266,7 +266,7 @@
                 <v-chip :color="selectedPersonel.sgkDurumu === 'VAR' ? 'primary' : 'error'" size="small" variant="flat">
                   <v-icon start size="16">{{ selectedPersonel.sgkDurumu === 'VAR' ? 'mdi-shield-check' :
                     'mdi-shield-off'
-                    }}</v-icon>
+                  }}</v-icon>
                   {{ selectedPersonel.sgkDurumu === 'VAR' ? 'SGK Var' : 'SGK Yok' }}
                 </v-chip>
               </div>
@@ -571,13 +571,17 @@ async function fetchPersonel() {
     error.value = null;
 
     console.log('📡 Personel verilerini çekiyor...');
-    const response = await apiCall('/auth/users', {}, 'GET');
+    const response = await apiCall('/auth/users?limit=100', {}, 'GET');
     console.log('📊 API Response:', response);
     console.log('📊 Response Type:', typeof response);
     console.log('📊 Is Array:', Array.isArray(response));
 
-    // apiCall zaten response.data döndürüyor
-    if (Array.isArray(response)) {
+    // Yeni API: {success, users, pagination}
+    if (response && Array.isArray(response.users)) {
+      personel.value = response.users;
+      console.log('✅ Personel verileri yüklendi:', personel.value.length, 'kayıt');
+      showSnackbar(`${personel.value.length} personel yüklendi`, 'success', 2000);
+    } else if (Array.isArray(response)) {
       personel.value = response;
       console.log('✅ Personel verileri yüklendi:', personel.value.length, 'kayıt');
       showSnackbar(`${personel.value.length} personel yüklendi`, 'success', 2000);
