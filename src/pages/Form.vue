@@ -465,6 +465,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, provide, nextTick } from 'vue';
 import axios from 'axios';
+import { apiCall } from '@/utils/api';
 import { useAuthStore } from '../stores/auth.js';
 // Cache sistemi kaldırıldı - artık direct API çağrıları kullanılıyor
 // import CacheStatus from '../components/CacheStatus.vue';
