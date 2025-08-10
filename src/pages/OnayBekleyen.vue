@@ -78,6 +78,7 @@ import { ref, onMounted, reactive, provide } from 'vue';
 import axios from 'axios';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { useAuthStore } from '../stores/auth';
 
 const orders = ref([]); // API'den gelen siparişler (içindeki kalemler düzenlenecek)
 const loading = ref(false);
@@ -116,10 +117,24 @@ function showSnackbar(text, color = 'info', timeout = 4000) {
 async function fetchPendingOrders() {
   loading.value = true; error.value = null; orders.value = [];
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`, { params: { status: 'pending' } });
-    // Gelen veriyi doğrudan kullanıyoruz, miktar alanları template içinde düzenlenebilir olacak
-    orders.value = response.data;
+    const authStore = useAuthStore();
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/orders`, {
+      params: { status: 'pending' },
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    // Check if response has orders array structure
+    if (response.data.orders) {
+      orders.value = response.data.orders; // Extract orders array from {success, count, orders}
+    } else if (Array.isArray(response.data)) {
+      orders.value = response.data; // Direct array response
+    } else {
+      orders.value = []; // Fallback
+    }
     console.log('Onay bekleyen siparişler:', orders.value);
+    console.log('Orders count:', orders.value.length);
   } catch (err) {
     console.error('❌ Siparişler çekilemedi:', err.response?.data || err.message || err);
     showSnackbar(`Siparişler yüklenirken bir hata oluştu: ${err.response?.data?.message || err.message}`, 'error', 6000);
@@ -165,7 +180,13 @@ async function saveChangesAndApprove(order, index) {
 
   try {
     // PUT isteği ile hem kalem miktarlarını hem de onay durumunu güncelle
-    await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload);
+    const authStore = useAuthStore();
+    await axios.put(`${import.meta.env.VITE_API_BASE_URL}/siparis/${orderId}`, payload, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
     showSnackbar(`Sipariş ${orderId} başarıyla güncellendi ve onaylandı!`, 'success');
 

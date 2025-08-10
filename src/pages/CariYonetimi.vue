@@ -23,48 +23,48 @@
             </v-col>
         </v-row>
 
-        <!-- İstatistik Kartları -->
+        <!-- İstatistik Kartları (Sade/Outlined) -->
         <v-row class="mb-6">
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="primary" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-account-group</v-icon>
+                        <v-icon size="32" class="mr-3" color="primary">mdi-account-group</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ cariler.length }}</div>
-                            <div class="text-subtitle-2">Toplam Müşteri</div>
+                            <div class="text-h5 font-weight-bold">{{ pagination.total || cariler.length }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Toplam Müşteri</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="success" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-currency-try</v-icon>
+                        <v-icon size="32" class="mr-3" color="success">mdi-currency-try</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ formatTutar(toplamAlacaklar) }}</div>
-                            <div class="text-subtitle-2">Toplam Alacak</div>
+                            <div class="text-h6 font-weight-bold">{{ formatTutar((summaryFinancial?.totalBalance ?? null) || toplamAlacaklar) }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Toplam Alacak</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="error" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-alert-circle</v-icon>
+                        <v-icon size="32" class="mr-3" color="error">mdi-alert-circle</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ vadesiGecenSayisi }}</div>
-                            <div class="text-subtitle-2">Vadesi Gecen</div>
+                            <div class="text-h6 font-weight-bold">{{ summary.overdueCount ?? vadesiGecenSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Vadesi Geçen</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="info" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-chart-line</v-icon>
+                        <v-icon size="32" class="mr-3" color="info">mdi-chart-line</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ aktifMusteriSayisi }}</div>
-                            <div class="text-subtitle-2">Aktif Müşteri</div>
+                            <div class="text-h6 font-weight-bold">{{ summary.totalActive ?? aktifMusteriSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Aktif Müşteri</div>
                         </div>
                     </div>
                 </v-card>
@@ -110,7 +110,7 @@
             <v-card-title class="d-flex justify-space-between align-center">
                 <span>
                     <v-icon class="mr-2">mdi-view-list</v-icon>
-                    Müşteri Listesi ({{ filteredCariler.length }} müşteri)
+                    Müşteri Listesi ({{ pagination.total || cariler.length }} müşteri)
                 </span>
             </v-card-title>
             <div v-if="excelResults.length > 0" class="my-2">
@@ -123,7 +123,17 @@
                     </div>
                 </v-alert>
             </div>
-            <v-data-table :headers="headers" :items="filteredCariler" item-key="id" class="elevation-0 modern-table">
+            <v-data-table
+                :headers="headers"
+                :items="filteredCariler"
+                item-key="id"
+                class="elevation-0 modern-table"
+                :items-per-page="pagination.limit"
+                :page="pagination.page"
+                @update:page="sayfaDegistir"
+                :items-per-page-options="[20, 50, 100, 200, 500]"
+                @update:items-per-page="sayfaBoyutuDegistir"
+            >
                 <!-- Müşteri Adı -->
                 <template v-slot:item.ad="{ item }">
                     <div class="d-flex align-center">
@@ -422,7 +432,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -458,6 +468,8 @@ const adreslerList = ref([]);
 const adresCariId = ref(null);
 const yeniAdres = ref({ tip: 'Ev', adres: '' });
 const adresKayitLoading = ref(false);
+const summary = reactive({ total: 0, totalActive: 0, totalInactive: 0 });
+const summaryFinancial = reactive({ totalReceivable: 0, totalPayments: 0, totalBalance: 0 });
 
 const headers = [
     { title: 'MÜŞTERİ', key: 'ad', sortable: true },
@@ -481,14 +493,30 @@ const vadeHeaders = [
     { text: 'Seç', value: 'actions', sortable: false },
 ];
 
+const pagination = reactive({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+})
+
+const sortState = reactive({ sortBy: 'cariAdi', sortDesc: false });
+const localCache = reactive({ customers: [], lastFetchedAt: 0 });
+
+function trLower(text) {
+    return (text || '').toLocaleLowerCase('tr-TR');
+}
+
 const filteredCariler = computed(() => {
     if (!search.value) return cariler.value;
-    return cariler.value.filter(c =>
-        c.ad.toLowerCase().includes(search.value.toLowerCase()) ||
-        c.musteriKodu.toLowerCase().includes(search.value.toLowerCase()) ||
-        (c.telefon && c.telefon.includes(search.value)) ||
-        (c.email && c.email.toLowerCase().includes(search.value.toLowerCase()))
-    );
+    const q = trLower(search.value);
+    return cariler.value.filter(c => {
+        return trLower(c.ad).includes(q)
+            || trLower(c.cariAdi).includes(q)
+            || trLower(c.musteriKodu).includes(q)
+            || (c.email ? trLower(c.email).includes(q) : false)
+            || (c.telefon ? String(c.telefon).includes(search.value) : false);
+    });
 });
 
 // İstatistik hesaplamaları
@@ -523,7 +551,12 @@ function updateScreen() {
 }
 
 onMounted(() => {
-    fetchCariler();
+    if (localCache.customers.length > 0) {
+        cariler.value = localCache.customers;
+        pagination.total = localCache.customers.length;
+    } else {
+        fetchCariler(true);
+    }
     updateScreen();
     window.addEventListener('resize', updateScreen);
 });
@@ -531,30 +564,50 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', updateScreen);
 });
 
-async function fetchCariler() {
+async function fetchCariler(initial = false) {
     try {
         console.log('🔄 Cariler yükleniyor...');
-        const response = await apiCall('/cari', { method: 'GET', useCache: true });
+        const params = new URLSearchParams({
+            all: 'true'
+        });
+        if (!initial && search.value) params.append('search', search.value);
 
-        // Response format: { success: true, customers: [...], pagination: {...} }
-        const data = response.customers || response.data || response;
+        const response = await apiCall(`/cari?${params.toString()}`, { method: 'GET', useCache: false });
 
-        if (!Array.isArray(data)) {
-            console.error('❌ API Response format error:', {
-                responseType: typeof response,
-                isArray: Array.isArray(response),
-                keys: Object.keys(response || {})
-            });
-            throw new Error('Invalid response format from API');
+        const dataList = Array.isArray(response?.customers) ? response.customers : Array.isArray(response) ? response : [];
+
+        const normalized = dataList.map(c => ({ ...c, ad: c.ad || c.cariAdi || '', adresler: c.adresler || [] }));
+        cariler.value = normalized;
+        if (initial) {
+            localCache.customers = normalized;
+            localCache.lastFetchedAt = Date.now();
         }
-
-        console.log('✅ Cariler yüklendi:', data.length, 'adet');
-        cariler.value = data.map(c => ({ ...c, adresler: c.adresler || [] }));
-        console.log('📊 İşlenmiş cariler:', cariler.value.length);
+        pagination.total = normalized.length;
+        pagination.totalPages = response?.pagination?.pages ?? Math.ceil((pagination.total || 0) / (pagination.limit || 100));
+        summary.totalActive = response?.summary?.totalActive ?? summary.totalActive;
+        summary.total = response?.summary?.total ?? pagination.total;
+        summary.totalInactive = response?.summary?.totalInactive ?? Math.max((summary.total || 0) - (summary.totalActive || 0), 0);
+        if (response?.summaryFinancial) {
+            summaryFinancial.totalReceivable = Number(response.summaryFinancial.totalReceivable) || 0;
+            summaryFinancial.totalPayments = Number(response.summaryFinancial.totalPayments) || 0;
+            summaryFinancial.totalBalance = Number(response.summaryFinancial.totalBalance) || 0;
+        }
     } catch (error) {
         console.error('❌ Cariler çekilemedi:', error);
         snackbar.value = { show: true, text: 'Müşteriler yüklenemedi: ' + error.message, color: 'error' };
     }
+}
+
+function tabloSecenekGuncelle(opts) {
+    // Vuetify 3 v-data-table-server emits: { page, itemsPerPage, sortBy: [{key, order}], } 
+    if (opts?.page && opts.page !== pagination.page) pagination.page = opts.page;
+    if (opts?.itemsPerPage && opts.itemsPerPage !== pagination.limit) pagination.limit = opts.itemsPerPage;
+    const sb = Array.isArray(opts?.sortBy) && opts.sortBy[0] ? opts.sortBy[0] : null;
+    if (sb) {
+        sortState.sortBy = sb.key;
+        sortState.sortDesc = sb.order === 'desc';
+    }
+    fetchCariler();
 }
 
 // Yardımcı fonksiyonlar
@@ -952,6 +1005,17 @@ async function saveAdresler() {
         adresKayitLoading.value = false;
     }
 }
+
+const sayfaDegistir = (yeniSayfa) => {
+    pagination.page = yeniSayfa
+    fetchCariler()
+}
+
+const sayfaBoyutuDegistir = (yeniLimit) => {
+    pagination.limit = yeniLimit || 100
+    pagination.page = 1
+    fetchCariler()
+}
 </script>
 
 <style scoped>
@@ -1139,5 +1203,14 @@ async function saveAdresler() {
     font-size: 1em;
     color: #607d8b;
     font-weight: 500;
+}
+
+.soft-card {
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    background: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.02),
+        0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 10px;
 }
 </style>

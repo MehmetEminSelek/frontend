@@ -163,10 +163,20 @@ const refreshUyarilar = async () => {
   loading.value = true
   try {
     // API base URL'i doğru kullan
-    const apiUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/stok/alerts`
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    const apiUrl = `${base}/stok?limit=50`
     console.log('🔍 Stok uyarıları API çağrısı:', apiUrl)
     
-    const response = await fetch(apiUrl)
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+    if (!token) {
+      // Auth yoksa widgetı sessizce kapat
+      loading.value = false
+      showWidget.value = false
+      return
+    }
+    const response = await fetch(apiUrl, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
@@ -174,26 +184,21 @@ const refreshUyarilar = async () => {
     
     const data = await response.json()
     console.log('📊 API Response:', data)
-    
-    if (data.success) {
-      uyarilar.value = data.uyarilar.tumKritikStoklar || []
-      
-      // Özet bilgileri güncelle
-      if (data.ozet) {
-        uyariBilgisi.value = {
-          count: data.toplamUyari || 0,
-          text: data.ozet.uyariMesaji || 'Stok kontrolü yapılıyor...',
-          severity: data.ozet.seviyeRengi || 'info'
-        }
+
+    if (data?.alerts) {
+      const critical = Array.isArray(data.alerts.criticalStock) ? data.alerts.criticalStock : []
+      const low = Array.isArray(data.alerts.lowStock) ? data.alerts.lowStock : []
+      uyarilar.value = [...critical, ...low]
+
+      uyariBilgisi.value = {
+        count: data.alerts.totalAlerts || uyarilar.value.length,
+        text: (data.alerts.totalAlerts || uyarilar.value.length) > 0 ? 'Kritik stok uyarıları var' : 'Stoklar normal',
+        severity: (data.alerts.totalAlerts || uyarilar.value.length) > 0 ? 'warning' : 'success'
       }
-      
-      // Widget'ı sadece uyarı varsa göster
-      showWidget.value = uyarilar.value.length > 0 || uyariBilgisi.value.severity !== 'success'
-      
-      console.log(`📊 Stok uyarıları güncellendi: ${uyarilar.value.length} uyarı`)
-      console.log('🚨 Kritik stoklar:', uyarilar.value)
+
+      showWidget.value = uyarilar.value.length > 0
     } else {
-      console.error('❌ API başarısız response:', data)
+      console.error('❌ API beklenen formatta değil:', data)
       uyarilar.value = []
       showWidget.value = false
     }

@@ -66,13 +66,20 @@ import {
     VToolbar,
     VToolbarTitle,
     VFadeTransition,
+    VExpandTransition,
     VSlideXTransition,
     VSlideYTransition,
     VImg,
     VForm,
     VWindow,
-    VWindowItem
+    VWindowItem,
+    VListItemSubtitle,
+    VListGroup,
+    VAppBarNavIcon,
+    VLayout
 } from 'vuetify/components';
+
+// Note: We use stable VDataTable from components; no labs import required
 
 import * as directives from 'vuetify/directives';
 
@@ -218,12 +225,17 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
             VToolbar,
             VToolbarTitle,
             VFadeTransition,
+            VExpandTransition,
             VSlideXTransition,
             VSlideYTransition,
             VImg,
             VForm,
             VWindow,
-            VWindowItem
+            VWindowItem,
+            VListItemSubtitle,
+            VListGroup,
+            VAppBarNavIcon,
+            VLayout
         },
         directives,
         defaults: {

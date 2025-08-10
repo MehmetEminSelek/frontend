@@ -428,8 +428,14 @@ async function fetchFiyatlar() {
     });
     console.log('📦 Backend yanıtı:', response);
 
-    // Backend'den gelen tüm fiyatları al
-    const allPrices = response.fiyatlar || response.data || response || [];
+    // Backend: { success, pricing, pagination }
+    const allPrices = Array.isArray(response?.pricing)
+      ? response.pricing
+      : Array.isArray(response?.data?.pricing)
+        ? response.data.pricing
+        : Array.isArray(response)
+          ? response
+          : [];
     console.log('📊 Toplam fiyat sayısı:', allPrices.length);
 
     if (allPrices.length > 0) {

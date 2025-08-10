@@ -50,7 +50,77 @@ export const useAuthStore = defineStore('auth', () => {
 
     const hasPermission = computed(() => (permission) => {
         if (!user.value) return false
-        return permissions.value.includes(permission) || user.value.rol === 'GENEL_MUDUR'
+
+        // 1) Legacy simple permission tags
+        if (permissions.value.includes(permission) || user.value.rol === 'GENEL_MUDUR') return true
+
+        // 2) Backend-style permission slugs support
+        if (typeof permission === 'string') {
+            const p = permission.trim().toUpperCase(); // Accept VIEW_USERS or users:view
+
+            // Normalize possible formats (users:view -> VIEW_USERS)
+            const normalized = p.includes(':')
+                ? p.replace(/:/g, '_').toUpperCase()
+                : p;
+
+            // Minimum roleLevel thresholds aligned with backend RBAC intent
+            const SLUG_MIN_LEVEL = {
+                // Users
+                VIEW_USERS: 80,
+                CREATE_USERS: 90,
+                UPDATE_USERS: 80,
+                DELETE_USERS: 90,
+
+                // Products
+                VIEW_PRODUCTS: 40,
+                CREATE_PRODUCTS: 60,
+                UPDATE_PRODUCTS: 60,
+                DELETE_PRODUCTS: 60,
+
+                // Orders
+                VIEW_ORDERS: 40,
+                CREATE_ORDERS: 50,
+                UPDATE_ORDERS: 50,
+                DELETE_ORDERS: 50,
+
+                // Customers
+                VIEW_CUSTOMERS: 40,
+                CREATE_CUSTOMERS: 50,
+                UPDATE_CUSTOMERS: 50,
+                DELETE_CUSTOMERS: 50,
+
+                // Stock
+                VIEW_STOCK: 40,
+                UPDATE_STOCK: 60,
+                MANAGE_STOCK: 60,
+
+                // Materials
+                VIEW_MATERIALS: 40,
+                CREATE_MATERIALS: 60,
+                UPDATE_MATERIALS: 60,
+                DELETE_MATERIALS: 60,
+
+                // Recipes / Financial / Reports
+                VIEW_RECIPES: 70,
+                VIEW_FINANCIAL: 80,
+                UPDATE_PRICES: 80,
+                MANAGE_PAYMENTS: 80,
+                VIEW_REPORTS: 40,
+                GENERATE_REPORTS: 40,
+                EXPORT_REPORTS: 40,
+
+                // Excel Ops / Audit
+                EXCEL_OPERATIONS: 70,
+                VIEW_AUDIT_LOGS: 80
+            };
+
+            const minLevel = SLUG_MIN_LEVEL[normalized];
+            if (typeof minLevel === 'number') {
+                return roleLevel.value >= minLevel;
+            }
+        }
+
+        return false
     })
 
     const canAccess = computed(() => (page) => {

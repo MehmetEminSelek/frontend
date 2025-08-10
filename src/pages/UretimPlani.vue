@@ -387,7 +387,7 @@
 
 <script setup>
 import { ref, provide, onMounted } from 'vue';
-import axios from 'axios';
+import { apiCall } from '../utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 
@@ -484,18 +484,18 @@ async function fetchData() {
     try {
         console.log('🔄 Üretim planı verileri yükleniyor...');
 
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/uretim-plani`, {
+        const response = await apiCall('/uretim-plani', {
             startDate: startDate.value,
             endDate: endDate.value
-        });
+        }, 'POST');
 
-        console.log('📦 API Yanıtı:', response.data);
+        console.log('📦 API Yanıtı:', response);
 
-        if (response.data.success) {
-            data.value = response.data.data;
+        if (response?.success) {
+            data.value = response.data;
             showSnackbar('Veriler başarıyla yüklendi!', 'success');
         } else {
-            throw new Error(response.data.error || 'Veri alınamadı');
+            throw new Error(response?.error || 'Veri alınamadı');
         }
     } catch (err) {
         console.error('❌ Üretim planı hatası:', err);

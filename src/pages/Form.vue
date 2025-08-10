@@ -97,12 +97,12 @@
                 prepend-inner-icon="mdi-account" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" :rules="[rules.phone]" 
-                :readonly="form.gonderenTel && selectedPersonel" 
-                variant="outlined" color="#388E3C" 
-                :placeholder="selectedPersonel && !form.gonderenTel ? 'Telefon numarası yok, manuel girin' : 'Personel seçilince otomatik doldurulur'"
-                prepend-inner-icon="mdi-phone"
-                @input="onGonderenTelInput" />
+              <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" :rules="[rules.phone]"
+                :readonly="selectedPersonel && selectedPersonel.telefon" variant="outlined" color="#388E3C"
+                :placeholder="selectedPersonel && !selectedPersonel.telefon ? 'Telefon numarası yok, manuel girin' : 'Personel seçilince otomatik doldurulur'"
+                prepend-inner-icon="mdi-phone" @input="onGonderenTelInput"
+                :hint="selectedPersonel && !selectedPersonel.telefon ? 'Bu personel için telefon kayıtlı değil' : ''"
+                persistent-hint />
             </v-col>
             <template v-if="showAliciFields">
               <v-col cols="12" md="6">
@@ -285,7 +285,7 @@
                   </template>
                   <template v-slot:append>
                     <span class="text-body-2 font-weight-bold" style="color: #4A148C;">{{ item.miktar }} {{ item.birim
-                      }}</span>
+                    }}</span>
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!pkg.urunler || pkg.urunler.length === 0">
@@ -623,17 +623,17 @@ const adresEnabled = computed(() => {
 });
 
 // Cari listesi için computed property
+function trLower(text) { return (text || '').toLocaleLowerCase('tr-TR'); }
+
 const filteredCariler = computed(() => {
   if (!dropdowns.value.cariler || dropdowns.value.cariler.length === 0) return [];
 
-  // Her cari için displayName ekle
+  const query = trLower(searchQuery.value || '');
   return dropdowns.value.cariler.map(cari => ({
     ...cari,
     displayName: `${cari.ad} ${cari.soyad || ''}`.trim()
   })).filter(cari => {
-    if (!searchQuery.value) return true;
-
-    const query = searchQuery.value.toLowerCase();
+    if (!query) return true;
     const searchFields = [
       cari.ad || '',
       cari.soyad || '',
@@ -641,10 +641,7 @@ const filteredCariler = computed(() => {
       cari.telefon || '',
       cari.musteriKodu || ''
     ];
-
-    return searchFields.some(field =>
-      field.toString().toLowerCase().includes(query)
-    );
+    return searchFields.some(field => trLower(field.toString()).includes(query));
   });
 });
 
@@ -806,8 +803,8 @@ async function onCariBlur() {
 
   // Basit arama - mevcut carilerde var mı kontrol et
   const mevcutCari = filteredCariler.value.find(c =>
-    c.displayName.toLowerCase() === girilenAd.toLowerCase() ||
-    c.ad.toLowerCase() === girilenAd.toLowerCase()
+    trLower(c.displayName) === trLower(girilenAd) ||
+    trLower(c.ad) === trLower(girilenAd)
   );
 
   if (!mevcutCari) {
@@ -879,7 +876,7 @@ function onPersonelSelect(personel) {
     form.gonderenAdi = personel.ad;
     form.gonderenTel = personel.telefon || '';
     console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon || 'telefon yok');
-    
+
     if (!personel.telefon) {
       showSnackbar('Bu personel için telefon numarası kayıtlı değil. Lütfen manuel girin.', 'warning');
     }
@@ -893,7 +890,7 @@ function onPersonelSelect(personel) {
 function onGonderenTelInput(val) {
   // Türk telefon formatına uygun input temizleme
   const cleanValue = val.replace(/[^\d+]/g, '');
-  
+
   // Maksimum 13 karakter (+905XXXXXXXXX)
   if (cleanValue.length <= 13) {
     form.gonderenTel = cleanValue;
@@ -993,19 +990,8 @@ async function saveAdres() {
   adresLoading.value = true;
 
   try {
-    const authStore = useAuthStore();
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/cari/${selectedCari.value?.id || selectedCari.value}/adres`,
-      newAdres,
-      {
-        headers: {
-          'Authorization': `Bearer ${authStore.accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    const yeniAdres = response.data;
+    const response = await apiCall(`/cari/${selectedCari.value?.id || selectedCari.value}/adres`, newAdres, 'POST');
+    const yeniAdres = response;
 
     // Adres listesini güncelle
     cariAdresler.value.push(yeniAdres);
@@ -1022,7 +1008,7 @@ async function saveAdres() {
     form.adres = yeniAdres.adres;
 
     // Cari dropdown'ındaki veriyi de güncelle
-    const cari = dropdowns.value.cariler.find(c => c.id === selectedCari.value);
+    const cari = dropdowns.value.cariler.find(c => c.id === (selectedCari.value?.id || selectedCari.value));
     if (cari) {
       if (!cari.adresler) cari.adresler = [];
       cari.adresler.push(yeniAdres);
@@ -1034,7 +1020,7 @@ async function saveAdres() {
   } catch (error) {
     console.error('Adres ekleme hatası:', error);
     showSnackbar(
-      `Adres eklenirken hata oluştu: ${error.response?.data?.error || error.message}`,
+      `Adres eklenirken hata oluştu: ${error?.error || error?.message}`,
       'error'
     );
   } finally {

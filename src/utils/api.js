@@ -471,11 +471,25 @@ const apiClient = new EnhancedApiClient()
 const api = new ApiEndpoints(apiClient)
 
 // Legacy apiCall function for backward compatibility
-export function apiCall(url, options = {}) {
-    return apiClient.request({
-        url,
-        ...options
-    })
+export function apiCall(url, options = {}, method = undefined) {
+    // Support signature: apiCall(url, data, 'POST'|'PUT'|'PATCH'|'DELETE')
+    if (typeof method === 'string') {
+        const upper = method.toUpperCase()
+        const config = { url, method: upper }
+        if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(upper)) {
+            if (options && typeof options === 'object' && (options.data !== undefined || options.params || options.headers)) {
+                Object.assign(config, options)
+            } else {
+                config.data = options
+            }
+        } else {
+            Object.assign(config, options)
+        }
+        return apiClient.request(config)
+    }
+
+    // Default behavior
+    return apiClient.request({ url, ...options })
 }
 
 // Export enhanced API client and endpoints

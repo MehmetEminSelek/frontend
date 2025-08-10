@@ -53,7 +53,7 @@ const routes = [
         meta: { requiresAuth: true, page: 'siparis-formu' }
       },
       {
-        path: 'FiyatYonetimi',
+        path: 'fiyat-yonetimi',
         name: 'FiyatYönetimi',
         component: FiyatYönetimi,
         meta: { requiresAuth: true, page: 'fiyat-yonetimi' }
@@ -150,86 +150,37 @@ const router = createRouter({
 
 // Güçlendirilmiş navigation guard'lar
 router.beforeEach(async (to, from, next) => {
-  console.log(`🧭 Navigation START: ${from.path} → ${to.path}`);
-
   try {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token') // Backward compatibility
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
 
-    // Login sayfasına erişim kontrolü  
+    // Login sayfasına token varsa ana forma
     if (to.name === 'Login' && token) {
-      next('/main/form')  // Herkesi direkt form sayfasına
-      return
+      return next('/main/form')
     }
 
-    // Auth gerektiren sayfalar için kontrol
+    // Auth gerektiren sayfalarda token yoksa login'e
     if (to.meta.requiresAuth && !token) {
-      console.warn('🔒 Authentication required, redirecting to login')
-      next('/login')
-      return
+      return next('/login')
     }
 
-    // Permission kontrolü (token varsa)
+    // Token varsa store init + permission check
     if (token && to.meta.page) {
-      try {
-        const authStore = useAuthStore()
+      const authStore = useAuthStore()
+      if (!authStore.isAuthenticated) {
+        try { await authStore.initializeAuth() } catch { }
+      }
 
-        // Store'u initialize et
-        if (!authStore.isAuthenticated) {
-          await authStore.initializeAuth()
-        }
-
-        // Permission kontrolü
-        if (!authStore.canAccess(to.meta.page)) {
-          console.warn(`🚫 Access denied to ${to.meta.page} for role: ${authStore.userRole}`)
-
-          // Eğer zaten access denied page'e gidiyorsa infinite loop'u önle
-          if (to.path.includes('error=access_denied')) {
-            console.warn('🔄 Preventing infinite redirect loop')
-            next(false) // Cancel navigation
-            return
-          }
-
-          // Herkesi form sayfasına yönlendir
-          const fallbackRoute = '/main/form'
-
-          // Eğer zaten fallback route'daysan infinite redirect'i önle
-          if (to.path.startsWith(fallbackRoute.split('?')[0])) {
-            console.warn('🛑 Already at fallback route, allowing access to prevent infinite redirect')
-            next() // Access'e izin ver
-            return
-          }
-
-          console.log(`🔄 Redirecting to fallback route: ${fallbackRoute}`)
-          next(fallbackRoute)
-          return
-        }
-      } catch (authError) {
-        console.error('🚨 Auth Store Error:', authError)
-        // Auth hatası durumunda form sayfasına yönlendir (logout etme!)
-        console.warn('🔄 Auth error, redirecting to form page instead of logout')
-        next('/main/form')
-        return
+      if (!authStore.canAccess(to.meta.page)) {
+        // Aynı route’a sonsuz yönlendirme olmasın
+        if (to.path === '/main/form') return next()
+        return next('/main/form')
       }
     }
 
-    // Vnode hatası durumunda force refresh
-    if (window.vueVnodeError) {
-      console.warn('🔧 Vnode hatası tespit edildi, sayfa yenileniyor...')
-      window.location.reload()
-      return
-    }
-
-    next()
-  } catch (error) {
-    console.error('🚨 Navigation Error:', error)
-
-    // Kritik hata durumunda ana sayfaya yönlendir
-    if (error.message && error.message.includes('vnode')) {
-      window.location.href = '/main/form'
-      return
-    }
-
-    next()
+    return next()
+  } catch (e) {
+    console.error('Router guard error:', e)
+    return next('/main/form')
   }
 })
 
