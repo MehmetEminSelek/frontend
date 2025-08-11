@@ -350,23 +350,29 @@ async function fetchReceteler() {
         const list = Array.isArray(data?.legacy)
             ? data.legacy
             : Array.isArray(data?.recipes)
-                ? data.recipes.map(r => ({
-                    id: r.id,
-                    name: r.ad,
-                    urunId: r.urunId,
-                    urunAd: r.urun?.ad || null,
-                    ingredients: Array.isArray(r.icerikelek)
-                        ? r.icerikelek.map(k => {
-                            const kg = Number(k.miktar) || 0;
+                ? data.recipes.map(r => {
+                    const kalemler = Array.isArray(r.icerikler)
+                        ? r.icerikler
+                        : Array.isArray(r.receteKalemleri)
+                            ? r.receteKalemleri
+                            : [];
+                    return {
+                        id: r.id,
+                        name: r.ad,
+                        urunId: r.urunId,
+                        urunAd: r.urun?.ad || null,
+                        ingredients: kalemler.map(k => {
+                            const kg = k.miktar != null ? Number(k.miktar) : (k.miktarKg != null ? Number(k.miktarKg) : (k.miktarGram != null ? Number(k.miktarGram) / 1000 : 0));
+                            const mat = k.material || k.malzeme || {};
                             return {
-                                stokKod: k.material?.kod,
-                                stokAd: k.material?.ad,
+                                stokKod: mat.kod,
+                                stokAd: mat.ad,
                                 miktarKg: kg,
                                 miktarGram: kg * 1000
                             };
                         })
-                        : []
-                }))
+                    };
+                })
                 : Array.isArray(data)
                     ? data
                     : [];
