@@ -20,48 +20,48 @@
             </v-col>
         </v-row>
 
-        <!-- İstatistik Kartları -->
+        <!-- İstatistik Kartları (nötr tema) -->
         <v-row class="mb-6">
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="primary" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-package-variant</v-icon>
+                        <v-icon size="32" class="mr-3" color="primary">mdi-package-variant</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ pagination.total }}</div>
-                            <div class="text-subtitle-2">Toplam Ürün</div>
+                            <div class="text-h5 font-weight-bold">{{ pagination.total }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Toplam Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="success" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-check-circle</v-icon>
+                        <v-icon size="32" class="mr-3" color="success">mdi-check-circle</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ aktifUrunSayisi }}</div>
-                            <div class="text-subtitle-2">Aktif Ürün</div>
+                            <div class="text-h5 font-weight-bold">{{ aktifUrunSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Aktif Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="warning" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-star</v-icon>
+                        <v-icon size="32" class="mr-3" color="warning">mdi-star</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">{{ ozelUrunSayisi }}</div>
-                            <div class="text-subtitle-2">Özel Ürün</div>
+                            <div class="text-h5 font-weight-bold">{{ ozelUrunSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey-600">Özel Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4" color="info" dark>
+                <v-card class="pa-4 soft-card" variant="outlined">
                     <div class="d-flex align-center">
-                        <v-icon size="40" class="mr-3">mdi-folder</v-icon>
+                        <v-icon size="32" class="mr-3" color="info">mdi-folder</v-icon>
                         <div>
-                            <div class="text-h4 font-weight-bold">—</div>
-                            <div class="text-subtitle-2">Kategori (kaldırıldı)</div>
+                            <div class="text-h6 font-weight-bold">Kategori</div>
+                            <div class="text-subtitle-2 text-grey-600">(kaldırıldı)</div>
                         </div>
                     </div>
                 </v-card>
@@ -121,10 +121,10 @@
             </v-card-title>
 
             <!-- Liste Görünümü -->
-            <v-data-table v-if="gorunumModu === 'liste'" :headers="headers" :items="urunler" :loading="yukleniyor"
+            <v-data-table v-if="gorunumModu === 'liste'" class="neutral-table elevation-0" :headers="headers" :items="urunler" :loading="yukleniyor"
                 :items-per-page="pagination.limit" :page="pagination.page" :server-items-length="pagination.total"
-                :items-per-page-options="[20,50,100,200]" hide-default-footer density="compact"
-                @update:page="sayfaDegistir" @update:items-per-page="(n)=>{ pagination.limit=n; pagination.page=1; urunleriYukle(); }" class="elevation-0">
+                :items-per-page-options="[20,50,100,200]" density="compact"
+                 @update:page="sayfaDegistir" @update:items-per-page="(n)=>{ pagination.limit=n; pagination.page=1; urunleriYukle(); }">
                 <!-- Ürün Adı -->
                 <template v-slot:item.ad="{ item }">
                     <div class="d-flex align-center">
@@ -148,7 +148,7 @@
                             <div class="font-weight-medium">
                                 {{ formatFiyat(item.guncelFiyat.kgFiyati) }} <span class="text-caption">/ {{ item.guncelFiyat.birim }}</span>
                             </div>
-                            <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'NORMAL'" size="x-small" color="orange" variant="tonal">
+                            <v-chip v-if="item.guncelFiyat.fiyatTipi !== 'NORMAL'" size="x-small" color="grey" variant="tonal">
                                 {{ item.guncelFiyat.fiyatTipi }}
                             </v-chip>
                         </div>
@@ -173,7 +173,7 @@
                 <!-- Durum -->
                 <template v-slot:item.durum="{ item }">
                     <div class="d-flex flex-column gap-1 align-center">
-                        <v-chip :color="item.aktif ? 'success' : 'error'" size="small" variant="tonal">
+                        <v-chip :color="item.aktif ? 'success' : 'grey'" size="small" variant="tonal">
                             {{ item.aktif ? 'Aktif' : 'Pasif' }}
                         </v-chip>
                         <div class="d-flex gap-1">
@@ -275,6 +275,14 @@
                         @update:model-value="sayfaDegistir" />
                 </div>
             </div>
+            <!-- Tablo Alt Sayfalama -->
+            <template v-if="gorunumModu === 'liste'">
+                <div class="d-flex justify-space-between align-center pa-3">
+                    <div class="text-caption text-grey">Toplam: {{ pagination.total }}</div>
+                    <v-pagination v-model="pagination.page" :length="Math.max(pagination.totalPages,1)" density="comfortable"
+                        @update:model-value="sayfaDegistir" />
+                </div>
+            </template>
         </v-card>
 
         <!-- Yeni Ürün Dialog -->
@@ -579,11 +587,26 @@ export default {
                     kod: (urunData.kod || urunData.ad || '').toString().toUpperCase().replace(/\s+/g, '_'),
                     kategoriId: null,
                     aciklama: urunData.aciklama || null,
-                    birim: urunData.birim || 'KG',
+                    birim: (urunData.birim || 'KG').toString().toUpperCase(),
                     minStokSeviye: urunData.minStokSeviye || 0,
                     satisaUygun: urunData.satisaUygun !== false
                 }
-                await apiCall('/urunler', payload, 'POST')
+                const res = await apiCall('/urunler', payload, 'POST')
+                const created = res?.product || res
+
+                // Fiyat girilmişse fiyat yönetimine de ekle
+                const fiyatDegeri = Number(urunData.fiyat)
+                if (created?.id && !isNaN(fiyatDegeri) && fiyatDegeri > 0) {
+                    const fiyatPayload = {
+                        urunId: created.id,
+                        birim: payload.birim === 'GRAM' ? 'KG' : payload.birim,
+                        kgFiyati: payload.birim === 'GRAM' ? fiyatDegeri * 1000 : fiyatDegeri,
+                        fiyatTipi: 'NORMAL',
+                        baslangicTarihi: new Date().toISOString(),
+                        aktif: true
+                    }
+                    try { await apiCall('/fiyatlar', fiyatPayload, 'POST') } catch (e) { console.warn('Fiyat ekleme başarısız:', e?.response?.data || e?.message) }
+                }
                 snackbarGoster('Ürün başarıyla oluşturuldu')
                 yeniUrunDialog.value = false
                 urunleriYukle()
@@ -688,5 +711,13 @@ export default {
 
 .h-100 {
     height: 100%;
+}
+
+/* Neutral card look reused across app */
+.soft-card {
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    background: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 -1px 0 0 rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04) !important;
+    border-radius: 10px;
 }
 </style>

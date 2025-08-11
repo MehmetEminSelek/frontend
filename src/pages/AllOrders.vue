@@ -14,26 +14,27 @@
 
       <v-alert type="error" v-if="error" class="mb-4" closable>{{ error }}</v-alert>
 
-      <v-data-table v-model:items-per-page="itemsPerPage" v-model:expanded="expanded" :headers="headers"
+      <v-data-table v-model:items-per-page="itemsPerPage" v-model:expanded="expanded" :headers="tableHeaders"
         :items="allOrders" :loading="loading" :search="search" item-value="id" class="elevation-1" hover
-        density="comfortable" items-per-page-text="Sayfa başına sipariş:"
-        no-data-text="Gösterilecek sipariş bulunamadı." loading-text="Siparişler yükleniyor..." show-expand>
+        :density="isMobile ? 'compact' : 'comfortable'" items-per-page-text="Sayfa başına sipariş:"
+        no-data-text="Gösterilecek sipariş bulunamadı." loading-text="Siparişler yükleniyor..."
+        :show-expand="!isSmallDevice" @click:row="onRowClick">
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
         <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
         <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
         }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
-          <v-chip v-if="!item.onaylandiMi" color="warning" size="small" label variant="tonal"> <v-icon start
+          <v-chip v-if="!item.onaylandiMi" color="warning" :size="isMobile ? 'x-small' : 'small'" label variant="tonal"> <v-icon start
               size="small">mdi-clock-alert-outline</v-icon> Bekliyor </v-chip>
-          <v-chip v-else-if="item.hazirlanmaDurumu === 'Hazırlandı'" color="indigo-lighten-1" size="small" label
+          <v-chip v-else-if="item.hazirlanmaDurumu === 'Hazırlandı'" color="indigo-lighten-1" :size="isMobile ? 'x-small' : 'small'" label
             variant="flat"> <v-icon start size="small">mdi-package-variant-closed-check</v-icon> Hazırlandı </v-chip>
-          <v-chip v-else color="success" size="small" label variant="tonal"> <v-icon start
+          <v-chip v-else color="success" :size="isMobile ? 'x-small' : 'small'" label variant="tonal"> <v-icon start
               size="small">mdi-check-circle</v-icon> Onaylandı </v-chip>
         </template>
 
         <template v-slot:item.odemeDurumu="{ item }">
-          <v-chip :color="getPaymentStatus(item).color" size="small" label variant="tonal">
+          <v-chip :color="getPaymentStatus(item).color" :size="isMobile ? 'x-small' : 'small'" label variant="tonal">
             <v-icon start size="small">{{ getPaymentStatus(item).icon }}</v-icon>
             {{ getPaymentStatus(item).text }}
           </v-chip>
@@ -55,7 +56,7 @@
           </v-tooltip>
           <v-tooltip location="top" text="Düzenle/Onayla"> <template v-slot:activator="{ props }"> <v-btn
                 icon="mdi-pencil" variant="text" size="small" color="primary" v-bind="props"
-                @click.stop="editOrder(item.id)"></v-btn> </template>
+                @click.stop="openOrderDetail(item, true)"></v-btn> </template>
           </v-tooltip>
           <v-tooltip location="top" text="Sil"> <template v-slot:activator="{ props }"> <v-btn icon="mdi-delete"
                 variant="text" size="small" color="error" v-bind="props" @click.stop="deleteOrder(item.id)"></v-btn>
@@ -156,9 +157,17 @@
                       <v-list-subheader>Yapılan Ödemeler</v-list-subheader>
                       <v-list-item v-for="odeme in item.odemeler" :key="odeme.id">
                         <v-list-item-title>{{ odeme.tutar.toFixed(2) }} ₺</v-list-item-title>
-                        <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi ||
-                          'Belirtilmemiş'
-                        }}</v-list-item-subtitle> <template v-slot:append>
+                        <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi || 'Belirtilmemiş' }}</v-list-item-subtitle>
+                        <template #append>
+                          <v-btn
+                            v-if="canManagePayments"
+                            icon="mdi-delete"
+                            variant="text"
+                            size="x-small"
+                            color="error"
+                            @click.stop="deletePayment(item.id, odeme.id)"
+                            :title="'Ödemeyi Sil'"
+                          />
                         </template>
                       </v-list-item>
                       <v-list-item v-if="!item.odemeler || item.odemeler.length === 0">
@@ -212,6 +221,128 @@
       </v-data-table>
     </v-card>
 
+    <!-- Order Detail Dialog (mobile/tablet only) -->
+    <v-dialog v-model="orderDetailDialog" :fullscreen="isMobile" :max-width="isMobile ? 600 : 960">
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center">
+          <span class="text-subtitle-1">Sipariş Detayı (ID: {{ selectedOrder?.id }})</span>
+          <div class="d-flex align-center">
+            <v-tooltip text="Ödeme Ekle" location="bottom">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" icon="mdi-cash-plus" variant="text" color="teal"
+                      @click.stop="openPaymentDialog(selectedOrder)" />
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Düzenle/Onayla" location="bottom">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" icon="mdi-pencil" variant="text" color="primary"
+                      @click.stop="isEditMode = true" />
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Sil" location="bottom">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error"
+                      @click.stop="selectedOrder && deleteOrder(selectedOrder.id)" />
+              </template>
+            </v-tooltip>
+            <v-btn icon="mdi-close" variant="text" class="ml-1" @click="orderDetailDialog = false" />
+          </div>
+        </v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="pa-3 order-dialog-content">
+          <v-row dense>
+            <v-col cols="12" md="8">
+              <v-form>
+                <v-row dense>
+                  <v-col cols="12" sm="6">
+                    <v-text-field v-model="editModel.tarih" type="date" label="Tarih" density="compact" :disabled="!isEditMode" />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field :model-value="formatDate(selectedOrder?.tarih, true)" label="Görünen Tarih" density="compact" readonly />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field :model-value="selectedOrder?.gonderenAdi" label="Gönderen" density="compact" disabled />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field :model-value="selectedOrder?.gonderenTel" label="Gönderen Tel" density="compact" disabled />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field :model-value="selectedOrder?.aliciAdi || selectedOrder?.gorunecekAd" label="Alıcı" density="compact" disabled />
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field :model-value="selectedOrder?.aliciTel" label="Alıcı Tel" density="compact" disabled />
+                  </v-col>
+                  <v-col cols="12">
+                    <v-textarea v-model="editModel.adres" label="Adres" rows="2" density="compact" :disabled="!isEditMode" />
+                  </v-col>
+                </v-row>
+              </v-form>
+
+              <v-divider class="my-2" />
+              <h4 class="text-subtitle-2 mb-2">Kalemler</h4>
+              <v-row dense>
+                <v-col v-for="(paket, index) in groupItemsByPackage(selectedOrder?.kalemler || [])" :key="`dlg-paket-${selectedOrder?.id}-${index}`" cols="12">
+                  <v-card variant="tonal">
+                    <v-card-title class="text-body-2 d-flex align-center">
+                      <v-icon start size="small">{{ getAmbalajIcon(paket.ambalajAdi) }}</v-icon>
+                      <span>{{ paket.ambalajAdi }} {{ paket.specificPackageName ? `(${paket.specificPackageName})` : '' }}</span>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-list density="compact" class="bg-transparent py-0">
+                      <v-list-item v-for="kalem in paket.urunler" :key="kalem.id">
+                        <template #prepend><v-icon size="x-small" class="mr-2">{{ getUrunIcon(kalem.urun?.ad) }}</v-icon></template>
+                        <v-list-item-title class="text-body-2 truncate">{{ kalem.urun?.ad }}</v-list-item-title>
+                        <template #append>
+                          <div v-if="isEditMode" class="d-flex align-center" style="gap:8px;">
+                            <v-text-field
+                              v-model.number="editedKalemler[kalem.id]"
+                              type="number" min="0" step="0.1" hide-details density="compact"
+                              style="max-width:90px"/>
+                            <span class="text-caption">{{ kalem.birim }}</span>
+                            <span class="text-caption">=
+                              {{ (getEditedQty(kalem) * (Number(kalem.birimFiyat) || Number(getActivePrice(kalem)) || 0)).toFixed(2) }} ₺
+                            </span>
+                          </div>
+                          <span v-else class="text-caption">{{ kalem.miktar }} {{ kalem.birim }} = {{ calculateItemTotal(kalem).toFixed(2) }} ₺</span>
+                        </template>
+                      </v-list-item>
+                    </v-list>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-col>
+
+            <v-col cols="12" md="4">
+              <h4 class="text-subtitle-2 mb-2">Ödemeler</h4>
+              <v-list density="compact" class="mb-2">
+                <v-list-item v-for="odeme in (selectedOrder?.odemeler || [])" :key="odeme.id">
+                  <v-list-item-title>{{ odeme.tutar.toFixed(2) }} ₺</v-list-item-title>
+                  <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi || 'Belirtilmemiş' }}</v-list-item-subtitle>
+                  <template #append>
+                    <v-btn v-if="canManagePayments" icon="mdi-delete" variant="text" size="x-small" color="error"
+                           @click.stop="selectedOrder && deletePayment(selectedOrder.id, odeme.id)" />
+                  </template>
+                </v-list-item>
+                <v-list-item v-if="!selectedOrder?.odemeler || selectedOrder?.odemeler.length === 0">
+                  <v-list-item-subtitle>Henüz ödeme yok.</v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+              <v-divider class="my-1" />
+              <div class="d-flex justify-space-between text-body-2"><span>Toplam</span><strong>{{ calculateGrandTotal(selectedOrder).toFixed(2) }} ₺</strong></div>
+              <div class="d-flex justify-space-between text-body-2"><span>Ödenen</span><strong>{{ calculateTotalPaid(selectedOrder?.odemeler).toFixed(2) }} ₺</strong></div>
+              <div class="d-flex justify-space-between text-body-2"><span>Kalan</span><strong>{{ (calculateGrandTotal(selectedOrder) - calculateTotalPaid(selectedOrder?.odemeler)).toFixed(2) }} ₺</strong></div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-3" v-if="isEditMode">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="isEditMode = false">Vazgeç</v-btn>
+          <v-btn color="primary" @click="saveOrderEdits" :loading="savingEdits">Kaydet</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="paymentDialog" persistent max-width="500px">
       <v-card :loading="paymentLoading">
         <v-card-title class="text-h6">Ödeme Ekle (Sipariş ID: {{ orderForPayment?.id }})</v-card-title>
@@ -256,9 +387,12 @@
 
 <script setup>
 import { ref, computed, onMounted, provide, reactive } from 'vue';
+import { storeToRefs } from 'pinia';
 import { apiCall } from '../utils/api';
 import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
+import { useAuthStore } from '@/stores/auth';
+import router from '@/router';
 
 // Tüm Siparişler modülüne özel tema ile Vuetify instance'ı oluştur
 const allOrdersTheme = {
@@ -280,7 +414,9 @@ provide('vuetify', allOrdersVuetify);
 
 // Data Table State
 const itemsPerPage = ref(10);
-const headers = ref([
+const isMobile = ref(false);
+const isSmallDevice = ref(false);
+const baseHeaders = [
   { title: 'ID', key: 'id', align: 'start', sortable: true },
   { title: 'Tarih', key: 'tarih', sortable: true },
   { title: 'Müşteri', key: 'musteri', value: item => item.gorunecekAd || item.gonderenAdi, sortable: true },
@@ -291,7 +427,15 @@ const headers = ref([
   { title: 'Genel Toplam (₺)', key: 'genelToplam', value: item => calculateGrandTotal(item), sortable: true, align: 'end' },
   { title: 'Kalan Tutar (₺)', key: 'kalanTutar', value: item => calculateGrandTotal(item) - calculateTotalPaid(item.odemeler), sortable: true, align: 'end' },
   { title: 'İşlemler', key: 'actions', sortable: false, align: 'end' },
-]);
+];
+const compactHeaders = [
+  { title: 'ID', key: 'id', align: 'start', sortable: true },
+  { title: 'Tarih', key: 'tarih', sortable: true },
+  { title: 'Müşteri', key: 'musteri', value: item => item.gorunecekAd || item.gonderenAdi, sortable: true },
+  { title: 'Toplam', key: 'genelToplam', value: item => calculateGrandTotal(item), sortable: true, align: 'end' },
+  { title: '', key: 'actions', sortable: false, align: 'end' },
+];
+const tableHeaders = computed(() => (isMobile.value ? compactHeaders : baseHeaders));
 const allOrders = ref([]);
 const loading = ref(true);
 const search = ref('');
@@ -381,7 +525,94 @@ async function fetchOrders() {
   finally { loading.value = false; }
 }
 
-onMounted(() => { fetchOrders(); fetchActivePrices(); });
+function updateIsMobile() {
+  isMobile.value = window.matchMedia('(max-width: 600px)').matches;
+  isSmallDevice.value = window.matchMedia('(max-width: 1264px)').matches;
+}
+
+onMounted(() => {
+  fetchOrders();
+  fetchActivePrices();
+  updateIsMobile();
+  window.addEventListener('resize', updateIsMobile);
+});
+// Optional: cleanup (script setup runs once per mount)
+// onUnmounted(() => window.removeEventListener('resize', updateIsMobile));
+
+// Order detail dialog state and handlers
+const orderDetailDialog = ref(false);
+const selectedOrder = ref(null);
+const isEditMode = ref(false);
+const savingEdits = ref(false);
+const editModel = reactive({
+  tarih: '', adres: ''
+});
+const editedKalemler = reactive({});
+
+function onRowClick(event, { item }) {
+  if (isSmallDevice.value) {
+    openOrderDetail(item,false);
+  }
+}
+
+function openOrderDetail(order, edit = false) {
+  selectedOrder.value = order;
+  // initialize edit model
+  editModel.tarih = (order?.tarih ? new Date(order.tarih).toISOString().slice(0,10) : '');
+  editModel.adres = order?.adres || order?.teslimatAdresi || '';
+  // init edited quantities map
+  editedKalemlerClear();
+  (order?.kalemler || []).forEach(k => { editedKalemler[k.id] = k.miktar; });
+  isEditMode.value = !!edit;
+  orderDetailDialog.value = true;
+}
+
+async function saveOrderEdits() {
+  if (!selectedOrder.value) return;
+  try {
+    savingEdits.value = true;
+    const payload = {
+      tarih: editModel.tarih,
+      adres: editModel.adres,
+      kalemler: Object.entries(editedKalemler).map(([id, miktar]) => ({ id: Number(id), miktar: Number(miktar) }))
+    };
+    await apiCall(`/siparis/${selectedOrder.value.id}`, payload, 'PUT');
+    // Reflect updates locally (do not overwrite kalemler structure)
+    selectedOrder.value.tarih = payload.tarih;
+    selectedOrder.value.adres = payload.adres;
+    (selectedOrder.value.kalemler || []).forEach(k => {
+      if (editedKalemler[k.id] !== undefined) {
+        k.miktar = Number(editedKalemler[k.id]);
+      }
+    });
+    const idx = allOrders.value.findIndex(o => o.id === selectedOrder.value.id);
+    if (idx > -1) {
+      allOrders.value[idx].tarih = payload.tarih;
+      allOrders.value[idx].adres = payload.adres;
+      (allOrders.value[idx].kalemler || []).forEach(k => {
+        if (editedKalemler[k.id] !== undefined) {
+          k.miktar = Number(editedKalemler[k.id]);
+        }
+      });
+    }
+    isEditMode.value = false;
+    showSnackbar('Sipariş güncellendi', 'success');
+  } catch (err) {
+    console.error('Order update failed:', err);
+    showSnackbar(`Sipariş güncellenemedi: ${err?.response?.data?.error || err.message}`, 'error');
+  } finally {
+    savingEdits.value = false;
+  }
+}
+
+function editedKalemlerClear() {
+  Object.keys(editedKalemler).forEach(k => delete editedKalemler[k]);
+}
+
+function getEditedQty(kalem) {
+  const val = editedKalemler[kalem.id];
+  return typeof val === 'number' ? val : kalem.miktar;
+}
 
 // Fiyatları yenileme fonksiyonu
 async function refreshPrices() {
@@ -392,6 +623,32 @@ async function refreshPrices() {
     showSnackbar('Fiyatlar yenilenirken hata oluştu!', 'error');
   }
 }
+// Ödeme silme yetkisi (RBAC): roleLevel >= 70 ödeme yönetimi için yeterli
+const auth = useAuthStore();
+const { roleLevel } = storeToRefs(auth);
+const canManagePayments = computed(() => roleLevel.value >= 70);
+
+async function deletePayment(orderId, paymentId) {
+  if (!canManagePayments.value) {
+    showSnackbar('Ödeme silme için yetkiniz yok (roleLevel ≥ 70 gerekir).', 'error');
+    return;
+  }
+  try {
+    await apiCall(`/siparis/${orderId}/odemeler/${paymentId}`, {}, 'DELETE');
+    const orderIndex = allOrders.value.findIndex(o => o.id === orderId);
+    if (orderIndex > -1) {
+      const payIndex = (allOrders.value[orderIndex].odemeler || []).findIndex(p => p.id === paymentId);
+      if (payIndex > -1) {
+        allOrders.value[orderIndex].odemeler.splice(payIndex, 1);
+      }
+    }
+    showSnackbar('Ödeme silindi.', 'success');
+  } catch (err) {
+    console.error('❌ Ödeme silinemedi:', err.response?.data || err.message || err);
+    showSnackbar(`Ödeme silinirken hata: ${err.response?.data?.error || err.message}`, 'error');
+  }
+}
+
 
 // --- Hesaplama Fonksiyonları ---
 function calculateItemTotal(kalem) {
@@ -507,19 +764,35 @@ async function savePayment() {
 // <<< YARDIMCI FONKSİYONLAR GERİ EKLENDİ >>>
 function editOrder(id) {
   console.log('Düzenle ID:', id);
-  showSnackbar(`Sipariş ${id} düzenleme/onaylama sayfasına gidilecek (henüz eklenmedi).`, 'info');
+  try {
+    router.push({ name: 'SiparisFormu', query: { edit: '1', id: String(id) } });
+  } catch (e) {
+    showSnackbar('Sayfaya yönlendirme başarısız.', 'error');
+  }
 }
 async function deleteOrder(id) {
   console.log('Sil ID:', id); /* Vue dialog ile onay alınmalı! */
   // if (!confirm(`${id} ID'li siparişi silmek istediğinizden emin misiniz?`)) return;
   const itemIndex = allOrders.value.findIndex(item => item.id === id);
   try {
-    await apiCall(`/siparis/${id}`, {}, 'DELETE');
+    // Force delete if user has sufficient roleLevel (>= 70)
+    const auth = useAuthStore();
+    const { roleLevel } = storeToRefs(auth);
+    const forceQuery = roleLevel.value >= 70 ? '?force=true' : '';
+    await apiCall(`/siparis/${id}${forceQuery}`, {}, 'DELETE');
     showSnackbar('Sipariş başarıyla silindi.', 'success'); // Snackbar kullanıldı
     if (itemIndex > -1) { allOrders.value.splice(itemIndex, 1); }
   } catch (err) {
     console.error('❌ Sipariş silinemedi:', err.response?.data || err.message || err);
-    showSnackbar(`Sipariş silinirken hata oluştu: ${err.response?.data?.message || err.message}`, 'error'); // Snackbar kullanıldı
+    const status = err?.response?.status;
+    const message = err?.response?.data?.error || err?.response?.data?.message || err.message;
+    if (status === 409) {
+      showSnackbar('Bu siparişe ait ödemeler var. Yönetici yetkisi (roleLevel ≥ 70) ile tekrar deneyin ya da ödemeleri kaldırın.', 'warning', 6000);
+    } else if (status === 403) {
+      showSnackbar('Yetkisiz işlem. Force silme için roleLevel ≥ 70 gerekir.', 'error', 6000);
+    } else {
+      showSnackbar(`Sipariş silinirken hata oluştu: ${message}`, 'error');
+    }
   }
 }
 function getAmbalajIcon(ambalajAdi) {
@@ -659,5 +932,16 @@ function hasPriceDifference(kalem) {
 
 .v-data-table {
   border-radius: 12px;
+}
+
+/* Order detail dialog improvements */
+.order-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.order-dialog-content .v-text-field,
+.order-dialog-content .v-textarea {
+  margin-bottom: 8px;
 }
 </style>

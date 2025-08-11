@@ -135,12 +135,11 @@
               <v-icon color="rgba(255,255,255,0.9)">mdi-chart-line</v-icon>
             </template>
           </v-list-item>
-
-          <v-list-item to="/main/crm-raporlama" title="CRM Raporlama" link prepend-icon="mdi-chart-box"
-            :active="isActive('/main/crm-raporlama')" class="modern-nav-item mb-1" @click="onMenuClick"
+          <v-list-item to="/main/masraf-yonetimi" title="Masraf Yönetimi" link prepend-icon="mdi-cash-minus"
+            :active="isActive('/main/masraf-yonetimi')" class="modern-nav-item mb-1" @click="onMenuClick"
             style="border-radius: 8px; color: white;">
             <template v-slot:prepend>
-              <v-icon color="rgba(255,255,255,0.9)">mdi-chart-box</v-icon>
+              <v-icon color="rgba(255,255,255,0.9)">mdi-cash-minus</v-icon>
             </template>
           </v-list-item>
         </v-list>
@@ -374,7 +373,7 @@ const getCurrentPageTitle = () => {
     '/main/recete-yonetimi': 'Reçete Yönetimi',
     '/main/uretim-plani': 'Üretim Planı',
     '/main/satis-raporu': 'Satış Raporu',
-    '/main/crm-raporlama': 'CRM Raporlama'
+    '/main/masraf-yonetimi': 'Masraf Yönetimi'
   };
   return titleMap[path] || 'Ana Sayfa';
 };
@@ -1025,9 +1024,7 @@ onBeforeUnmount(() => {
 
 /* ========= MAIN CONTENT BACKGROUND ========= */
 .main-content-background {
-  background: linear-gradient(135deg, #F8F4E6 0%, #E5C297 50%, #D4A574 100%);
-  background-image: url('data:image/svg+xml;utf8,%3Csvg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"%3E%3Crect x="0" y="0" width="60" height="60" fill="%23F8F4E6"/%3E%3Cpath d="M0 30L30 0L60 30L30 60L0 30Z" fill="%23D4A574" fill-opacity="0.05"/%3E%3Cpath d="M15 30L30 15L45 30L30 45L15 30Z" fill="%23B8956A" fill-opacity="0.03"/%3E%3C/svg%3E');
-  background-size: 60px 60px;
+  background: #f5f7fa;
 }
 
 .scrollable-main {

@@ -16,7 +16,7 @@ import CariYonetimi from '../pages/CariYonetimi.vue'
 import KargoOperasyon from '../pages/KargoOperasyon.vue'
 import UrunYonetimi from '../pages/UrunYonetimi.vue'
 import SatisRaporu from '../pages/SatisRaporu.vue'
-import CrmRaporlama from '../pages/CrmRaporlama.vue'
+import MasrafYonetimi from '../pages/MasrafYonetimi.vue'
 import ReceteYonetimi from '../pages/ReceteYonetimi.vue'
 
 // ROUTER SETUP
@@ -119,10 +119,10 @@ const routes = [
         meta: { requiresAuth: true, page: 'satis-raporu' }
       },
       {
-        path: 'crm-raporlama',
-        name: 'CrmRaporlama',
-        component: CrmRaporlama,
-        meta: { requiresAuth: true, page: 'crm-raporlama' }
+        path: 'masraf-yonetimi',
+        name: 'MasrafYonetimi',
+        component: MasrafYonetimi,
+        meta: { requiresAuth: true, page: 'masraf-yonetimi' }
       },
       {
         path: 'kargo-operasyon',

@@ -18,7 +18,9 @@ import {
     VCardText,
     VCardTitle,
     VCardActions,
+    VCardSubtitle,
     VBtn,
+    VBtnGroup,
     VIcon,
     VTextField,
     VTextarea,
@@ -155,8 +157,12 @@ const darkPastryTheme = {
 };
 
 // createVuetify fonksiyonunu güncelliyorum
-export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraThemes = {} } = {}) {
+export function createCustomVuetify({ themeName = 'professionalTheme', extraThemes = {} } = {}) {
     return createVuetify({
+        display: {
+            mobileBreakpoint: 'sm',
+            thresholds: { xs: 0, sm: 600, md: 960, lg: 1280, xl: 1920 }
+        },
         theme: {
             defaultTheme: themeName,
             themes: {
@@ -239,6 +245,11 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
         },
         directives,
         defaults: {
+            // Global compact defaults for small screens
+            global: {
+                ripple: true,
+                density: 'comfortable'
+            },
             VCard: {
                 elevation: 2,
                 rounded: 'lg',
@@ -246,17 +257,17 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
             },
             VTextField: {
                 variant: 'outlined',
-                density: 'comfortable',
+                density: 'compact',
                 color: 'primary'
             },
             VTextarea: {
                 variant: 'outlined',
-                density: 'comfortable',
+                density: 'compact',
                 color: 'primary'
             },
             VSelect: {
                 variant: 'outlined',
-                density: 'comfortable',
+                density: 'compact',
                 color: 'primary'
             },
             VBtn: {
@@ -271,6 +282,9 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
             VAlert: {
                 variant: 'tonal',
                 rounded: 'lg'
+            },
+            VDataTable: {
+                density: 'compact'
             }
         },
         icons: {
@@ -281,6 +295,6 @@ export function createCustomVuetify({ themeName = 'baklavaBusinessTheme', extraT
     });
 }
 
-// Varsayılan olarak baklavaBusinessTheme ile export
-const vuetify = createCustomVuetify();
+// Varsayılan olarak professionalTheme ile export
+const vuetify = createCustomVuetify({ themeName: 'professionalTheme' });
 export default vuetify;

@@ -326,6 +326,9 @@
                     <v-text-field v-model="yeniCari.telefon" label="Telefon" />
                     <v-text-field v-model="yeniCari.email" label="Email" />
                     <v-textarea v-model="yeniCari.aciklama" label="Açıklama" />
+                    <v-text-field v-model="yeniCari.il" label="İl (opsiyonel)" />
+                    <v-text-field v-model="yeniCari.ilce" label="İlçe (opsiyonel)" />
+                    <v-textarea v-model="yeniCari.adres" label="Adres (opsiyonel)" />
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
@@ -384,9 +387,11 @@
                     <v-text-field v-model="editCari.musteriKodu" label="Müşteri Kodu" disabled />
                     <v-text-field :value="editCari.sube?.ad" label="Şube" disabled />
                     <v-textarea v-model="editCari.aciklama" label="Açıklama" />
+<v-textarea :model-value="defaultAdres" label="Varsayılan Adres" auto-grow readonly placeholder="Henüz adres yok. 'Adresleri Yönet' ile ekleyin" />
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
+                    <v-btn variant="text" @click="openAdresDialog(editCari)">Adresleri Yönet</v-btn>
                     <v-btn text @click="closeDialogFullEdit">İptal</v-btn>
                     <v-btn color="primary" @click="saveFullEdit">Kaydet</v-btn>
                 </v-card-actions>
@@ -412,7 +417,8 @@
                         </v-col>
                     </v-row>
                     <v-divider class="my-2" />
-                    <v-text-field v-model="yeniAdres.adres" label="Yeni Adres" class="mb-2" />
+                    <v-text-field v-model="yeniAdres.adres" label="Yeni Adres" class="mb-2"
+                                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                     <v-select v-model="yeniAdres.tip" :items="['Ev', 'İş', 'Diğer']" label="Adres Tipi" class="mb-2" />
                     <v-btn color="success" @click="addAdres" :disabled="!yeniAdres.adres">Ekle</v-btn>
                 </v-card-text>
@@ -450,7 +456,7 @@ const dialogDetay = ref(false);
 const dialogVadeTakip = ref(false);
 const dialogFullEdit = ref(false);
 const dialogAdres = ref(false);
-const yeniCari = ref({ ad: '', telefon: '', email: '', aciklama: '' });
+const yeniCari = ref({ ad: '', telefon: '', email: '', aciklama: '', il: '', ilce: '', adres: '' });
 const odemeTutar = ref(0);
 const odemeAciklama = ref('');
 const odemeYontemi = ref('');
@@ -460,6 +466,13 @@ const isMobile = ref(false);
 const vadeList = ref([]);
 const selectedVade = ref([]);
 const editCari = ref({ ad: '', telefon: '', email: '', aciklama: '', musteriKodu: '', sube: {}, adresler: [] });
+const defaultAdres = computed(() => {
+    try {
+        const list = Array.isArray(editCari.value?.adresler) ? editCari.value.adresler : [];
+        const v = list.find(a => a?.varsayilan) || list[0];
+        return (v && typeof v.adres === 'string') ? v.adres : '';
+    } catch { return ''; }
+});
 const excelInput = ref(null);
 const excelResults = ref([]);
 const loadingExcel = ref(false);
@@ -666,19 +679,23 @@ async function addCari() {
         snackbar.value = { show: true, text: 'Ad zorunlu', color: 'error' };
         return;
     }
-    const payload = { ...yeniCari.value };
-    payload.adresler = (payload.adresler || []).filter(a => a.adres && a.adres.trim() !== '');
-    if (payload.adresler.length === 0) {
-        snackbar.value = { show: true, text: 'En az bir adres girin', color: 'error' };
-        return;
+    // Backend alanlarına normalize et
+    const payload = {
+        cariAdi: yeniCari.value.ad,
+        telefon: yeniCari.value.telefon || null,
+        irtibatAdi: null,
+        musteriKodu: `M${Date.now()}`,
+        email: yeniCari.value.email || null,
+        aciklama: yeniCari.value.aciklama || null,
+    };
+    const adresler = [];
+    if (yeniCari.value.adres && yeniCari.value.adres.trim() !== '') {
+        adresler.push({ tip: 'Ev', adres: yeniCari.value.adres, il: yeniCari.value.il || null, ilce: yeniCari.value.ilce || null, varsayilan: true });
     }
-    if (payload.id) {
-        await apiCall('/cari', { method: 'PUT', data: payload });
-        snackbar.value = { show: true, text: 'Müşteri güncellendi', color: 'success' };
-    } else {
-        await apiCall('/cari', { method: 'POST', data: payload });
-        snackbar.value = { show: true, text: 'Müşteri eklendi', color: 'success' };
-    }
+    if (adresler.length > 0) payload.adresler = adresler;
+
+    await apiCall('/cari', { method: 'POST', data: payload });
+    snackbar.value = { show: true, text: 'Müşteri eklendi', color: 'success' };
     closeDialogYeni();
     fetchCariler();
 }
@@ -689,12 +706,12 @@ async function fetchHareketler(cariId) {
 
         // Hem cari hareketlerini hem de sipariş ödemelerini çek
         const [cariHareketRes, siparislerRes] = await Promise.all([
-            axios.get('/api/cari/hareket?cariId=' + cariId),
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/siparis`) // Tüm siparişleri çek, cariId filtrelemesi frontend'de yapılacak
+            apiCall(`/cari/hareket?cariId=${cariId}`, { method: 'GET' }),
+            apiCall('/siparis', { method: 'GET' })
         ]);
 
-        const cariHareketler = cariHareketRes.data || [];
-        const tumSiparisler = siparislerRes.data || [];
+        const cariHareketler = Array.isArray(cariHareketRes) ? cariHareketRes : (cariHareketRes?.hareketler || []);
+        const tumSiparisler = Array.isArray(siparislerRes?.orders) ? siparislerRes.orders : (Array.isArray(siparislerRes) ? siparislerRes : []);
 
         // Bu cariye ait siparişleri filtrele
         const cariSiparisler = tumSiparisler.filter(siparis =>
@@ -853,11 +870,19 @@ function openVadeTakipDialog() {
 function closeVadeTakip() { dialogVadeTakip.value = false; }
 
 async function openDialogFullEdit(item) {
-    const { data } = await axios.get('/api/cari/' + item.id);
-    editCari.value = data;
-    if (!editCari.value.adresler || !Array.isArray(editCari.value.adresler) || editCari.value.adresler.length === 0) {
-        editCari.value.adresler = [{ tip: 'Ev', adres: '' }];
-    }
+    const resp = await apiCall('/cari/' + item.id, { method: 'GET' });
+    const data = resp?.customer || resp || {};
+    editCari.value = {
+        id: data.id ?? item.id,
+        ad: data.ad ?? data.cariAdi ?? item.ad ?? '',
+        telefon: data.telefon ?? '',
+        email: data.email ?? '',
+        musteriKodu: data.musteriKodu ?? data.kod ?? item.musteriKodu ?? '',
+        sube: data.sube ? { id: data.sube.id, ad: data.sube.ad } : (item.sube || {}),
+        aciklama: data.aciklama ?? '',
+        adresler: Array.isArray(data.adresler) ? data.adresler : []
+    };
+    // Boş placeholder ekleme; boşsa dizi olarak bırak
     dialogFullEdit.value = true;
 }
 function closeDialogFullEdit() {
@@ -870,10 +895,11 @@ async function saveFullEdit() {
         snackbar.value = { show: true, text: 'Ad zorunlu', color: 'error' };
         return;
     }
-    const payload = { ...editCari.value };
-    if (payload.sube && payload.sube.id) payload.subeId = payload.sube.id;
-    delete payload.sube;
-    await axios.put('/api/cari', payload);
+    // Sadece desteklenen alanları gönder; adresler ayrı dialogdan yönetiliyor
+    const allowed = ['id','cariAdi','musteriKodu','subeAdi','telefon','irtibatAdi','cariGrubu','fiyatGrubu','aktif','ad'];
+    const payload = {};
+    for (const k of allowed) { if (editCari.value[k] !== undefined) payload[k] = editCari.value[k]; }
+    await apiCall('/cari', payload, 'PUT');
     snackbar.value = { show: true, text: 'Cari güncellendi', color: 'success' };
     closeDialogFullEdit();
     fetchCariler();
@@ -881,13 +907,13 @@ async function saveFullEdit() {
 
 async function addOdeme() {
     if (!detayCari.value) return;
-    await axios.post('/api/cari/odeme', {
+    await apiCall('/cari/odeme', {
         cariId: detayCari.value.id,
         tutar: odemeTutar.value,
         aciklama: odemeAciklama.value,
         odemeYontemi: odemeYontemi.value,
         vadeTarihi: odemeVade.value || null,
-    });
+    }, 'POST');
     snackbar.value = { show: true, text: 'Ödeme eklendi', color: 'success' };
     closeDialogOdeme();
     fetchCariler();
@@ -972,7 +998,9 @@ async function onExcelFileChange(e) {
 }
 
 function openAdresDialog(item) {
-    adreslerList.value = Array.isArray(item.adresler) ? [...item.adresler] : [];
+    adreslerList.value = Array.isArray(item.adresler)
+        ? item.adresler.filter(a => a && typeof a.adres === 'string' && a.adres.trim() !== '').map(a => ({ ...a }))
+        : [];
     adresCariId.value = item.id;
     yeniAdres.value = { tip: 'Ev', adres: '' };
     dialogAdres.value = true;
@@ -985,7 +1013,9 @@ function closeAdresDialog() {
 }
 function addAdres() {
     if (!yeniAdres.value.adres) return;
-    adreslerList.value.push({ tip: yeniAdres.value.tip, adres: yeniAdres.value.adres });
+    const isFirst = adreslerList.value.length === 0;
+    // İlk eklenen adresi varsayılan yap ve boşlukları kırp
+    adreslerList.value.push({ tip: yeniAdres.value.tip, adres: yeniAdres.value.adres.trim(), varsayilan: isFirst });
     yeniAdres.value = { tip: 'Ev', adres: '' };
 }
 function removeAdres(i) {
@@ -995,8 +1025,12 @@ async function saveAdresler() {
     if (!adresCariId.value) return;
     adresKayitLoading.value = true;
     try {
-        await axios.put('/api/cari', { id: adresCariId.value, adresler: adreslerList.value });
+        await apiCall('/cari', { id: adresCariId.value, adresler: adreslerList.value }, 'PUT');
         snackbar.value = { show: true, text: 'Adresler kaydedildi', color: 'success' };
+        // Aktif düzenlenen kayıtta adresleri anında güncelle
+        if (editCari.value && editCari.value.id === adresCariId.value) {
+            editCari.value.adresler = adreslerList.value.map(a => ({ ...a }));
+        }
         fetchCariler();
         closeAdresDialog();
     } catch (e) {

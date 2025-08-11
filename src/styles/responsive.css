@@ -1,0 +1,84 @@
+/* Global responsive overrides and utility classes for Vuetify v3 */
+
+:root {
+    --table-mobile-min-width: 640px;
+    --font-size-mobile: 12px;
+    --chip-font-size-mobile: 11px;
+    --table-cell-padding-mobile-y: 6px;
+    --table-cell-padding-mobile-x: 8px;
+    --brand-surface: #ffffff;
+    --brand-background: #f5f7fa;
+    --brand-border: #e6e9ef;
+}
+
+/* General text truncation utility */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Visibility utilities */
+.hidden-sm {
+    display: none !important;
+}
+
+@media (min-width: 600px) {
+    .hidden-sm {
+        display: initial !important;
+    }
+}
+
+/* Data table responsive improvements */
+.v-data-table .v-table__wrapper {
+    overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+
+    /* Ensure a reasonable horizontal min-width, enable horizontal scroll */
+    .v-data-table .v-table__wrapper>table {
+        min-width: var(--table-mobile-min-width);
+    }
+
+    /* Compact typography and paddings */
+    .v-data-table .v-data-table__td,
+    .v-data-table .v-data-table__th {
+        padding: var(--table-cell-padding-mobile-y) var(--table-cell-padding-mobile-x) !important;
+        font-size: var(--font-size-mobile) !important;
+        line-height: 1.25rem !important;
+    }
+
+    /* Make header cells more compact */
+    .v-data-table .v-data-table__th .v-data-table-header__content {
+        font-size: var(--font-size-mobile) !important;
+    }
+
+    /* Chips smaller on mobile but neutral */
+    .v-chip {
+        font-size: var(--chip-font-size-mobile) !important;
+        height: 22px !important;
+        background: #eef2f7 !important;
+        color: #455a64 !important;
+    }
+
+    /* Icon buttons smaller inside tables */
+    .v-data-table .v-btn.v-btn--icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+}
+
+/* Sticky table header enhancement for large lists */
+.v-data-table .v-table__wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--brand-surface);
+    border-bottom: 1px solid var(--brand-border);
+}
+
+/* Neutral background for app */
+body {
+    background: var(--brand-background);
+}
