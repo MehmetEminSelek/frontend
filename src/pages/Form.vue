@@ -91,10 +91,20 @@
                 label="Gönderen Tipi" @update:modelValue="handleGonderenChange" variant="outlined" color="#388E3C" />
             </v-col>
             <v-col cols="12" md="6">
-              <v-select v-model="selectedPersonel" :items="dropdowns.personeller" item-title="displayName"
-                item-value="id" return-object label="Gönderen Personel" @update:modelValue="onPersonelSelect"
-                :rules="[rules.required]" variant="outlined" color="#388E3C" placeholder="Personel seçiniz..."
-                prepend-inner-icon="mdi-account" />
+              <v-select
+                v-model="selectedPersonel"
+                :items="dropdowns.cariler"
+                item-title="ad"
+                item-value="id"
+                return-object
+                label="Gönderen (Cari)"
+                @update:modelValue="onPersonelSelect"
+                :rules="[rules.required]"
+                variant="outlined"
+                color="#388E3C"
+                placeholder="Cari seçiniz..."
+                prepend-inner-icon="mdi-account"
+              />
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field v-model="form.gonderenTel" label="Gönderen Tel" :rules="[rules.phone]"
@@ -872,14 +882,14 @@ function onAliciTelInput(val) {
 }
 
 // Personel seçim fonksiyonu
-function onPersonelSelect(personel) {
-  if (personel) {
-    form.gonderenAdi = personel.ad;
-    form.gonderenTel = personel.telefon || '';
-    console.log('✅ Personel seçildi:', personel.ad, '-', personel.telefon || 'telefon yok');
+function onPersonelSelect(cari) {
+  if (cari) {
+    form.gonderenAdi = cari.ad;
+    form.gonderenTel = cari.telefon || '';
+    console.log('✅ Gönderen cari seçildi:', cari.ad, '-', cari.telefon || 'telefon yok');
 
-    if (!personel.telefon) {
-      showSnackbar('Bu personel için telefon numarası kayıtlı değil. Lütfen manuel girin.', 'warning');
+    if (!cari.telefon) {
+      showSnackbar('Bu cari için telefon kayıtlı değil. Lütfen manuel girin.', 'warning');
     }
   } else {
     form.gonderenAdi = '';
