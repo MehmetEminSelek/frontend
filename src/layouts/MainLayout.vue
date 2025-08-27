@@ -146,16 +146,16 @@
       </v-navigation-drawer>
 
       <!-- Top App Bar -->
-      <v-app-bar v-if="currentUser" app elevation="0" height="64"
-        style="background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); border-bottom: 1px solid #E0E7ED;">
+      <v-app-bar v-if="currentUser" app elevation="0" height="72"
+        style="background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%); border-bottom: 1px solid #E0E7ED; overflow: visible;">
         <v-app-bar-nav-icon class="d-md-none" @click="drawer = !drawer" color="#8D6E63"></v-app-bar-nav-icon>
 
-        <v-toolbar-title class="d-none d-md-flex align-center">
-          <img src="../logos/omergullulogo.png" height="40" class="mr-3" alt="Logo" />
-          <span class="text-h6 font-weight-medium" style="color: #5D4037;">{{ getCurrentPageTitle() }}</span>
+        <!-- Left-aligned Title (no logo) -->
+        <v-toolbar-title class="app-title-left">
+          <span class="app-title-text">{{ getCurrentPageTitle() }}</span>
         </v-toolbar-title>
 
-        <v-spacer></v-spacer>
+        <v-spacer />
 
         <!-- Header Actions -->
         <div class="d-flex align-center">
@@ -168,7 +168,17 @@
             {{ realtimeStore.isConnected ? 'Canlı' : 'Offline' }}
           </v-chip>
 
-
+          <!-- Top bar bell to toggle notification drawer -->
+          <v-badge v-if="unreadNotificationCount > 0" :content="unreadNotificationCount > 99 ? '99+' : unreadNotificationCount" color="error" offset-x="0" offset-y="0" class="mr-1">
+            <v-btn icon variant="text" @click="toggleNotificationDrawer" :aria-label="'Bildirimler'">
+              <v-icon :color="hasUnreadNotifications ? '#FFD54F' : '#8D6E63'">
+                {{ hasUnreadNotifications ? 'mdi-bell-ring' : 'mdi-bell-outline' }}
+              </v-icon>
+            </v-btn>
+          </v-badge>
+          <v-btn v-else icon variant="text" class="mr-1" @click="toggleNotificationDrawer" :aria-label="'Bildirimler'">
+            <v-icon color="#8D6E63">mdi-bell-outline</v-icon>
+          </v-btn>
 
           <!-- User Menu -->
           <v-menu location="bottom end">
@@ -219,9 +229,8 @@
       </v-main>
 
       <!-- Floating Notification Drawer Button -->
-      <div v-if="currentUser && !drawerPinned" class="floating-drawer-button" :style="{
-        right: notificationDrawer ? '420px' : '24px',
-        transform: notificationDrawer ? 'translateX(0)' : 'translateX(0)'
+      <div v-if="currentUser && isMobile && !drawerPinned" class="floating-drawer-button" :style="{
+        right: notificationDrawer ? '420px' : '24px'
       }">
         <v-btn fab color="#8D6E63" size="large" elevation="6" class="notification-trigger"
           :class="{ 'notification-shake': shouldShakeNotification }" @click="toggleNotificationDrawer"
@@ -876,8 +885,8 @@ onBeforeUnmount(() => {
 /* ========= FLOATING DRAWER BUTTON ========= */
 .floating-drawer-button {
   position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 24px;
+  right: 24px;
   z-index: 1500;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -1075,6 +1084,30 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 30px rgba(212, 165, 116, 0.15);
 }
 
+/* ========= APP BAR TITLE ALIGNMENT ========= */
+.app-title {
+  align-items: center;
+  display: inline-flex;
+}
+.app-title-text {
+  color: #5D4037;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-title-left {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Ensure app bar allows badges to render fully */
+:deep(.v-app-bar) {
+  overflow: visible !important;
+}
+
 /* ========= BUTTON ENHANCEMENTS ========= */
 .v-btn {
   border-radius: 12px !important;
@@ -1138,9 +1171,7 @@ onBeforeUnmount(() => {
 
   .floating-drawer-button {
     right: 16px !important;
-    bottom: 80px !important;
-    top: auto !important;
-    transform: none !important;
+    bottom: 16px !important;
   }
 
   .floating-drawer-button .v-btn {

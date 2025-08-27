@@ -51,8 +51,10 @@ const createSecureApiClient = () => {
                 // Add security level
                 config.headers['X-Security-Level'] = authStore.securityLevel || SECURITY_LEVELS.NORMAL
 
-                // Basit input sanitization
-                if (['post', 'put', 'patch'].includes(config.method.toLowerCase()) && config.data) {
+                // Basit input sanitization (sadece JSON için)
+                const ct = (config.headers['Content-Type'] || config.headers['content-type'] || '').toString().toLowerCase()
+                const isJson = !ct || ct.includes('application/json')
+                if (isJson && ['post', 'put', 'patch'].includes(config.method.toLowerCase()) && config.data && !(config.data instanceof FormData)) {
                     config.data = basicSanitizeData(config.data)
                 }
 

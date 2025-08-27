@@ -6,6 +6,7 @@ import { SOCKET_URL } from '../config'
 let socket = null
 let realtimeStore = null
 let toast = null
+let authStore = null
 
 // Lazy load dependencies
 const getRealtimeStore = () => {
@@ -24,18 +25,30 @@ const getToast = () => {
     return toast
 }
 
+const getAuthStore = () => {
+    if (!authStore) {
+        const { useAuthStore } = require('../stores/auth.js')
+        authStore = useAuthStore()
+    }
+    return authStore
+}
+
 export function useSocket() {
     const isConnecting = ref(false)
     const reconnectAttempts = ref(0)
     const maxReconnectAttempts = 5
 
     const connect = () => {
+        const aStore = getAuthStore()
+        const token = aStore?.accessToken || localStorage.getItem('accessToken')
+
         if (!socket) {
             socket = io(SOCKET_URL, {
                 transports: ['websocket'],
                 reconnection: true,
                 reconnectionAttempts: 5,
-                reconnectionDelay: 1000
+                reconnectionDelay: 1000,
+                auth: token ? { token } : undefined
             })
         }
         return socket

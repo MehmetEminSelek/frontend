@@ -162,8 +162,11 @@
         class="elevation-0" hover density="comfortable" items-per-page="20" no-data-text="Hareket kaydı yok."
         loading-text="Hareketler yükleniyor...">
         <template v-slot:item.stok="{ item }">
-          <span>{{ item.stok.hammadde?.ad || item.stok.yariMamul?.ad }}<br><small>{{ item.stok.operasyonBirimi?.ad
-              }}</small></span>
+          <span>
+            {{ item.material?.ad || item.urun?.ad || 'Bilinmiyor' }}
+            <br>
+            <small>{{ item.material?.kod || item.urun?.kod || '' }}</small>
+          </span>
         </template>
         <template v-slot:item.tip="{ item }">
           <span>{{ hareketTipLabel(item.tip) }}</span>

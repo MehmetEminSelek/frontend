@@ -1,75 +1,53 @@
 <template>
     <v-container class="py-6 px-4" fluid>
         <!-- Header -->
-        <v-card class="pa-6 mb-6 rounded-lg" elevation="2" 
+        <v-card class="pa-6 mb-6 rounded-lg" elevation="2"
             style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #dee2e6;">
-                <v-row align="center">
-                    <v-col cols="12" md="8">
-                        <div class="d-flex align-center mb-3">
+            <v-row align="center">
+                <v-col cols="12" md="8">
+                    <div class="d-flex align-center mb-3">
                         <v-icon size="40" class="mr-3" color="#495057">mdi-chart-line</v-icon>
-                            <div>
+                        <div>
                             <h1 class="text-h4 font-weight-bold mb-1" style="color: #343a40;">Satış Raporları</h1>
                             <p class="text-body-1 mb-0" style="color: #6c757d;">Günlük ve aylık satış performansı</p>
                         </div>
-                        </div>
-                    </v-col>
-                    <v-col cols="12" md="4" class="text-center">
+                    </div>
+                </v-col>
+                <v-col cols="12" md="4" class="text-center">
                     <v-card class="pa-4" color="#f8f9fa" elevation="0" style="border: 1px solid #dee2e6;">
                         <div class="text-h5 font-weight-bold" style="color: #28a745;">
                             ₺{{ toplamCiro.toLocaleString('tr-TR') }}
                         </div>
                         <div class="text-body-2" style="color: #6c757d;">Toplam Ciro</div>
                     </v-card>
-                    </v-col>
-                </v-row>
-            </v-card>
+                </v-col>
+            </v-row>
+        </v-card>
 
         <!-- Filters -->
         <v-card class="pa-4 mb-6 rounded-lg" elevation="1" style="border: 1px solid #dee2e6;">
             <v-row align="center">
-                    <v-col cols="12" md="3">
-                        <v-text-field 
-                            v-model="startDate" 
-                            label="Başlangıç Tarihi" 
-                            type="date"
-                            variant="outlined" 
-                        density="compact"
-                        color="#6c757d"
-                            hide-details />
-                    </v-col>
-                    <v-col cols="12" md="3">
-                        <v-text-field 
-                            v-model="endDate" 
-                            label="Bitiş Tarihi" 
-                            type="date"
-                            variant="outlined"
-                        density="compact"
-                        color="#6c757d"
-                            hide-details />
-                    </v-col>
                 <v-col cols="12" md="3">
-                    <v-btn 
-                        color="#495057" 
-                        variant="elevated" 
-                        @click="fetchReport" 
-                        :loading="loading"
-                        prepend-icon="mdi-refresh" 
-                        class="w-100"
-                        elevation="2">
-                            Raporu Getir
-                        </v-btn>
-                    </v-col>
+                    <v-text-field v-model="startDate" label="Başlangıç Tarihi" type="date" variant="outlined"
+                        density="compact" color="#6c757d" hide-details />
+                </v-col>
                 <v-col cols="12" md="3">
-                    <v-btn 
-                        color="#28a745" 
-                        variant="outlined" 
-                        @click="exportCSV"
-                        prepend-icon="mdi-file-excel" 
+                    <v-text-field v-model="endDate" label="Bitiş Tarihi" type="date" variant="outlined"
+                        density="compact" color="#6c757d" hide-details />
+                </v-col>
+                <v-col cols="12" md="3">
+                    <v-btn color="#495057" variant="elevated" @click="fetchReport" :loading="loading"
+                        prepend-icon="mdi-refresh" class="w-100" elevation="2">
+                        Raporu Getir
+                    </v-btn>
+                </v-col>
+                <v-col cols="12" md="3">
+                    <v-btn color="#28a745" variant="outlined" @click="exportCSV" prepend-icon="mdi-file-excel"
                         class="w-100">
                         Excel İndir
-                        </v-btn>
-                    </v-col>
-                </v-row>
+                    </v-btn>
+                </v-col>
+            </v-row>
         </v-card>
 
         <!-- Main Charts -->
@@ -78,9 +56,9 @@
             <v-col cols="12" lg="8">
                 <v-card class="rounded-lg" elevation="2" style="border: 1px solid #dee2e6;">
                     <v-card-title class="pa-4" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-                            <div class="d-flex align-center">
+                        <div class="d-flex align-center">
                             <v-icon class="mr-3" color="#495057">mdi-chart-line</v-icon>
-                                <div>
+                            <div>
                                 <h3 class="text-h6 font-weight-bold" style="color: #343a40;">Günlük Ciro Trendi</h3>
                                 <p class="text-body-2 mb-0" style="color: #6c757d;">{{ formattedDateRange }}</p>
                             </div>
@@ -88,8 +66,7 @@
                     </v-card-title>
                     <v-card-text class="pa-4">
                         <div style="background: white; border-radius: 8px; padding: 16px; min-height: 350px;">
-                            <Line v-if="gunlukCiroData.labels.length > 0" 
-                                :data="gunlukCiroData" 
+                            <Line v-if="gunlukCiroData.labels.length > 0" :data="gunlukCiroData"
                                 :options="chartOptions" />
                             <div v-else class="d-flex align-center justify-center" style="height: 300px;">
                                 <div class="text-center">
@@ -106,9 +83,9 @@
             <v-col cols="12" lg="4">
                 <v-card class="rounded-lg" elevation="2" style="border: 1px solid #dee2e6;">
                     <v-card-title class="pa-4" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-                            <div class="d-flex align-center">
+                        <div class="d-flex align-center">
                             <v-icon class="mr-3" color="#495057">mdi-trophy</v-icon>
-                                <div>
+                            <div>
                                 <h3 class="text-h6 font-weight-bold" style="color: #343a40;">En Çok Satan Ürünler</h3>
                                 <p class="text-body-2 mb-0" style="color: #6c757d;">Adet bazında sıralama</p>
                             </div>
@@ -116,8 +93,7 @@
                     </v-card-title>
                     <v-card-text class="pa-4">
                         <div style="background: white; border-radius: 8px; padding: 16px; min-height: 350px;">
-                            <Bar v-if="urunSatisChartData.labels.length > 0" 
-                                :data="urunSatisChartData" 
+                            <Bar v-if="urunSatisChartData.labels.length > 0" :data="urunSatisChartData"
                                 :options="urunChartOptions" />
                             <div v-else class="d-flex align-center justify-center" style="height: 300px;">
                                 <div class="text-center">
@@ -140,7 +116,8 @@
                             <div class="d-flex align-center">
                                 <v-icon class="mr-3" color="#495057">mdi-table</v-icon>
                                 <div>
-                                    <h3 class="text-h6 font-weight-bold" style="color: #343a40;">Satış Detay Tablosu</h3>
+                                    <h3 class="text-h6 font-weight-bold" style="color: #343a40;">Satış Detay Tablosu
+                                    </h3>
                                     <p class="text-body-2 mb-0" style="color: #6c757d;">
                                         {{ satisDetay.length }} kayıt
                                     </p>
@@ -149,26 +126,20 @@
                         </div>
                     </v-card-title>
                     <v-card-text class="pa-0">
-                        <v-data-table 
-                            :headers="satisHeaders" 
-                            :items="satisDetay" 
-                            :loading="loading"
-                            class="clean-table"
-                            density="comfortable" 
-                            :items-per-page="25"
-                            items-per-page-text="Sayfa başına:"
+                        <v-data-table :headers="satisHeaders" :items="satisDetay" :loading="loading" class="clean-table"
+                            density="comfortable" :items-per-page="25" items-per-page-text="Sayfa başına:"
                             no-data-text="Veri bulunamadı">
-                            
+
                             <template #item.tarih="{ item }">
                                 <span style="color: #495057;">{{ formatDate(item.tarih) }}</span>
                             </template>
-                            
+
                             <template #item.tutar="{ item }">
                                 <span class="font-weight-bold" style="color: #28a745;">
                                     ₺{{ (item.tutar || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 }) }}
                                 </span>
                             </template>
-                            
+
                             <template #bottom>
                                 <div class="pa-4" style="background: #f8f9fa; border-top: 1px solid #dee2e6;">
                                     <div class="d-flex justify-space-between align-center">
@@ -249,7 +220,7 @@ const gunlukCiroData = computed(() => {
 
     const labels = ciroData.value.map(item => formatDate(item.tarih));
     const data = ciroData.value.map(item => item.ciro || 0);
-    
+
     return {
         labels,
         datasets: [{
@@ -273,12 +244,12 @@ const urunSatisChartData = computed(() => {
     if (!urunSatisData.value || urunSatisData.value.length === 0) {
         return { labels: [], datasets: [] };
     }
-    
+
     // En çok satan 5 ürünü al
     const topUrunler = urunSatisData.value.slice(0, 5);
     const labels = topUrunler.map(item => item.urunAdi || item.urunAd);
     const data = topUrunler.map(item => item.toplamMiktar || item.satisAdedi || 0);
-    
+
     return {
         labels,
         datasets: [{
@@ -293,7 +264,7 @@ const urunSatisChartData = computed(() => {
             ],
             borderColor: [
                 '#1e7e34',
-                '#138496', 
+                '#138496',
                 '#e0a800',
                 '#e8690b',
                 '#59359a'
@@ -320,7 +291,7 @@ const chartOptions = {
             borderWidth: 1,
             cornerRadius: 8,
             callbacks: {
-                label: function(context) {
+                label: function (context) {
                     return `Ciro: ₺${context.parsed.y.toLocaleString('tr-TR')}`;
                 }
             }
@@ -350,7 +321,7 @@ const chartOptions = {
                     size: 11
                 },
                 color: '#6c757d',
-                callback: function(value) {
+                callback: function (value) {
                     return '₺' + value.toLocaleString('tr-TR');
                 }
             }
@@ -375,7 +346,7 @@ const urunChartOptions = {
             borderWidth: 1,
             cornerRadius: 8,
             callbacks: {
-                label: function(context) {
+                label: function (context) {
                     return `Satış: ${context.parsed.x} adet`;
                 }
             }
@@ -415,44 +386,46 @@ async function fetchReport() {
     try {
         console.log('📊 Gerçek sipariş verileri yükleniyor...');
         console.log('📅 Tarih aralığı:', startDate.value, '-', endDate.value);
-        
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/reports/sales`, {
+
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${apiBase}/reports/sales`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                startDate: startDate.value, 
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify({
+                startDate: startDate.value,
                 endDate: endDate.value,
                 reportType: 'genel',
-                detayLevel: 'detay'
+                detayLevel: 'ozet'
             })
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'API hatası');
         }
-        
+
         const response_data = await response.json();
-        const data = response_data.data;
-        
+        const data = response_data.report?.data || response_data.data || {};
+
         // Yeni API formatına göre verileri set et
-        ciroData.value = data.gunlukTrend || [];
-        satisDetay.value = data.satisDetaylari || [];
-        urunSatisData.value = data.enCokSatanUrunler || [];
-        toplamCiro.value = data.ozet?.toplamCiro || 0;
-        
+        ciroData.value = data.dailyTrend || data.gunlukTrend || [];
+        satisDetay.value = data.salesDetails || data.satisDetaylari || [];
+        urunSatisData.value = data.productPerformance || data.enCokSatanUrunler || [];
+        toplamCiro.value = (data.basicKPIs?.toplamCiro) || data.ozet?.toplamCiro || 0;
+
         console.log('✅ Yeni API ile satış verileri yüklendi:');
         console.log('- Günlük ciro kayıtları:', ciroData.value.length);
         console.log('- Satış detay kayıtları:', satisDetay.value.length);
         console.log('- En çok satan ürünler:', urunSatisData.value.length);
         console.log('- Toplam ciro:', toplamCiro.value);
-        console.log('- API Response Meta:', response_data.data.meta);
-        
+        console.log('- API Response Meta:', response_data.report?.reportInfo || response_data.data?.meta);
+
     } catch (error) {
         console.error('❌ Satış raporu hatası:', error);
         snackbarMsg.value = error.message || 'Gerçek veriler yüklenemedi';
         snackbar.value = true;
-        
+
         // Hata durumunda test verisi yükle
         console.log('🧪 Fallback: Test verileri yükleniyor...');
         loadTestData();
@@ -463,7 +436,7 @@ async function fetchReport() {
 
 function loadTestData() {
     console.log('🧪 Test verisi yükleniyor...');
-    
+
     // Test ciro verisi - son 30 gün
     const testCiro = [];
     const bugün = new Date();
@@ -475,7 +448,7 @@ function loadTestData() {
             ciro: Math.floor(Math.random() * 15000) + 5000 // 5000-20000 arası
         });
     }
-    
+
     // Test satış detayı - daha fazla veri
     const testDetay = [
         { tarih: '2024-12-15', urunAd: 'Baklava', sube: 'Merkez', musteri: 'Ahmet Yılmaz', miktar: 2, tutar: 1500 },
@@ -494,7 +467,7 @@ function loadTestData() {
         { tarih: '2024-12-11', urunAd: 'Kadayıf', sube: 'Merkez', musteri: 'İrem Sakar', miktar: 2, tutar: 1600 },
         { tarih: '2024-12-10', urunAd: 'Baklava', sube: 'Şube 2', musteri: 'Cem Taş', miktar: 4, tutar: 3000 }
     ];
-    
+
     // Test ürün satış verisi
     const testUrunSatis = [
         { urunAd: 'Baklava', satisAdedi: 156, toplamTutar: 234000 },
@@ -503,12 +476,12 @@ function loadTestData() {
         { urunAd: 'Kurabiye', satisAdedi: 45, toplamTutar: 67500 },
         { urunAd: 'Pasta', satisAdedi: 32, toplamTutar: 96000 }
     ];
-    
+
     ciroData.value = testCiro;
     satisDetay.value = testDetay;
     urunSatisData.value = testUrunSatis;
     toplamCiro.value = testCiro.reduce((sum, item) => sum + item.ciro, 0);
-    
+
     console.log('📊 Test verileri yüklendi:');
     console.log('- Ciro kayıtları:', ciroData.value.length);
     console.log('- Satış detay kayıtları:', satisDetay.value.length);
@@ -519,19 +492,19 @@ function exportCSV() {
     const rows = [
         ['Tarih', 'Ürün', 'Şube', 'Müşteri', 'Miktar', 'Tutar (₺)'],
         ...satisDetay.value.map(r => [
-            r.tarih, 
-            r.urunAd, 
-            r.sube, 
-            r.musteri, 
-            r.miktar, 
+            r.tarih,
+            r.urunAd,
+            r.sube,
+            r.musteri,
+            r.miktar,
             r.tutar
         ])
     ];
-    
-    const csv = rows.map(row => 
+
+    const csv = rows.map(row =>
         row.map(String).map(s => `"${s.replace(/"/g, '""')}"`).join(',')
     ).join('\n');
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -546,8 +519,8 @@ function exportCSV() {
 function formatDate(dateStr) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('tr-TR', { 
-        day: '2-digit', 
+    return date.toLocaleDateString('tr-TR', {
+        day: '2-digit',
         month: '2-digit'
     });
 }
@@ -583,7 +556,7 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.02) !important;
 }
 
-.space-y-3 > * + * {
+.space-y-3>*+* {
     margin-top: 12px;
 }
 </style>
