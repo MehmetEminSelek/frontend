@@ -1,51 +1,248 @@
 /* Global theme: neutral, professional UI */
 
+/* ========== CSS VARIABLES ========== */
 :root {
     --brand-bg: #f5f7fa;
     --brand-surface: #ffffff;
+    --brand-surface-elevated: #ffffff;
     --brand-border: #e6e9ef;
+    --brand-border-light: #f1f5f9;
     --brand-text: #263238;
+    --brand-text-secondary: #64748b;
     --brand-muted: #607d8b;
+    --brand-primary: #5D87FF;
+    --brand-primary-light: rgba(93, 135, 255, 0.1);
+    --brand-success: #13DEB9;
+    --brand-warning: #FFAE1F;
+    --brand-error: #FA896B;
+    --brand-shadow: rgba(0, 0, 0, 0.05);
+    --brand-shadow-lg: rgba(0, 0, 0, 0.1);
+    --brand-overlay: rgba(0, 0, 0, 0.5);
+    --brand-input-bg: #ffffff;
+    --brand-hover: rgba(0, 0, 0, 0.03);
+    --brand-divider: #e2e8f0;
+    
+    /* Smooth transition timing */
+    --transition-fast: 0.2s ease-out;
+    --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Application background */
+/* ========== GLOBAL SMOOTH TRANSITIONS ========== */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* All interactive elements get smooth transitions */
+a, button, input, select, textarea,
+.v-btn, .v-card, .v-chip, .v-list-item,
+.v-tab, .v-expansion-panel, .v-data-table__tr {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* ========== APPLICATION BACKGROUND ========== */
 body {
     background: var(--brand-bg);
 }
 
-/* Soft neutral card used across the app */
+.v-application {
+    background: var(--brand-bg) !important;
+}
+
+.v-main {
+    background: var(--brand-bg) !important;
+}
+
+/* ========== CARDS ========== */
+.v-card {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 0.3s ease !important;
+}
+
+.v-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
 .soft-card {
     border: 1px solid var(--brand-border) !important;
     background: var(--brand-surface) !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6),
-        inset 0 -1px 0 0 rgba(0, 0, 0, 0.02),
-        0 1px 2px rgba(0, 0, 0, 0.04) !important;
-    border-radius: 10px;
+    box-shadow: 0 1px 3px var(--brand-shadow) !important;
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
-/* Data table neutral look */
+.soft-card:hover {
+    box-shadow: 0 6px 20px var(--brand-shadow-lg) !important;
+    transform: translateY(-2px);
+}
+
+/* ========== BUTTONS ========== */
+.v-btn {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.v-btn:hover {
+    transform: translateY(-1px);
+}
+
+.v-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ========== LIST ITEMS ========== */
+.v-list-item {
+    transition: background-color 0.3s ease,
+                transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.v-list-item:hover {
+    background-color: var(--brand-hover) !important;
+}
+
+/* ========== DATA TABLES ========== */
 .v-data-table .v-table__wrapper>table thead th {
     background: var(--brand-bg) !important;
     color: var(--brand-text) !important;
     font-weight: 600 !important;
+    border-bottom: 1px solid var(--brand-border) !important;
 }
 
 .v-data-table .v-data-table__td,
 .v-data-table .v-data-table__th {
     padding: 12px 14px !important;
+    border-bottom: 1px solid var(--brand-divider) !important;
+}
+
+.v-data-table .v-data-table__tr {
+    transition: background-color 0.3s ease !important;
 }
 
 .v-data-table .v-data-table__tr:nth-child(even) {
     background: #fafbfd;
 }
 
-.v-data-table.neutral-table {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(60, 60, 60, 0.06);
-    background: var(--brand-surface);
+.v-data-table .v-data-table__tr:hover {
+    background: var(--brand-primary-light) !important;
 }
 
-/* Chips */
+.v-data-table.neutral-table {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--brand-shadow);
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-border);
+}
+
+/* ========== CHIPS ========== */
 .v-chip {
     border-radius: 8px;
+    transition: all 0.25s ease !important;
+}
+
+.v-chip:hover {
+    transform: scale(1.02);
+}
+
+/* ========== INPUTS ========== */
+.v-field {
+    transition: border-color 0.3s ease,
+                box-shadow 0.3s ease !important;
+}
+
+.v-field--focused {
+    box-shadow: 0 0 0 3px rgba(93, 135, 255, 0.1) !important;
+}
+
+/* ========== DIALOGS & OVERLAYS ========== */
+.v-overlay__content {
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.35s ease !important;
+}
+
+.v-dialog {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* ========== NAVIGATION DRAWER ========== */
+.v-navigation-drawer {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* ========== TABS ========== */
+.v-tab {
+    transition: color 0.3s ease,
+                background-color 0.3s ease !important;
+}
+
+/* ========== EXPANSION PANELS ========== */
+.v-expansion-panel {
+    transition: margin 0.3s ease,
+                box-shadow 0.3s ease !important;
+}
+
+.v-expansion-panel-title {
+    transition: background-color 0.3s ease !important;
+}
+
+/* ========== ICONS ========== */
+.v-icon {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                color 0.3s ease !important;
+}
+
+/* ========== TOOLTIPS ========== */
+.v-tooltip > .v-overlay__content {
+    transition: opacity 0.25s ease,
+                transform 0.25s ease !important;
+}
+
+/* ========== SNACKBARS ========== */
+.v-snackbar__wrapper {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.3s ease !important;
+}
+
+/* ========== PROGRESS ========== */
+.v-progress-linear {
+    transition: all 0.5s ease !important;
+}
+
+/* ========== FADE ANIMATIONS ========== */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* ========== SLIDE ANIMATIONS ========== */
+.slide-fade-enter-active {
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-fade-leave-active {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+    transform: translateY(10px);
+    opacity: 0;
+}
+
+/* ========== SCALE ANIMATIONS ========== */
+.scale-enter-active,
+.scale-leave-active {
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scale-enter-from,
+.scale-leave-to {
+    transform: scale(0.95);
+    opacity: 0;
 }

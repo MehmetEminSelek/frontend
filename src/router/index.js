@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth.js'
 
 // PAGE COMPONENTS
 import Login from '../pages/Login.vue'
+import Dashboard from '../pages/Dashboard.vue' // Ana Dashboard
 import Form from '../pages/Form.vue' // Sipariş Ekleme Formu
 import Orders from '../pages/OnayBekleyen.vue' // Onay Bekleyenler Sayfası
 import AllOrders from '../pages/AllOrders.vue' // Tüm Siparişler Sayfası
@@ -24,7 +25,7 @@ import ReceteYonetimi from '../pages/ReceteYonetimi.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/main/form'  // Direkt form sayfasına
+    redirect: '/main/dashboard'  // Dashboard'a yönlendir
   },
   {
     path: '/login',
@@ -38,12 +39,12 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: { name: 'SiparisFormu' }  // Form sayfasına yönlendir
+        redirect: { name: 'Dashboard' }  // Dashboard'a yönlendir
       },
       {
         path: 'dashboard', // /main/dashboard
         name: 'Dashboard',
-        component: Form, // Geçici olarak Form component'ini kullan
+        component: Dashboard, // Yeni Dashboard component
         meta: { requiresAuth: true, page: 'dashboard' }
       },
       {
@@ -132,7 +133,7 @@ const routes = [
       }
     ]
   },
-  { path: '/:pathMatch(.*)*', redirect: '/main/form' }
+  { path: '/:pathMatch(.*)*', redirect: '/main/dashboard' }
 ]
 
 const router = createRouter({
@@ -153,9 +154,9 @@ router.beforeEach(async (to, from, next) => {
   try {
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
 
-    // Login sayfasına token varsa ana forma
+    // Login sayfasına token varsa dashboard'a
     if (to.name === 'Login' && token) {
-      return next('/main/form')
+      return next('/main/dashboard')
     }
 
     // Auth gerektiren sayfalarda token yoksa login'e
@@ -171,16 +172,16 @@ router.beforeEach(async (to, from, next) => {
       }
 
       if (!authStore.canAccess(to.meta.page)) {
-        // Aynı route’a sonsuz yönlendirme olmasın
-        if (to.path === '/main/form') return next()
-        return next('/main/form')
+        // Aynı route'a sonsuz yönlendirme olmasın
+        if (to.path === '/main/dashboard') return next()
+        return next('/main/dashboard')
       }
     }
 
     return next()
   } catch (e) {
     console.error('Router guard error:', e)
-    return next('/main/form')
+    return next('/main/dashboard')
   }
 })
 

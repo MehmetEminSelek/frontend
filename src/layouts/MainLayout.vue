@@ -2,25 +2,27 @@
   <v-app class="main-app">
     <v-layout class="main-layout">
       <!-- Left Sidebar - Modern Solid Design -->
-      <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile"
-        class="modern-sidebar" width="260" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
-        :touchless="!isMobile" @click:outside="onDrawerOutsideClick" @update:model-value="onDrawerUpdate"
+      <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile" class="modern-sidebar"
+        width="260" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false" :touchless="!isMobile"
+        @click:outside="onDrawerOutsideClick" @update:model-value="onDrawerUpdate"
         style="background: #2A3447; box-shadow: 2px 0 8px rgba(0,0,0,0.15);">
 
         <v-list nav density="comfortable" class="pa-2">
-          <!-- Header -->
-          <v-list-item class="mb-3"
-            style="background: rgba(66,165,245,0.1); border-radius: 12px; border-left: 3px solid #42A5F5;">
+          <!-- Header - Dashboard'a yönlendir -->
+          <v-list-item class="mb-3" @click="() => safeNavigate('/main/dashboard')"
+            style="background: rgba(66,165,245,0.1); border-radius: 12px; border-left: 3px solid #42A5F5; cursor: pointer;">
             <template v-slot:prepend>
               <v-avatar color="rgba(66,165,245,0.2)" size="40">
                 <v-icon color="#42A5F5">mdi-factory</v-icon>
               </v-avatar>
             </template>
             <v-list-item-title class="text-h6 font-weight-bold" style="color: #FFFFFF;">OGS Panel</v-list-item-title>
-            <v-list-item-subtitle style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Ömer Güllü Sistemi</v-list-item-subtitle>
+            <v-list-item-subtitle style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Ömer Güllü
+              Sistemi</v-list-item-subtitle>
           </v-list-item>
 
           <!-- Navigation Items -->
+
           <v-list-item title="Sipariş Formu" link prepend-icon="mdi-clipboard-text-outline"
             :active="isActive('/main/form')" class="modern-nav-item mb-1" @click="() => safeNavigate('/main/form')"
             style="border-radius: 8px; color: white;">
@@ -159,13 +161,6 @@
 
         <!-- Header Actions -->
         <div class="d-flex align-center">
-          <!-- Theme Toggle -->
-          <v-btn icon variant="text" class="mr-1" @click="toggleTheme" title="Tema Değiştir">
-            <v-icon :color="theme.global.current.value.dark ? '#FFD666' : '#5D87FF'">
-              {{ theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}
-            </v-icon>
-          </v-btn>
-
           <!-- Real-time Connection Status -->
           <v-chip :color="realtimeStore.isConnected ? '#C8E6C9' : '#FFCDD2'" size="small" class="mr-3" variant="flat"
             :style="{ color: realtimeStore.isConnected ? '#2E7D32' : '#C62828' }">
@@ -176,7 +171,9 @@
           </v-chip>
 
           <!-- Top bar bell to toggle notification drawer -->
-          <v-badge v-if="unreadNotificationCount > 0" :content="unreadNotificationCount > 99 ? '99+' : unreadNotificationCount" color="error" offset-x="0" offset-y="0" class="mr-1">
+          <v-badge v-if="unreadNotificationCount > 0"
+            :content="unreadNotificationCount > 99 ? '99+' : unreadNotificationCount" color="error" offset-x="0"
+            offset-y="0" class="mr-1">
             <v-btn icon variant="text" @click="toggleNotificationDrawer" :aria-label="'Bildirimler'">
               <v-icon :color="hasUnreadNotifications ? '#FFD54F' : '#8D6E63'">
                 {{ hasUnreadNotifications ? 'mdi-bell-ring' : 'mdi-bell-outline' }}
@@ -254,33 +251,32 @@
       <!-- Notification Drawer -->
       <v-navigation-drawer v-model="notificationDrawer" location="right" :temporary="!drawerPinned"
         :permanent="drawerPinned && notificationDrawer" width="400" class="notification-drawer"
-        style="background: linear-gradient(180deg, #F5F7FA 0%, #E8F1F8 100%); box-shadow: -4px 0 20px rgba(0,0,0,0.15);"
         @click:outside="handleDrawerOutsideClick">
         <!-- Drawer Header -->
         <v-card-title class="notification-drawer-header d-flex justify-space-between align-center pa-4">
           <div>
-            <h3 class="text-h6 font-weight-bold" style="color: #5D4037;">
-              <v-icon class="mr-2" color="#8D6E63">mdi-bell</v-icon>
+            <h3 class="text-h6 font-weight-bold notification-title">
+              <v-icon class="mr-2 notification-icon">mdi-bell</v-icon>
               Bildirimler
             </h3>
-            <div class="text-caption" style="color: #8D6E63;">
+            <div class="text-caption notification-subtitle">
               {{ realtimeStore.notifications.length }} bildirim • {{ unreadNotificationCount }} okunmamış
             </div>
           </div>
           <div class="d-flex">
-            <v-btn icon size="small" variant="text" @click="markAllAsRead" style="color: #8D6E63;" class="mr-1"
+            <v-btn icon size="small" variant="text" @click="markAllAsRead" class="notification-action-btn mr-1"
               v-tooltip:bottom="'Tümünü Okundu İşaretle'">
               <v-icon>mdi-check-all</v-icon>
             </v-btn>
-            <v-btn icon size="small" variant="text" @click="clearAll" style="color: #8D6E63;" class="mr-1"
+            <v-btn icon size="small" variant="text" @click="clearAll" class="notification-action-btn mr-1"
               v-tooltip:bottom="'Tümünü Temizle'">
               <v-icon>mdi-delete-sweep</v-icon>
             </v-btn>
-            <v-btn icon size="small" variant="text" @click="toggleDrawerPin" style="color: #8D6E63;" class="mr-1"
+            <v-btn icon size="small" variant="text" @click="toggleDrawerPin" class="notification-action-btn mr-1"
               v-tooltip:bottom="drawerPinned ? 'Sabitlemeyi Kaldır' : 'Sabitle'">
               <v-icon>{{ drawerPinned ? 'mdi-pin-off' : 'mdi-pin' }}</v-icon>
             </v-btn>
-            <v-btn icon size="small" variant="text" @click="closeNotificationDrawer" style="color: #8D6E63;"
+            <v-btn icon size="small" variant="text" @click="closeNotificationDrawer" class="notification-action-btn"
               v-if="!drawerPinned">
               <v-icon>mdi-close</v-icon>
             </v-btn>
@@ -339,7 +335,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useTheme } from 'vuetify';
 import { apiCall } from '../utils/api.js';
 import { useRealtimeStore } from '../stores/realtime.js';
 import { useAuthStore } from '../stores/auth.js';
@@ -348,7 +343,6 @@ import ToastNotification from '../components/ToastNotification.vue';
 
 const router = useRouter();
 const route = useRoute();
-const theme = useTheme();
 const authStore = useAuthStore();
 const realtimeStore = useRealtimeStore();
 
@@ -364,20 +358,6 @@ const loginLoading = ref(false);
 // Current user computed property
 const currentUser = computed(() => authStore.user);
 
-// Theme Toggle
-function toggleTheme() {
-  theme.global.name.value = theme.global.current.value.dark ? 'modernPastelTheme' : 'modernDarkTheme';
-  localStorage.setItem('user_theme', theme.global.name.value);
-}
-
-// Load saved theme
-onMounted(() => {
-  const savedTheme = localStorage.getItem('user_theme');
-  if (savedTheme) {
-    theme.global.name.value = savedTheme;
-  }
-});
-
 const notificationDrawer = ref(false);
 const shouldShakeNotification = ref(false);
 const lastNotificationCount = ref(0);
@@ -392,6 +372,7 @@ const unreadNotificationCount = computed(() => realtimeStore.unreadNotifications
 const getCurrentPageTitle = () => {
   const path = route.path;
   const titleMap = {
+    '/main/dashboard': 'Dashboard',
     '/main/form': 'Sipariş Formu',
     '/main/orders': 'Onay Bekleyen Siparişler',
     '/main/hazirlanacak': 'Hazırlanacak Siparişler',
@@ -592,7 +573,7 @@ async function handleLogin() {
 
     loginDialog.value = false;
     // Auth store zaten state'i güncelleyecek, reload'a gerek yok
-    router.push('/main/form');
+    router.push('/main/dashboard');
   } catch (e) {
     loginError.value = e.response?.data?.message || e.message || 'Giriş başarısız.';
   } finally {
@@ -872,6 +853,7 @@ onBeforeUnmount(() => {
   margin-bottom: 4px;
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
 }
 
 .modern-nav-item:hover {
@@ -880,7 +862,7 @@ onBeforeUnmount(() => {
 }
 
 .modern-nav-item.v-list-item--active {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0.15) 100%) !important;
   color: white !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -890,9 +872,10 @@ onBeforeUnmount(() => {
 }
 
 .sub-nav-item {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   border-radius: 6px;
   padding-left: 32px !important;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .sub-nav-item:hover {
@@ -901,7 +884,7 @@ onBeforeUnmount(() => {
 }
 
 .sub-nav-item.v-list-item--active {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(99, 102, 241, 0.2) !important;
   color: white !important;
 }
 
@@ -916,7 +899,7 @@ onBeforeUnmount(() => {
 
 .floating-drawer-button .v-btn {
   box-shadow: 0 6px 20px rgba(141, 110, 99, 0.3) !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 .floating-drawer-button .v-btn:hover {
@@ -927,7 +910,7 @@ onBeforeUnmount(() => {
 /* ========= NOTIFICATION TRIGGER & SHAKE ANIMATION ========= */
 .notification-trigger {
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .notification-trigger:hover {
@@ -1007,10 +990,33 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+/* Notification drawer styles */
+.notification-drawer {
+  background: linear-gradient(180deg, #F5F7FA 0%, #E8F1F8 100%) !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15) !important;
+}
+
 .notification-drawer-header {
   background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+}
+
+/* Notification text colors */
+.notification-title {
+  color: #5D4037;
+}
+
+.notification-icon {
+  color: #8D6E63 !important;
+}
+
+.notification-subtitle {
+  color: #8D6E63;
+}
+
+.notification-action-btn {
+  color: #8D6E63 !important;
 }
 
 .notification-drawer-content {
@@ -1035,7 +1041,7 @@ onBeforeUnmount(() => {
 /* ========= FADE TRANSITIONS ========= */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .fade-enter-from,
@@ -1066,6 +1072,7 @@ onBeforeUnmount(() => {
   -webkit-overflow-scrolling: touch !important;
   scrollbar-width: thin !important;
   scrollbar-color: rgba(212, 165, 116, 0.3) transparent !important;
+  background: #f5f7fa;
 }
 
 .scrollable-main::-webkit-scrollbar {
@@ -1098,7 +1105,7 @@ onBeforeUnmount(() => {
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(212, 165, 116, 0.08);
   backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   border: 1px solid rgba(212, 165, 116, 0.1);
 }
 
@@ -1112,6 +1119,7 @@ onBeforeUnmount(() => {
   align-items: center;
   display: inline-flex;
 }
+
 .app-title-text {
   color: #5D4037;
   font-weight: 600;
@@ -1136,7 +1144,7 @@ onBeforeUnmount(() => {
   border-radius: 12px !important;
   font-weight: 500 !important;
   text-transform: none !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 .v-btn:hover {
@@ -1146,7 +1154,7 @@ onBeforeUnmount(() => {
 /* ========= INPUT FIELD ENHANCEMENTS ========= */
 .v-text-field .v-field {
   border-radius: 12px !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 .v-text-field .v-field:hover {
@@ -1155,7 +1163,7 @@ onBeforeUnmount(() => {
 
 /* ========= NOTIFICATION ENHANCEMENTS ========= */
 .v-chip {
-  transition: all 0.3s ease !important;
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 .v-chip:hover {

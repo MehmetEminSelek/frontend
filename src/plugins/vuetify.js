@@ -126,29 +126,54 @@ const modernPastelTheme = {
     }
 };
 
-// Professional Dark Theme (Updated for Pastel)
+// Professional Dark Theme - Premium Look
 const modernDarkTheme = {
     dark: true,
     colors: {
-        background: '#2A3447', // Soft Dark Blue
-        surface: '#333F55',
-        primary: '#5D87FF',
-        'primary-darken-1': '#4570EA',
-        secondary: '#49BEFF',
-        'secondary-darken-1': '#29A8E8',
-        accent: '#FFD666',
-        error: '#FA896B',
-        info: '#5D87FF',
-        success: '#13DEB9',
-        warning: '#FFAE1F',
-        'on-background': '#EAEFF4',
-        'on-surface': '#EAEFF4',
-        'on-primary': '#FFFFFF',
-        'on-secondary': '#FFFFFF',
-        'on-success': '#FFFFFF',
-        'on-warning': '#FFFFFF',
-        'on-error': '#FFFFFF',
+        background: '#0f172a',        // Slate 900 - Deep navy
+        surface: '#1e293b',           // Slate 800 - Card background
+        'surface-bright': '#334155',  // Slate 700 - Elevated surface
+        'surface-light': '#475569',   // Slate 600 - Hover states
+        'surface-variant': '#1e293b', // Same as surface
+        primary: '#818cf8',           // Indigo 400 - Vibrant purple-blue
+        'primary-darken-1': '#6366f1', // Indigo 500
+        secondary: '#22d3ee',         // Cyan 400 - Bright cyan
+        'secondary-darken-1': '#06b6d4', // Cyan 500
+        accent: '#fbbf24',            // Amber 400 - Warm accent
+        error: '#f87171',             // Red 400 - Soft red
+        info: '#60a5fa',              // Blue 400 - Clear info blue
+        success: '#34d399',           // Emerald 400 - Fresh green
+        warning: '#fb923c',           // Orange 400 - Warm warning
+        'on-background': '#e2e8f0',   // Slate 200 - Primary text
+        'on-surface': '#e2e8f0',      // Slate 200 - Card text
+        'on-surface-variant': '#94a3b8', // Slate 400 - Secondary text
+        'on-primary': '#ffffff',
+        'on-secondary': '#0f172a',
+        'on-success': '#0f172a',
+        'on-warning': '#0f172a',
+        'on-error': '#ffffff',
     },
+    variables: {
+        'border-color': '#334155',    // Slate 700
+        'border-opacity': 0.8,
+        'high-emphasis-opacity': 0.95,
+        'medium-emphasis-opacity': 0.70,
+        'disabled-opacity': 0.40,
+        'idle-opacity': 0.10,
+        'hover-opacity': 0.08,
+        'focus-opacity': 0.15,
+        'selected-opacity': 0.12,
+        'activated-opacity': 0.15,
+        'pressed-opacity': 0.16,
+        'dragged-opacity': 0.10,
+        'theme-kbd': '#334155',
+        'theme-on-kbd': '#e2e8f0',
+        'theme-code': '#1e293b',
+        'theme-on-code': '#e2e8f0',
+        'shadow-key-umbra-opacity': 0.3,
+        'shadow-key-penumbra-opacity': 0.2,
+        'shadow-key-ambient-opacity': 0.15,
+    }
 };
 
 export function createCustomVuetify({ themeName = 'modernPastelTheme', extraThemes = {} } = {}) {

@@ -426,7 +426,7 @@ const handleLogin = async () => {
     resetLoginAttempts()
     
     // Redirect to intended page or dashboard  
-    const redirectTo = route.query.redirect || '/main/form'
+    const redirectTo = route.query.redirect || '/main/dashboard'
     await router.push(redirectTo)
     
   } catch (err) {

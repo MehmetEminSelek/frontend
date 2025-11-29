@@ -135,16 +135,19 @@ export const useAuthStore = defineStore('auth', () => {
         // Rol bazlı sayfa erişim hakları
         const roleAccess = {
             'VIEWER': [
+                'dashboard',
                 'siparis-formu',
                 'hazirlanacak'
             ],
             'PERSONEL': [
+                'dashboard',
                 'siparis-formu',
                 'hazirlanacak',
                 'onay-bekleyenler',
                 'tum-siparisler'
             ],
             'SUBE_MUDURU': [
+                'dashboard',
                 'siparis-formu',
                 'hazirlanacak',
                 'onay-bekleyenler',
@@ -154,6 +157,7 @@ export const useAuthStore = defineStore('auth', () => {
                 'kargo-operasyon'
             ],
             'URETIM_MUDURU': [
+                'dashboard',
                 'siparis-formu',
                 'hazirlanacak',
                 'onay-bekleyenler',
@@ -164,6 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
                 'urun-yonetimi'
             ],
             'SEVKIYAT_MUDURU': [
+                'dashboard',
                 'siparis-formu',
                 'hazirlanacak',
                 'onay-bekleyenler',
