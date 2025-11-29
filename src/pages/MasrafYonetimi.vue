@@ -1,59 +1,161 @@
 <template>
-  <v-container>
-    <v-toolbar density="default" color="transparent" flat class="px-0 mb-6 header-toolbar">
-      <div class="d-flex flex-column">
-        <div class="page-title">Masraf Yönetimi</div>
-        <div class="page-subtitle">Tüm giderleri görüntüleyin ve yeni masraf/fatura oluşturun</div>
-      </div>
-      <v-spacer />
-      <div class="actions d-flex align-center flex-wrap">
-        <v-btn size="large" color="primary" variant="flat" class="action-btn" @click="dialogMasraf = true" prepend-icon="mdi-cash-minus">Masraf Ekle</v-btn>
-        <v-btn size="large" color="indigo" variant="tonal" class="action-btn" @click="olusturTopluMaas" prepend-icon="mdi-cash">Ayın Maaşlarını Oluştur</v-btn>
-        <v-btn size="large" color="success" variant="flat" class="action-btn" @click="dialogFatura = true" prepend-icon="mdi-receipt">Fatura Oluştur</v-btn>
-        <v-btn size="large" color="purple" variant="tonal" class="action-btn" @click="dialogFaturaPdf = true" prepend-icon="mdi-file-pdf-box">PDF Fatura Yükle</v-btn>
-        <v-btn size="large" color="grey" variant="tonal" class="action-btn" @click="openKategoriYonetimi" prepend-icon="mdi-folder-cog">Kategoriler</v-btn>
-      </div>
-    </v-toolbar>
+  <v-container class="py-6 px-2 px-md-8" fluid>
+    <!-- Hero Section -->
+    <div class="hero-section mb-6">
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="error">mdi-cash-register</v-icon>
+        </div>
+        <v-row align="center">
+          <v-col cols="12" md="6">
+            <div class="d-flex align-center mb-3">
+              <v-icon size="48" class="mr-3" color="error">mdi-cash-register</v-icon>
+              <div>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Masraf Yönetimi</h1>
+                <p class="text-h6 mb-0 text-secondary">Tüm giderleri görüntüleyin ve yeni masraf/fatura oluşturun</p>
+              </div>
+            </div>
+            <div class="d-flex align-center">
+              <v-chip color="error" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-cash-minus</v-icon>
+                Gider Takibi
+              </v-chip>
+              <v-chip color="success" variant="tonal" size="small">
+                <v-icon start size="16">mdi-receipt-text-outline</v-icon>
+                Fatura Yönetimi
+              </v-chip>
+            </div>
+          </v-col>
+          <v-col cols="12" md="6">
+            <!-- Hızlı İşlemler Bölümü -->
+            <v-card class="pa-4 rounded-lg" elevation="0" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);">
+              <div class="text-subtitle-2 text-grey-darken-1 mb-3 d-flex align-center">
+                <v-icon size="18" class="mr-2">mdi-lightning-bolt</v-icon>
+                Hızlı İşlemler
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <!-- Ana İşlemler -->
+                <v-btn color="primary" variant="flat" class="rounded-lg flex-grow-1" @click="dialogMasraf = true" prepend-icon="mdi-plus-circle-outline">
+                  Masraf Ekle
+                </v-btn>
+                <v-btn color="success" variant="outlined" class="rounded-lg flex-grow-1" @click="dialogFatura = true" prepend-icon="mdi-receipt-text-outline">
+                  Fatura Oluştur
+                </v-btn>
+              </div>
+              <v-divider class="my-3"></v-divider>
+              <div class="d-flex flex-wrap gap-2">
+                <!-- Araçlar -->
+                <v-btn color="indigo" variant="tonal" size="small" class="rounded-lg" @click="olusturTopluMaas" prepend-icon="mdi-account-cash-outline">
+                  Ayın Maaşları
+                </v-btn>
+                <v-btn color="purple" variant="tonal" size="small" class="rounded-lg" @click="dialogFaturaPdf = true" prepend-icon="mdi-file-pdf-box">
+                  PDF Yükle
+                </v-btn>
+                <v-btn color="grey-darken-1" variant="tonal" size="small" class="rounded-lg" @click="openKategoriYonetimi" prepend-icon="mdi-folder-cog-outline">
+                  Kategoriler
+                </v-btn>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card>
+    </div>
 
+    <!-- İstatistik Kartları -->
     <v-row class="mb-4">
       <v-col cols="12" md="3">
-        <v-card class="pa-4" color="blue-lighten-5"><div class="text-caption">Toplam</div><div class="text-h6">{{ formatTL(toplam) }}</div></v-card>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="error" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="error">mdi-cash-multiple</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-bold text-error">{{ formatTL(toplam) }}</div>
+              <div class="text-subtitle-2 text-grey">Toplam</div>
+            </div>
+          </div>
+        </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="pa-4" color="indigo-lighten-5"><div class="text-caption">Maaş Toplamı</div><div class="text-h6">{{ formatTL(toplamMaas) }}</div></v-card>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="indigo" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="indigo">mdi-account-cash-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-bold text-indigo">{{ formatTL(toplamMaas) }}</div>
+              <div class="text-subtitle-2 text-grey">Maaş Toplamı</div>
+            </div>
+          </div>
+        </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="pa-4" color="orange-lighten-5"><div class="text-caption">Kira Toplamı</div><div class="text-h6">{{ formatTL(toplamKira) }}</div></v-card>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="warning" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="warning">mdi-home-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-bold text-warning">{{ formatTL(toplamKira) }}</div>
+              <div class="text-subtitle-2 text-grey">Kira Toplamı</div>
+            </div>
+          </div>
+        </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-switch v-model="filters.includePayroll" inset label="Maaşları dahil et" color="indigo" />
+        <v-card class="pa-4 rounded-xl border d-flex align-center justify-center" elevation="0">
+          <v-switch v-model="filters.includePayroll" inset label="Maaşları dahil et" color="indigo" hide-details />
+        </v-card>
       </v-col>
     </v-row>
 
-    <v-card class="mb-4 pa-4">
-      <v-row dense>
-        <v-col cols="12" md="3">
-          <v-text-field v-model="filters.start" type="date" label="Başlangıç" density="compact" />
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-text-field v-model="filters.end" type="date" label="Bitiş" density="compact" />
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-select v-model="filters.kategoriId" :items="kategoriOptions" item-title="ad" item-value="id" label="Kategori" clearable density="compact" />
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-select v-model="filters.subeId" :items="subeOptions" item-title="ad" item-value="id" label="Şube" clearable density="compact" />
-        </v-col>
-        <v-col cols="12" md="12" class="d-flex align-center">
-          <v-btn color="primary" @click="fetchMasraflar" :loading="loading" block>Listele</v-btn>
-        </v-col>
-      </v-row>
+    <v-card class="mb-4 rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-grey-lighten-4">
+        <div class="d-flex align-center">
+          <v-avatar color="primary" variant="tonal" size="36" class="mr-3">
+            <v-icon size="20">mdi-filter-outline</v-icon>
+          </v-avatar>
+          <span class="text-body-1 font-weight-medium">Filtrele & Listele</span>
+        </div>
+      </v-card-title>
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field v-model="filters.start" type="date" label="Başlangıç" density="compact" variant="outlined" color="primary" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field v-model="filters.end" type="date" label="Bitiş" density="compact" variant="outlined" color="primary" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-select v-model="filters.kategoriId" :items="kategoriOptions" item-title="ad" item-value="id" label="Kategori" clearable density="compact" variant="outlined" color="primary" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-select v-model="filters.subeId" :items="subeOptions" item-title="ad" item-value="id" label="Şube" clearable density="compact" variant="outlined" color="primary" hide-details />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-btn color="primary" variant="flat" @click="fetchMasraflar" :loading="loading" block class="rounded-lg" size="large" prepend-icon="mdi-magnify">
+              Listele
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
     </v-card>
 
-    <v-card>
-      <v-card-title class="d-flex justify-space-between">
-        <span>Masraflar</span>
-        <span class="text-h6">Toplam: {{ formatTL(toplam) }} • Maaş: {{ formatTL(toplamMaas) }} • Kira: {{ formatTL(toplamKira) }}</span>
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-error text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-table</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Masraf Listesi</h3>
+              <p class="text-body-2 opacity-80 ma-0">Toplam: {{ formatTL(toplam) }}</p>
+            </div>
+          </div>
+          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchMasraflar" title="Yenile"></v-btn>
+        </div>
       </v-card-title>
       <v-data-table :headers="headers" :items="masraflar" :loading="loading" class="elevation-0">
         <template #item.tarih="{ item }">{{ formatDate(item.tarih) }}</template>
@@ -65,8 +167,8 @@
         </template>
         <template #item.personel="{ item }">{{ item.personel?.ad || '-' }}</template>
         <template #item.actions="{ item }">
-          <v-btn icon size="small" color="primary" variant="text" @click="edit(item)"><v-icon>mdi-pencil</v-icon></v-btn>
-          <v-btn icon size="small" color="error" variant="text" @click="sil(item)"><v-icon>mdi-delete</v-icon></v-btn>
+          <v-btn icon size="small" color="primary" variant="text" @click="edit(item)"><v-icon>mdi-pencil-outline</v-icon></v-btn>
+          <v-btn icon size="small" color="error" variant="text" @click="sil(item)"><v-icon>mdi-delete-outline</v-icon></v-btn>
         </template>
       </v-data-table>
       <div class="d-flex justify-end align-center px-4 pb-4">
@@ -451,6 +553,29 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(244,67,54,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-btn {
+  text-transform: none;
+}
+
 /* Compact switch visual fix for consistent sizing/alignment across browsers */
 .switch-compact :deep(.v-selection-control) { min-height: 28px; }
 .switch-compact :deep(.v-switch) { --v-switch-track-size: 32px; }
@@ -463,20 +588,5 @@ onMounted(async () => {
   width: 14px;
 }
 .switch-compact { align-items: center; }
-
-.page-title {
-  font-size: 26px;
-  font-weight: 700;
-}
-.page-subtitle {
-  font-size: 14px;
-  color: #6b7280; /* grey-600 */
-}
-.actions .action-btn {
-  border-radius: 9999px; /* pill */
-  margin-left: 10px;
-  margin-bottom: 8px;
-}
-.header-toolbar :deep(.v-toolbar-title){ font-size: 0; }
 </style>
 

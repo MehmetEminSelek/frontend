@@ -1,34 +1,85 @@
 <template>
-  <v-container class="py-6 px-4" fluid>
-    <v-card class="pa-4 rounded-lg" elevation="2">
-      <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
-        <span>📚 Tüm Siparişler</span>
-        <div class="d-flex align-center gap-2">
-          <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify"
-            variant="outlined" density="compact" hide-details clearable style="max-width: 300px;"></v-text-field>
-          <v-btn icon="mdi-currency-try" variant="text" @click="refreshPrices" title="Fiyatları Yenile"
-            color="blue"></v-btn>
-          <v-btn icon="mdi-refresh" variant="text" @click="fetchOrders" title="Listeyi Yenile"></v-btn>
+  <v-container class="py-6 px-2 px-md-8" fluid>
+    <!-- Hero Section -->
+    <div class="hero-section mb-6">
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="primary">mdi-clipboard-list-outline</v-icon>
+        </div>
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center mb-3">
+              <v-icon size="48" class="mr-3" color="primary">mdi-clipboard-list-outline</v-icon>
+              <div>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Tüm Siparişler</h1>
+                <p class="text-h6 mb-0 text-secondary">Sipariş geçmişi ve detayları</p>
+              </div>
+            </div>
+            <div class="d-flex align-center">
+              <v-chip color="primary" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-format-list-bulleted</v-icon>
+                Tüm Liste
+              </v-chip>
+              <v-chip color="secondary" variant="tonal" size="small">
+                <v-icon start size="16">mdi-cash-multiple</v-icon>
+                Ödeme Takibi
+              </v-chip>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
+            <v-btn size="large" color="primary" variant="flat" @click="fetchOrders" class="font-weight-bold rounded-lg">
+              <v-icon left size="20">mdi-refresh</v-icon>
+              Listeyi Yenile
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card>
+    </div>
+
+    <!-- Main Content Card -->
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-primary text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-table</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Sipariş Listesi</h3>
+              <p class="text-body-2 opacity-80 ma-0">Arama ve filtreleme</p>
+            </div>
+          </div>
+          <div class="d-flex align-center gap-2">
+            <v-text-field v-model="search" label="Ara (Müşteri, ID...)" prepend-inner-icon="mdi-magnify"
+              variant="outlined" density="compact" hide-details clearable style="min-width: 300px; max-width: 400px;"
+              bg-color="rgba(255,255,255,0.1)" base-color="white" color="white"></v-text-field>
+            <v-btn icon="mdi-currency-try" variant="flat" @click="refreshPrices" title="Fiyatları Yenile"
+              color="rgba(255,255,255,0.2)"></v-btn>
+          </div>
         </div>
       </v-card-title>
 
-      <v-alert type="error" v-if="error" class="mb-4" closable>{{ error }}</v-alert>
+      <v-alert type="error" v-if="error" class="mb-4" closable variant="tonal">{{ error }}</v-alert>
 
       <v-data-table v-model:items-per-page="itemsPerPage" v-model:expanded="expanded" :headers="tableHeaders"
-        :items="allOrders" :loading="loading" :search="search" item-value="id" class="elevation-1" hover
+        :items="allOrders" :loading="loading" :search="search" item-value="id" class="elevation-0" hover
         :density="isMobile ? 'compact' : 'comfortable'" items-per-page-text="Sayfa başına sipariş:"
         no-data-text="Gösterilecek sipariş bulunamadı." loading-text="Siparişler yükleniyor..."
         :show-expand="!isSmallDevice" @click:row="onRowClick">
         <template v-slot:item.tarih="{ item }"> {{ formatDate(item.tarih, true) }} </template>
-        <template v-slot:item.musteri="{ item }"> {{ item.gorunecekAd || item.gonderenAdi }} </template>
-        <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube">({{ item.sube.ad
-        }})</span> </template>
+        <template v-slot:item.musteri="{ item }"> <span class="font-weight-medium">{{ item.gorunecekAd ||
+          item.gonderenAdi }}</span> </template>
+        <template v-slot:item.teslimat="{ item }"> {{ item.teslimatTuru?.ad }} <span v-if="item.sube"
+            class="text-caption text-grey">({{ item.sube.ad
+            }})</span> </template>
 
         <template v-slot:item.siparisDurumu="{ item }">
-          <v-chip v-if="!item.onaylandiMi" color="warning" :size="isMobile ? 'x-small' : 'small'" label variant="tonal"> <v-icon start
-              size="small">mdi-clock-alert-outline</v-icon> Bekliyor </v-chip>
-          <v-chip v-else-if="item.hazirlanmaDurumu === 'Hazırlandı'" color="indigo-lighten-1" :size="isMobile ? 'x-small' : 'small'" label
-            variant="flat"> <v-icon start size="small">mdi-package-variant-closed-check</v-icon> Hazırlandı </v-chip>
+          <v-chip v-if="!item.onaylandiMi" color="warning" :size="isMobile ? 'x-small' : 'small'" label variant="tonal">
+            <v-icon start size="small">mdi-clock-alert-outline</v-icon> Bekliyor </v-chip>
+          <v-chip v-else-if="item.hazirlanmaDurumu === 'Hazırlandı'" color="primary"
+            :size="isMobile ? 'x-small' : 'small'" label variant="flat"> <v-icon start
+              size="small">mdi-package-variant-closed-check</v-icon> Hazırlandı </v-chip>
           <v-chip v-else color="success" :size="isMobile ? 'x-small' : 'small'" label variant="tonal"> <v-icon start
               size="small">mdi-check-circle</v-icon> Onaylandı </v-chip>
         </template>
@@ -40,7 +91,7 @@
           </v-chip>
         </template>
 
-        <template v-slot:item.genelToplam="{ item }"> <span class="font-weight-medium">{{
+        <template v-slot:item.genelToplam="{ item }"> <span class="font-weight-bold text-primary">{{
           calculateGrandTotal(item).toFixed(2) }} ₺</span> </template>
         <template v-slot:item.kalanTutar="{ item }">
           <span :class="getPaymentStatus(item).textColor + ' font-weight-medium'">
@@ -48,20 +99,26 @@
           </span>
         </template>
         <template v-slot:item.actions="{ item }">
-          <v-tooltip location="top" text="Ödeme Ekle">
-            <template v-slot:activator="{ props }">
-              <v-btn icon="mdi-cash-plus" variant="text" size="small" color="teal" v-bind="props"
-                @click.stop="openPaymentDialog(item)"></v-btn>
-            </template>
-          </v-tooltip>
-          <v-tooltip location="top" text="Düzenle/Onayla"> <template v-slot:activator="{ props }"> <v-btn
-                icon="mdi-pencil" variant="text" size="small" color="primary" v-bind="props"
-                @click.stop="openOrderDetail(item, true)"></v-btn> </template>
-          </v-tooltip>
-          <v-tooltip location="top" text="Sil"> <template v-slot:activator="{ props }"> <v-btn icon="mdi-delete"
-                variant="text" size="small" color="error" v-bind="props" @click.stop="deleteOrder(item.id)"></v-btn>
-            </template>
-          </v-tooltip>
+          <div class="d-flex align-center gap-1">
+            <v-tooltip location="top" text="Ödeme Ekle">
+              <template v-slot:activator="{ props }">
+                <v-btn icon="mdi-cash-plus" variant="text" size="small" color="success" v-bind="props"
+                  @click.stop="openPaymentDialog(item)"></v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip location="top" text="Düzenle/Onayla">
+              <template v-slot:activator="{ props }">
+                <v-btn icon="mdi-pencil" variant="text" size="small" color="primary" v-bind="props"
+                  @click.stop="openOrderDetail(item, true)"></v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip location="top" text="Sil">
+              <template v-slot:activator="{ props }">
+                <v-btn icon="mdi-delete" variant="text" size="small" color="error" v-bind="props"
+                  @click.stop="deleteOrder(item.id)"></v-btn>
+              </template>
+            </v-tooltip>
+          </div>
         </template>
 
         <template v-slot:expanded-row="{ columns, item }">
@@ -157,17 +214,12 @@
                       <v-list-subheader>Yapılan Ödemeler</v-list-subheader>
                       <v-list-item v-for="odeme in item.odemeler" :key="odeme.id">
                         <v-list-item-title>{{ odeme.tutar.toFixed(2) }} ₺</v-list-item-title>
-                        <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi || 'Belirtilmemiş' }}</v-list-item-subtitle>
+                        <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi ||
+                          'Belirtilmemiş'
+                        }}</v-list-item-subtitle>
                         <template #append>
-                          <v-btn
-                            v-if="canManagePayments"
-                            icon="mdi-delete"
-                            variant="text"
-                            size="x-small"
-                            color="error"
-                            @click.stop="deletePayment(item.id, odeme.id)"
-                            :title="'Ödemeyi Sil'"
-                          />
+                          <v-btn v-if="canManagePayments" icon="mdi-delete" variant="text" size="x-small" color="error"
+                            @click.stop="deletePayment(item.id, odeme.id)" :title="'Ödemeyi Sil'" />
                         </template>
                       </v-list-item>
                       <v-list-item v-if="!item.odemeler || item.odemeler.length === 0">
@@ -229,20 +281,20 @@
           <div class="d-flex align-center">
             <v-tooltip text="Ödeme Ekle" location="bottom">
               <template #activator="{ props }">
-                <v-btn v-bind="props" icon="mdi-cash-plus" variant="text" color="teal"
-                      @click.stop="openPaymentDialog(selectedOrder)" />
+                <v-btn v-bind="props" icon="mdi-cash-plus" variant="text" color="success"
+                  @click.stop="openPaymentDialog(selectedOrder)" />
               </template>
             </v-tooltip>
             <v-tooltip text="Düzenle/Onayla" location="bottom">
               <template #activator="{ props }">
                 <v-btn v-bind="props" icon="mdi-pencil" variant="text" color="primary"
-                      @click.stop="isEditMode = true" />
+                  @click.stop="isEditMode = true" />
               </template>
             </v-tooltip>
             <v-tooltip text="Sil" location="bottom">
               <template #activator="{ props }">
                 <v-btn v-bind="props" icon="mdi-delete" variant="text" color="error"
-                      @click.stop="selectedOrder && deleteOrder(selectedOrder.id)" />
+                  @click.stop="selectedOrder && deleteOrder(selectedOrder.id)" />
               </template>
             </v-tooltip>
             <v-btn icon="mdi-close" variant="text" class="ml-1" @click="orderDetailDialog = false" />
@@ -255,25 +307,31 @@
               <v-form>
                 <v-row dense>
                   <v-col cols="12" sm="6">
-                    <v-text-field v-model="editModel.tarih" type="date" label="Tarih" density="compact" :disabled="!isEditMode" />
+                    <v-text-field v-model="editModel.tarih" type="date" label="Tarih" density="compact"
+                      :disabled="!isEditMode" />
                   </v-col>
                   <v-col cols="12" sm="6">
-                    <v-text-field :model-value="formatDate(selectedOrder?.tarih, true)" label="Görünen Tarih" density="compact" readonly />
+                    <v-text-field :model-value="formatDate(selectedOrder?.tarih, true)" label="Görünen Tarih"
+                      density="compact" readonly />
                   </v-col>
                   <v-col cols="12" sm="6">
-                    <v-text-field :model-value="selectedOrder?.gonderenAdi" label="Gönderen" density="compact" disabled />
+                    <v-text-field :model-value="selectedOrder?.gonderenAdi" label="Gönderen" density="compact"
+                      disabled />
                   </v-col>
                   <v-col cols="12" sm="6">
-                    <v-text-field :model-value="selectedOrder?.gonderenTel" label="Gönderen Tel" density="compact" disabled />
+                    <v-text-field :model-value="selectedOrder?.gonderenTel" label="Gönderen Tel" density="compact"
+                      disabled />
                   </v-col>
                   <v-col cols="12" sm="6">
-                    <v-text-field :model-value="selectedOrder?.aliciAdi || selectedOrder?.gorunecekAd" label="Alıcı" density="compact" disabled />
+                    <v-text-field :model-value="selectedOrder?.aliciAdi || selectedOrder?.gorunecekAd" label="Alıcı"
+                      density="compact" disabled />
                   </v-col>
                   <v-col cols="12" sm="6">
                     <v-text-field :model-value="selectedOrder?.aliciTel" label="Alıcı Tel" density="compact" disabled />
                   </v-col>
                   <v-col cols="12">
-                    <v-textarea v-model="editModel.adres" label="Adres" rows="2" density="compact" :disabled="!isEditMode" />
+                    <v-textarea v-model="editModel.adres" label="Adres" rows="2" density="compact"
+                      :disabled="!isEditMode" />
                   </v-col>
                 </v-row>
               </v-form>
@@ -281,29 +339,32 @@
               <v-divider class="my-2" />
               <h4 class="text-subtitle-2 mb-2">Kalemler</h4>
               <v-row dense>
-                <v-col v-for="(paket, index) in groupItemsByPackage(selectedOrder?.kalemler || [])" :key="`dlg-paket-${selectedOrder?.id}-${index}`" cols="12">
+                <v-col v-for="(paket, index) in groupItemsByPackage(selectedOrder?.kalemler || [])"
+                  :key="`dlg-paket-${selectedOrder?.id}-${index}`" cols="12">
                   <v-card variant="tonal">
                     <v-card-title class="text-body-2 d-flex align-center">
                       <v-icon start size="small">{{ getAmbalajIcon(paket.ambalajAdi) }}</v-icon>
-                      <span>{{ paket.ambalajAdi }} {{ paket.specificPackageName ? `(${paket.specificPackageName})` : '' }}</span>
+                      <span>{{ paket.ambalajAdi }} {{ paket.specificPackageName ? `(${paket.specificPackageName})` : ''
+                      }}</span>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-list density="compact" class="bg-transparent py-0">
                       <v-list-item v-for="kalem in paket.urunler" :key="kalem.id">
-                        <template #prepend><v-icon size="x-small" class="mr-2">{{ getUrunIcon(kalem.urun?.ad) }}</v-icon></template>
+                        <template #prepend><v-icon size="x-small" class="mr-2">{{ getUrunIcon(kalem.urun?.ad)
+                            }}</v-icon></template>
                         <v-list-item-title class="text-body-2 truncate">{{ kalem.urun?.ad }}</v-list-item-title>
                         <template #append>
                           <div v-if="isEditMode" class="d-flex align-center" style="gap:8px;">
-                            <v-text-field
-                              v-model.number="editedKalemler[kalem.id]"
-                              type="number" min="0" step="0.1" hide-details density="compact"
-                              style="max-width:90px"/>
+                            <v-text-field v-model.number="editedKalemler[kalem.id]" type="number" min="0" step="0.1"
+                              hide-details density="compact" style="max-width:90px" />
                             <span class="text-caption">{{ kalem.birim }}</span>
                             <span class="text-caption">=
-                              {{ (getEditedQty(kalem) * (Number(kalem.birimFiyat) || Number(getActivePrice(kalem)) || 0)).toFixed(2) }} ₺
+                              {{ (getEditedQty(kalem) * (Number(kalem.birimFiyat) || Number(getActivePrice(kalem)) ||
+                                0)).toFixed(2) }} ₺
                             </span>
                           </div>
-                          <span v-else class="text-caption">{{ kalem.miktar }} {{ kalem.birim }} = {{ calculateItemTotal(kalem).toFixed(2) }} ₺</span>
+                          <span v-else class="text-caption">{{ kalem.miktar }} {{ kalem.birim }} = {{
+                            calculateItemTotal(kalem).toFixed(2) }} ₺</span>
                         </template>
                       </v-list-item>
                     </v-list>
@@ -317,10 +378,12 @@
               <v-list density="compact" class="mb-2">
                 <v-list-item v-for="odeme in (selectedOrder?.odemeler || [])" :key="odeme.id">
                   <v-list-item-title>{{ odeme.tutar.toFixed(2) }} ₺</v-list-item-title>
-                  <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi || 'Belirtilmemiş' }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ formatDate(odeme.odemeTarihi, true) }} - {{ odeme.odemeYontemi ||
+                    'Belirtilmemiş'
+                  }}</v-list-item-subtitle>
                   <template #append>
                     <v-btn v-if="canManagePayments" icon="mdi-delete" variant="text" size="x-small" color="error"
-                           @click.stop="selectedOrder && deletePayment(selectedOrder.id, odeme.id)" />
+                      @click.stop="selectedOrder && deletePayment(selectedOrder.id, odeme.id)" />
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!selectedOrder?.odemeler || selectedOrder?.odemeler.length === 0">
@@ -328,9 +391,13 @@
                 </v-list-item>
               </v-list>
               <v-divider class="my-1" />
-              <div class="d-flex justify-space-between text-body-2"><span>Toplam</span><strong>{{ calculateGrandTotal(selectedOrder).toFixed(2) }} ₺</strong></div>
-              <div class="d-flex justify-space-between text-body-2"><span>Ödenen</span><strong>{{ calculateTotalPaid(selectedOrder?.odemeler).toFixed(2) }} ₺</strong></div>
-              <div class="d-flex justify-space-between text-body-2"><span>Kalan</span><strong>{{ (calculateGrandTotal(selectedOrder) - calculateTotalPaid(selectedOrder?.odemeler)).toFixed(2) }} ₺</strong></div>
+              <div class="d-flex justify-space-between text-body-2"><span>Toplam</span><strong>{{
+                calculateGrandTotal(selectedOrder).toFixed(2) }} ₺</strong></div>
+              <div class="d-flex justify-space-between text-body-2"><span>Ödenen</span><strong>{{
+                calculateTotalPaid(selectedOrder?.odemeler).toFixed(2) }} ₺</strong></div>
+              <div class="d-flex justify-space-between text-body-2"><span>Kalan</span><strong>{{
+                (calculateGrandTotal(selectedOrder) - calculateTotalPaid(selectedOrder?.odemeler)).toFixed(2) }}
+                  ₺</strong></div>
             </v-col>
           </v-row>
         </v-card-text>
@@ -394,23 +461,9 @@ import { formatDate } from '../utils/date';
 import { useAuthStore } from '@/stores/auth';
 import router from '@/router';
 
-// Tüm Siparişler modülüne özel tema ile Vuetify instance'ı oluştur
-const allOrdersTheme = {
-  dark: false,
-  colors: {
-    primary: '#1976D2', // Mavi
-    secondary: '#B0BEC5', // Gri
-    accent: '#64B5F6',
-    error: '#D32F2F',
-    info: '#1976D2',
-    success: '#388E3C',
-    warning: '#FBC02D',
-    background: '#F5F7FA',
-    surface: '#FFFFFF',
-  },
-};
-const allOrdersVuetify = createCustomVuetify({ themeName: 'allOrdersTheme', customTheme: allOrdersTheme });
-provide('vuetify', allOrdersVuetify);
+// Global theme is now used
+// const allOrdersTheme = ... (removed)
+// provide('vuetify', allOrdersVuetify); (removed)
 
 // Data Table State
 const itemsPerPage = ref(10);
@@ -551,14 +604,14 @@ const editedKalemler = reactive({});
 
 function onRowClick(event, { item }) {
   if (isSmallDevice.value) {
-    openOrderDetail(item,false);
+    openOrderDetail(item, false);
   }
 }
 
 function openOrderDetail(order, edit = false) {
   selectedOrder.value = order;
   // initialize edit model
-  editModel.tarih = (order?.tarih ? new Date(order.tarih).toISOString().slice(0,10) : '');
+  editModel.tarih = (order?.tarih ? new Date(order.tarih).toISOString().slice(0, 10) : '');
   editModel.adres = order?.adres || order?.teslimatAdresi || '';
   // init edited quantities map
   editedKalemlerClear();
@@ -912,26 +965,27 @@ function hasPriceDifference(kalem) {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,135,255,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
 .v-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px #1976d222;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .v-btn {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.v-chip {
-  border-radius: 8px;
-}
-
-.v-alert {
-  border-radius: 8px;
-}
-
-.v-data-table {
-  border-radius: 12px;
+  text-transform: none;
 }
 
 /* Order detail dialog improvements */

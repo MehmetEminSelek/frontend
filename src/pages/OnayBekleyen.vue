@@ -1,19 +1,70 @@
 <template>
-  <v-container class="py-6 px-4" max-width="xl">
-    <v-card class="pa-4 rounded-lg" elevation="2">
-      <v-card-title class="text-h5 font-weight-bold mb-4 d-flex justify-space-between align-center">
-        <span>⏳ Onay Bekleyen Siparişler</span>
-        <v-btn icon="mdi-refresh" variant="text" @click="fetchPendingOrders" title="Listeyi Yenile"></v-btn>
+  <v-container class="py-6 px-2 px-md-8" fluid>
+    <!-- Hero Section -->
+    <div class="hero-section mb-6">
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="warning">mdi-clock-alert-outline</v-icon>
+        </div>
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center mb-3">
+              <v-icon size="48" class="mr-3" color="warning">mdi-clock-alert-outline</v-icon>
+              <div>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Onay Bekleyen Siparişler</h1>
+                <p class="text-h6 mb-0 text-secondary">Onay bekleyen siparişleri inceleyin ve onaylayın</p>
+              </div>
+            </div>
+            <div class="d-flex align-center">
+              <v-chip color="warning" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-timer-sand</v-icon>
+                Beklemede
+              </v-chip>
+              <v-chip color="success" variant="tonal" size="small">
+                <v-icon start size="16">mdi-check-decagram-outline</v-icon>
+                Onayla
+              </v-chip>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
+            <v-btn size="large" color="primary" variant="flat" @click="fetchPendingOrders" class="font-weight-bold rounded-lg">
+              <v-icon left size="20">mdi-refresh</v-icon>
+              Listeyi Yenile
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card>
+    </div>
+
+    <!-- Main Content Card -->
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-warning text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-clipboard-clock-outline</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Bekleyen Siparişler</h3>
+              <p class="text-body-2 opacity-80 ma-0">{{ orders.length }} sipariş onay bekliyor</p>
+            </div>
+          </div>
+        </div>
       </v-card-title>
 
-      <v-progress-linear indeterminate color="primary" v-if="loading"></v-progress-linear>
-      <v-alert type="error" v-if="error" class="mb-4" closable>{{ error }}</v-alert>
+      <v-card-text class="pa-4">
+        <v-progress-linear indeterminate color="warning" v-if="loading"></v-progress-linear>
+        <v-alert type="error" v-if="error" class="mb-4" closable variant="tonal" rounded="lg">{{ error }}</v-alert>
 
-      <div v-if="!loading && orders.length === 0 && !error">
-        <v-alert type="info" variant="tonal">Onay bekleyen sipariş bulunmamaktadır.</v-alert>
-      </div>
+        <div v-if="!loading && orders.length === 0 && !error">
+          <v-alert type="info" variant="tonal" rounded="lg">
+            <v-icon start>mdi-check-circle-outline</v-icon>
+            Onay bekleyen sipariş bulunmamaktadır.
+          </v-alert>
+        </div>
 
-      <v-expansion-panels v-if="!loading && orders.length > 0" variant="accordion">
+        <v-expansion-panels v-if="!loading && orders.length > 0" variant="accordion">
         <v-expansion-panel v-for="(order, orderIndex) in orders" :key="order.id" elevation="1" class="mb-2">
           <v-expansion-panel-title>
             <v-row no-gutters align="center">
@@ -60,6 +111,7 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
+      </v-card-text>
     </v-card>
 
     <v-snackbar v-model="snackbar" :timeout="snackbarTimeout" :color="snackbarColor" location="bottom right" multi-line
@@ -74,9 +126,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, provide } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import axios from 'axios';
-import { createCustomVuetify } from '../plugins/vuetify';
 import { formatDate } from '../utils/date';
 import { useAuthStore } from '../stores/auth';
 
@@ -90,24 +141,6 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('info');
 const snackbarTimeout = ref(4000);
-
-// Onay Bekleyen modülüne özel tema ile Vuetify instance'ı oluştur
-const onayBekleyenTheme = {
-  dark: false,
-  colors: {
-    primary: '#6C63FF', // Mor-mavi
-    secondary: '#E0E7FF', // Açık mavi
-    accent: '#B39DDB',
-    error: '#D32F2F',
-    info: '#6C63FF',
-    success: '#388E3C',
-    warning: '#FBC02D',
-    background: '#F5F7FA',
-    surface: '#FFFFFF',
-  },
-};
-const onayBekleyenVuetify = createCustomVuetify({ themeName: 'onayBekleyenTheme', customTheme: onayBekleyenTheme });
-provide('vuetify', onayBekleyenVuetify);
 
 function showSnackbar(text, color = 'info', timeout = 4000) {
   snackbarText.value = text; snackbarColor.value = color; snackbarTimeout.value = timeout; snackbar.value = true;
@@ -146,12 +179,6 @@ onMounted(() => { fetchPendingOrders(); });
 // Değişiklikleri Kaydet ve Onayla
 async function saveChangesAndApprove(order, index) {
   if (!order || !order.kalemler) return;
-
-  // TODO: Vue dialog ile onay alınmalı!
-  // Kullanıcıya onay soralım
-  // if (!confirm(`ID: ${order.id} siparişindeki değişiklikleri kaydedip onaylamak istediğinizden emin misiniz?`)) {
-  //   return;
-  // }
 
   const orderId = order.id;
   approveLoading[orderId] = true; // Bu sipariş için loading başlat
@@ -225,38 +252,34 @@ function getUrunIcon(urunAdi) {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,174,31,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-btn {
+  text-transform: none;
+}
+
 .expansion-panel-no-padding :deep(.v-expansion-panel-text__wrapper) {
-  padding: 0 4px;
+  padding: 12px 16px;
 }
 
 .list-item-border:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
-}
-
-.v-expansion-panel {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #6c63ff22;
-  margin-bottom: 8px;
-}
-
-.v-card {
-  background: linear-gradient(135deg, #e0e7ff 60%, #fff 100%);
-}
-
-.v-btn {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.v-chip {
-  border-radius: 8px;
-}
-
-.v-alert {
-  border-radius: 8px;
-}
-
-.v-progress-linear {
-  border-radius: 8px;
 }
 </style>

@@ -6,7 +6,7 @@ import Login from '../pages/Login.vue'
 import Form from '../pages/Form.vue' // Sipariş Ekleme Formu
 import Orders from '../pages/OnayBekleyen.vue' // Onay Bekleyenler Sayfası
 import AllOrders from '../pages/AllOrders.vue' // Tüm Siparişler Sayfası
-import Hazirlanacaklar from '../pages/Hazırlanacak.vue' // <<< YENİ: Hazırlanacaklar sayfası component importu
+import Hazirlanacaklar from '../pages/Hazirlanacak.vue' // <<< YENİ: Hazırlanacaklar sayfası component importu
 import MainLayout from '../layouts/MainLayout.vue'
 import FiyatYönetimi from '../pages/FiyatYonetimi.vue'
 import StokYonetimi from '../pages/StokYonetimi.vue'

@@ -81,83 +81,77 @@ import {
     VLayout
 } from 'vuetify/components';
 
-// Note: We use stable VDataTable from components; no labs import required
-
 import * as directives from 'vuetify/directives';
 
-// --- Baklava Business Theme ---
-const baklavaBusinessTheme = {
+// --- Modern Pastel Theme (Primary) ---
+const modernPastelTheme = {
     dark: false,
     colors: {
-        primary: '#D4A574', // Honey gold - baklava rengi
-        'primary-darken-1': '#B8956A',
-        'primary-lighten-1': '#E5C297',
-        secondary: '#8B4513', // Walnut brown - ceviz rengi
-        'secondary-darken-1': '#6D340F',
-        'secondary-lighten-1': '#A0572B',
-        accent: '#F5F5DC', // Cream - kaymak rengi
-        error: '#D32F2F',
-        info: '#4A90E2',
-        success: '#228B22', // Pistachio green - antep fıstığı yeşili
-        warning: '#FFB74D',
-        background: '#F8F4E6', // Warm honey background
+        background: '#F5F7FA', // Soft blue-grey background
         surface: '#FFFFFF',
-        'surface-variant': '#F5F5DC',
-        'on-surface': '#5D4037',
+        primary: '#5D87FF',    // Soft Blue
+        'primary-darken-1': '#4570EA',
+        secondary: '#49BEFF',  // Soft Cyan
+        'secondary-darken-1': '#29A8E8',
+        accent: '#FFD666',     // Soft Yellow
+        error: '#FA896B',      // Soft Red
+        info: '#5D87FF',       // Same as primary for consistency
+        success: '#13DEB9',    // Soft Teal
+        warning: '#FFAE1F',    // Soft Orange
+        'on-background': '#2A3547',
+        'on-surface': '#2A3547',
         'on-primary': '#FFFFFF',
         'on-secondary': '#FFFFFF',
-        // Custom baklava colors
-        'honey-gold': '#D4A574',
-        'walnut-brown': '#8B4513',
-        'cream': '#F5F5DC',
-        'pistachio-green': '#228B22',
-        'warm-honey': '#F8F4E6',
-        'baklava-layers': '#E5C297',
+        'on-success': '#FFFFFF',
+        'on-warning': '#FFFFFF',
+        'on-error': '#FFFFFF',
     },
+    variables: {
+        'border-color': '#EAEFF4',
+        'border-opacity': 1,
+        'high-emphasis-opacity': 0.87,
+        'medium-emphasis-opacity': 0.60,
+        'disabled-opacity': 0.38,
+        'idle-opacity': 0.04,
+        'hover-opacity': 0.04,
+        'focus-opacity': 0.12,
+        'selected-opacity': 0.08,
+        'activated-opacity': 0.12,
+        'pressed-opacity': 0.12,
+        'dragged-opacity': 0.08,
+        'theme-kbd': '#212529',
+        'theme-on-kbd': '#FFFFFF',
+        'theme-code': '#F5F5F5',
+        'theme-on-code': '#000000',
+    }
 };
 
-// Professional Light Theme (Alternative)
-const professionalTheme = {
-    dark: false,
-    colors: {
-        primary: '#1976D2',
-        'primary-darken-1': '#1565C0',
-        secondary: '#424242',
-        'secondary-darken-1': '#212121',
-        accent: '#82B1FF',
-        error: '#FF5252',
-        info: '#2196F3',
-        success: '#4CAF50',
-        warning: '#FF9800',
-        background: '#F5F7FA',
-        surface: '#FFFFFF',
-    },
-};
-
-// Dark Pastry Theme
-const darkPastryTheme = {
+// Professional Dark Theme (Updated for Pastel)
+const modernDarkTheme = {
     dark: true,
     colors: {
-        primary: '#D4A574',
-        'primary-darken-1': '#B8956A',
-        secondary: '#A0572B',
-        'secondary-darken-1': '#8B4513',
-        accent: '#F5F5DC',
-        error: '#FF6B6B',
-        info: '#4ECDC4',
-        success: '#51CF66',
-        warning: '#FFD93D',
-        background: '#2C1810',
-        surface: '#3E2723',
-        'surface-variant': '#4E342E',
-        'on-surface': '#F5F5DC',
-        'on-primary': '#2C1810',
-        'on-secondary': '#F5F5DC',
+        background: '#2A3447', // Soft Dark Blue
+        surface: '#333F55',
+        primary: '#5D87FF',
+        'primary-darken-1': '#4570EA',
+        secondary: '#49BEFF',
+        'secondary-darken-1': '#29A8E8',
+        accent: '#FFD666',
+        error: '#FA896B',
+        info: '#5D87FF',
+        success: '#13DEB9',
+        warning: '#FFAE1F',
+        'on-background': '#EAEFF4',
+        'on-surface': '#EAEFF4',
+        'on-primary': '#FFFFFF',
+        'on-secondary': '#FFFFFF',
+        'on-success': '#FFFFFF',
+        'on-warning': '#FFFFFF',
+        'on-error': '#FFFFFF',
     },
 };
 
-// createVuetify fonksiyonunu güncelliyorum
-export function createCustomVuetify({ themeName = 'professionalTheme', extraThemes = {} } = {}) {
+export function createCustomVuetify({ themeName = 'modernPastelTheme', extraThemes = {} } = {}) {
     return createVuetify({
         display: {
             mobileBreakpoint: 'sm',
@@ -166,9 +160,8 @@ export function createCustomVuetify({ themeName = 'professionalTheme', extraThem
         theme: {
             defaultTheme: themeName,
             themes: {
-                baklavaBusinessTheme,
-                professionalTheme,
-                darkPastryTheme,
+                modernPastelTheme,
+                modernDarkTheme,
                 ...extraThemes,
             },
         },
@@ -245,47 +238,31 @@ export function createCustomVuetify({ themeName = 'professionalTheme', extraThem
         },
         directives,
         defaults: {
-            // Global compact defaults for small screens
             global: {
                 ripple: true,
                 density: 'comfortable'
             },
             VCard: {
-                elevation: 2,
+                elevation: 0, // Flat design for pastel theme
                 rounded: 'lg',
-                class: 'modern-card'
+                class: 'modern-card border' // Add border class
             },
             VTextField: {
                 variant: 'outlined',
                 density: 'compact',
-                color: 'primary'
-            },
-            VTextarea: {
-                variant: 'outlined',
-                density: 'compact',
-                color: 'primary'
-            },
-            VSelect: {
-                variant: 'outlined',
-                density: 'compact',
-                color: 'primary'
+                color: 'primary',
+                hideDetails: 'auto'
             },
             VBtn: {
                 variant: 'flat',
                 color: 'primary',
-                class: 'text-none'
+                class: 'text-none font-weight-bold',
+                rounded: 'lg'
             },
             VChip: {
                 variant: 'flat',
                 rounded: 'lg'
             },
-            VAlert: {
-                variant: 'tonal',
-                rounded: 'lg'
-            },
-            VDataTable: {
-                density: 'compact'
-            }
         },
         icons: {
             defaultSet: 'mdi',
@@ -295,6 +272,5 @@ export function createCustomVuetify({ themeName = 'professionalTheme', extraThem
     });
 }
 
-// Varsayılan olarak professionalTheme ile export
-const vuetify = createCustomVuetify({ themeName: 'professionalTheme' });
+const vuetify = createCustomVuetify({ themeName: 'modernPastelTheme' });
 export default vuetify;

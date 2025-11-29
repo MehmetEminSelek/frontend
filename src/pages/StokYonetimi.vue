@@ -5,58 +5,59 @@
 
     <!-- Hero Section -->
     <div class="hero-section mb-6">
-      <v-card class="pa-6 rounded-xl elevation-4"
-        style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%); color: #1B5E20; position: relative; overflow: hidden;">
-        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
-          <v-icon size="120">mdi-archive</v-icon>
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="primary">mdi-archive-outline</v-icon>
         </div>
         <v-row align="center">
           <v-col cols="12" md="8">
             <div class="d-flex align-center mb-3">
-              <v-icon size="48" class="mr-3" color="#2E7D32">mdi-archive-outline</v-icon>
+              <v-icon size="48" class="mr-3" color="primary">mdi-archive-outline</v-icon>
               <div>
-                <h1 class="text-h3 font-weight-bold mb-1" style="color: #1B5E20;">Stok Yönetimi</h1>
-                <p class="text-h6 mb-0" style="color: #2E7D32; opacity: 0.8;">Hammadde ve yarı mamul stok takibi</p>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Stok Yönetimi</h1>
+                <p class="text-h6 mb-0 text-secondary">Hammadde ve yarı mamul stok takibi</p>
               </div>
             </div>
             <div class="d-flex align-center">
-              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" class="mr-2" style="color: #1B5E20;">
-                <v-icon start size="16" color="#2E7D32">mdi-eye</v-icon>
+              <v-chip color="primary" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-eye-outline</v-icon>
                 Gerçek Zamanlı
               </v-chip>
-              <v-chip color="rgba(27, 94, 32, 0.15)" size="small" style="color: #1B5E20;">
-                <v-icon start size="16" color="#2E7D32">mdi-alert</v-icon>
+              <v-chip color="warning" variant="tonal" size="small">
+                <v-icon start size="16">mdi-alert-outline</v-icon>
                 Kritik Seviye Uyarıları
               </v-chip>
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center">
             <v-select v-model="selectedOp" :items="opList" item-title="ad" item-value="kod" label="Operasyon Birimi"
-              variant="solo" color="white" style="background: rgba(255,255,255,0.9); border-radius: 12px;" />
+              variant="outlined" density="comfortable" color="primary" hide-details class="rounded-lg" />
           </v-col>
         </v-row>
       </v-card>
     </div>
 
     <!-- Main Content Card -->
-    <v-card class="rounded-xl" elevation="2" style="border: 1px solid #E8F5E9;">
-      <v-card-title class="pa-4 d-flex justify-space-between align-center"
-        style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: white;">
-        <div class="d-flex align-center">
-          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
-            <v-icon color="white">mdi-table</v-icon>
-          </v-avatar>
-          <div>
-            <h3 class="text-h6 font-weight-bold">Stok Listesi</h3>
-            <p class="text-body-2 opacity-80 ma-0">Mevcut stok durumu</p>
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-primary text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-table</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Stok Listesi</h3>
+              <p class="text-body-2 opacity-80 ma-0">Mevcut stok durumu</p>
+            </div>
           </div>
+          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchStoklar"
+            title="Yenile"></v-btn>
         </div>
-        <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchStoklar"
-          title="Yenile"></v-btn>
       </v-card-title>
 
-      <v-card-text class="pa-4">
-        <v-data-table :headers="headers" :items="filteredStoklar" :loading="loading" item-value="id" class="elevation-1"
+      <v-card-text class="pa-0">
+        <v-data-table :headers="headers" :items="filteredStoklar" :loading="loading" item-value="id" class="elevation-0"
           hover density="comfortable" items-per-page="50" no-data-text="Stok kaydı yok."
           loading-text="Stoklar yükleniyor..."
           :item-class="item => item.mevcutStok < item.minStokSeviye ? 'bg-red-lighten-5' : ''">
@@ -72,9 +73,9 @@
             </span>
           </template>
           <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-plus" size="small" color="success" variant="text" @click="openStokDialog(item, 'giris')"
+            <v-btn icon="mdi-plus-circle-outline" size="small" color="success" variant="text" @click="openStokDialog(item, 'giris')"
               title="Stok Girişi"></v-btn>
-            <v-btn icon="mdi-minus" size="small" color="error" variant="text" @click="openStokDialog(item, 'cikis')"
+            <v-btn icon="mdi-minus-circle-outline" size="small" color="error" variant="text" @click="openStokDialog(item, 'cikis')"
               title="Stok Çıkışı"></v-btn>
           </template>
         </v-data-table>
@@ -656,7 +657,7 @@ async function consumeOrderStok(siparisId) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(27,94,32,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,135,255,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
   pointer-events: none;
 }
 
@@ -664,44 +665,7 @@ async function consumeOrderStok(siparisId) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.v-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
-}
-
 .v-btn {
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.v-btn:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 2px 8px rgba(56, 142, 60, 0.10);
-}
-
-.v-avatar {
-  font-weight: bold;
-  font-size: 1.2em;
-}
-
-.v-data-table {
-  border-radius: 12px;
-  background: #fff;
-}
-
-.v-data-table th {
-  background: #C8E6C9 !important;
-  color: #388E3C !important;
-  font-weight: bold;
-}
-
-.v-chip {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.v-card-title.bg-primary {
-  background: #388E3C !important;
-  color: #fff !important;
-  border-radius: 12px 12px 0 0;
+  text-transform: none;
 }
 </style>

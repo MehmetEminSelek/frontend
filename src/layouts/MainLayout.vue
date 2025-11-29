@@ -1,23 +1,23 @@
 <template>
   <v-app class="main-app">
     <v-layout class="main-layout">
-      <!-- Left Sidebar - Classic Fixed Position -->
+      <!-- Left Sidebar - Modern Solid Design -->
       <v-navigation-drawer v-model="drawer" app :permanent="!isMobile" :temporary="isMobile"
-        class="sidebar-pastel text-dark" width="280" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
+        class="modern-sidebar" width="260" :scrim="isMobile ? 'rgba(0,0,0,0.35)' : false"
         :touchless="!isMobile" @click:outside="onDrawerOutsideClick" @update:model-value="onDrawerUpdate"
-        style="background: linear-gradient(180deg, #D4A574 0%, #B8956A 100%); box-shadow: 2px 0 12px rgba(0,0,0,0.1);">
+        style="background: #2A3447; box-shadow: 2px 0 8px rgba(0,0,0,0.15);">
 
         <v-list nav density="comfortable" class="pa-2">
           <!-- Header -->
           <v-list-item class="mb-3"
-            style="background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%); border-radius: 12px; color: white;">
+            style="background: rgba(66,165,245,0.1); border-radius: 12px; border-left: 3px solid #42A5F5;">
             <template v-slot:prepend>
-              <v-avatar color="rgba(255,255,255,0.2)" size="36">
-                <v-icon color="white">mdi-factory</v-icon>
+              <v-avatar color="rgba(66,165,245,0.2)" size="40">
+                <v-icon color="#42A5F5">mdi-factory</v-icon>
               </v-avatar>
             </template>
-            <v-list-item-title class="text-h6 font-weight-bold">OGS Panel</v-list-item-title>
-            <v-list-item-subtitle style="color: rgba(255,255,255,0.8);">Ömer Güllü Sistemi</v-list-item-subtitle>
+            <v-list-item-title class="text-h6 font-weight-bold" style="color: #FFFFFF;">OGS Panel</v-list-item-title>
+            <v-list-item-subtitle style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Ömer Güllü Sistemi</v-list-item-subtitle>
           </v-list-item>
 
           <!-- Navigation Items -->
@@ -159,6 +159,13 @@
 
         <!-- Header Actions -->
         <div class="d-flex align-center">
+          <!-- Theme Toggle -->
+          <v-btn icon variant="text" class="mr-1" @click="toggleTheme" title="Tema Değiştir">
+            <v-icon :color="theme.global.current.value.dark ? '#FFD666' : '#5D87FF'">
+              {{ theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}
+            </v-icon>
+          </v-btn>
+
           <!-- Real-time Connection Status -->
           <v-chip :color="realtimeStore.isConnected ? '#C8E6C9' : '#FFCDD2'" size="small" class="mr-3" variant="flat"
             :style="{ color: realtimeStore.isConnected ? '#2E7D32' : '#C62828' }">
@@ -330,36 +337,52 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useTheme } from 'vuetify';
 import { apiCall } from '../utils/api.js';
 import { useRealtimeStore } from '../stores/realtime.js';
 import { useAuthStore } from '../stores/auth.js';
 import NotificationList from '../components/NotificationList.vue';
 import ToastNotification from '../components/ToastNotification.vue';
 
-const drawer = ref(true);
-const isMobile = ref(false);
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
+const theme = useTheme();
 const authStore = useAuthStore();
 const realtimeStore = useRealtimeStore();
 
-// Auth store'dan reactive user bilgisi
-const currentUser = computed(() => authStore.user);
-const isAdmin = computed(() => authStore.userRole === 'ADMIN' || authStore.userRole === 'GENEL_MUDUR');
+const drawer = ref(true);
+const isMobile = ref(false);
 
+// Login dialog state
 const loginDialog = ref(false);
 const loginForm = ref({ email: '', password: '' });
 const loginError = ref('');
 const loginLoading = ref(false);
-const toastNotification = ref(null);
 
-// Notification Drawer State
+// Current user computed property
+const currentUser = computed(() => authStore.user);
+
+// Theme Toggle
+function toggleTheme() {
+  theme.global.name.value = theme.global.current.value.dark ? 'modernPastelTheme' : 'modernDarkTheme';
+  localStorage.setItem('user_theme', theme.global.name.value);
+}
+
+// Load saved theme
+onMounted(() => {
+  const savedTheme = localStorage.getItem('user_theme');
+  if (savedTheme) {
+    theme.global.name.value = savedTheme;
+  }
+});
+
 const notificationDrawer = ref(false);
 const shouldShakeNotification = ref(false);
 const lastNotificationCount = ref(0);
 const drawerPinned = ref(localStorage.getItem('drawerPinned') === 'true');
+const toastNotification = ref(null);
 
 // Computed
 const hasUnreadNotifications = computed(() => realtimeStore.unreadNotifications > 0);
@@ -1209,5 +1232,24 @@ onBeforeUnmount(() => {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+}
+
+/* ========= MODERN SIDEBAR STYLES ========= */
+.modern-nav-item.v-list-item--active {
+  background: rgba(33, 150, 243, 0.1) !important;
+  color: #42A5F5 !important;
+  border-right: 3px solid #42A5F5;
+}
+
+.modern-nav-item.v-list-item--active .v-icon {
+  color: #42A5F5 !important;
+}
+
+.sub-nav-item.v-list-item--active {
+  color: #42A5F5 !important;
+}
+
+.sub-nav-item.v-list-item--active .v-icon {
+  color: #42A5F5 !important;
 }
 </style>

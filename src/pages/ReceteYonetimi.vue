@@ -2,37 +2,35 @@
     <v-container class="py-6 px-2 px-md-8" fluid>
         <!-- Hero Section -->
         <div class="hero-section mb-6">
-            <v-card class="pa-6 rounded-xl elevation-4"
-                style="background: linear-gradient(135deg, #FFE0B2 0%, #FFCC80 50%, #FFB74D 100%); color: #5D4037; position: relative; overflow: hidden;">
-                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
-                    <v-icon size="120">mdi-chef-hat</v-icon>
+            <v-card class="pa-6 rounded-xl elevation-0 border"
+                style="background: #F5F7FA; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+                    <v-icon size="120" color="success">mdi-chef-hat</v-icon>
                 </div>
                 <v-row align="center">
                     <v-col cols="12" md="8">
                         <div class="d-flex align-center mb-3">
-                            <v-icon size="48" class="mr-3" color="#8D6E63">mdi-food-variant</v-icon>
+                            <v-icon size="48" class="mr-3" color="success">mdi-food-variant</v-icon>
                             <div>
-                                <h1 class="text-h3 font-weight-bold mb-1" style="color: #5D4037;">Reçete Yönetimi</h1>
-                                <p class="text-h6 mb-0" style="color: #6D4C41; opacity: 0.8;">Yemek tariflerinizi ve
-                                    malzemelerinizi kolayca yönetin</p>
+                                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Reçete Yönetimi</h1>
+                                <p class="text-h6 mb-0 text-secondary">Yemek tariflerinizi ve malzemelerinizi kolayca yönetin</p>
                             </div>
                         </div>
                         <div class="d-flex align-center">
-                            <v-chip color="rgba(93, 64, 55, 0.15)" size="small" class="mr-2" style="color: #5D4037;">
-                                <v-icon start size="16" color="#8D6E63">mdi-clipboard-check</v-icon>
+                            <v-chip color="success" variant="tonal" size="small" class="mr-2">
+                                <v-icon start size="16">mdi-clipboard-check-outline</v-icon>
                                 {{ filteredReceteler.length }} Reçete
                             </v-chip>
-                            <v-chip color="rgba(93, 64, 55, 0.15)" size="small" style="color: #5D4037;">
-                                <v-icon start size="16" color="#8D6E63">mdi-package-variant</v-icon>
+                            <v-chip color="info" variant="tonal" size="small">
+                                <v-icon start size="16">mdi-calculator-variant-outline</v-icon>
                                 Otomatik Maliyet
                             </v-chip>
                         </div>
                     </v-col>
                     <v-col cols="12" md="4" class="text-center">
-                        <v-btn size="x-large" color="white" variant="elevated" @click="openAddDialog"
-                            class="font-weight-bold"
-                            style="color: #8D6E63 !important; box-shadow: 0 4px 12px rgba(141, 110, 99, 0.2);">
-                            <v-icon left size="20">mdi-plus-circle</v-icon>
+                        <v-btn size="large" color="primary" variant="flat" @click="openAddDialog"
+                            class="font-weight-bold rounded-lg">
+                            <v-icon left size="20">mdi-plus-circle-outline</v-icon>
                             Yeni Reçete Ekle
                         </v-btn>
                     </v-col>
@@ -41,12 +39,14 @@
         </div>
 
         <!-- Filters Section -->
-        <v-card class="mb-6 rounded-xl" elevation="1" style="border: 1px solid #EFEBE9;">
-            <v-card-title class="d-flex align-center py-4">
-                <v-icon color="#8D6E63" class="mr-2">mdi-filter-variant</v-icon>
-                <span class="text-h6 font-weight-bold" style="color: #5D4037;">Filtreler & Arama</span>
+        <v-card class="mb-6 rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-grey-lighten-4">
+                <div class="d-flex align-center">
+                    <v-icon color="primary" class="mr-2">mdi-filter-outline</v-icon>
+                    <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+                </div>
             </v-card-title>
-            <v-card-text class="pt-0">
+            <v-card-text class="pa-4">
                 <v-row>
                     <v-col cols="12" md="4">
                         <v-text-field v-model="search" label="Reçete ara..." prepend-inner-icon="mdi-magnify"
@@ -226,14 +226,81 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <!-- Silme Onay Dialog -->
         <v-dialog v-model="deleteDialog" max-width="400px">
             <v-card class="rounded-xl">
-                <v-card-title class="text-h6">Reçete Sil</v-card-title>
-                <v-card-text>Bu reçeteyi silmek istediğinize emin misiniz?</v-card-text>
-                <v-card-actions>
+                <v-card-title class="pa-4 bg-error text-white">
+                    <v-icon class="mr-2">mdi-alert-circle-outline</v-icon>
+                    Reçete Silme Onayı
+                </v-card-title>
+                <v-card-text class="pa-4">
+                    <p class="text-body-1">Bu reçeteyi silmek istediğinize emin misiniz?</p>
+                    <p class="text-body-2 text-grey mt-2">Bu işlem geri alınamaz.</p>
+                </v-card-text>
+                <v-card-actions class="pa-4 justify-end">
+                    <v-btn variant="text" @click="deleteDialog = false">Vazgeç</v-btn>
+                    <v-btn color="error" variant="flat" @click="deleteRecete" :loading="deleteLoading">
+                        <v-icon start>mdi-delete-outline</v-icon>
+                        Sil
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Aktif Siparişler Uyarı Dialog -->
+        <v-dialog v-model="activeOrdersDialog" max-width="600px" persistent>
+            <v-card class="rounded-xl">
+                <v-card-title class="pa-4 bg-warning text-white">
+                    <div class="d-flex align-center">
+                        <v-icon size="28" class="mr-3">mdi-alert-outline</v-icon>
+                        <div>
+                            <div class="text-h6 font-weight-bold">Aktif Siparişler Mevcut</div>
+                            <div class="text-body-2 opacity-80">Bu reçete aktif siparişlerde kullanılıyor</div>
+                        </div>
+                    </div>
+                </v-card-title>
+                <v-card-text class="pa-4">
+                    <v-alert type="info" variant="tonal" class="mb-4" rounded="lg">
+                        <strong>{{ activeOrdersData?.recipeInfo?.ad }}</strong> reçetesi 
+                        <strong>{{ activeOrdersData?.totalActiveOrders }}</strong> aktif siparişte kullanılmaktadır.
+                        Silme yerine <strong>deaktif etme</strong> önerilir.
+                    </v-alert>
+
+                    <div class="text-subtitle-2 font-weight-bold mb-2">İlgili Siparişler:</div>
+                    <v-list density="compact" class="rounded-lg border" max-height="250" style="overflow-y: auto;">
+                        <v-list-item v-for="order in activeOrdersData?.activeOrders" :key="order.id" class="border-b">
+                            <template v-slot:prepend>
+                                <v-avatar :color="order.durum === 'Hazırlanacak' ? 'warning' : 'success'" size="32" variant="tonal">
+                                    <v-icon size="18">{{ order.durum === 'Hazırlanacak' ? 'mdi-clock-outline' : 'mdi-check' }}</v-icon>
+                                </v-avatar>
+                            </template>
+                            <v-list-item-title class="font-weight-medium">
+                                Sipariş #{{ order.id }} - {{ order.musteriAdi }}
+                            </v-list-item-title>
+                            <v-list-item-subtitle>
+                                <v-chip size="x-small" :color="order.durum === 'Hazırlanacak' ? 'warning' : 'success'" variant="tonal" class="mr-2">
+                                    {{ order.durum }}
+                                </v-chip>
+                                <span class="text-caption">{{ formatDate(order.tarih) }}</span>
+                            </v-list-item-subtitle>
+                            <v-list-item-subtitle class="text-caption text-grey mt-1">
+                                {{ order.urunler }}
+                            </v-list-item-subtitle>
+                        </v-list-item>
+                    </v-list>
+
+                    <v-alert type="warning" variant="tonal" class="mt-4" rounded="lg" density="compact">
+                        <v-icon start>mdi-information-outline</v-icon>
+                        Deaktif edilen reçete, mevcut siparişleri etkilemez ancak yeni siparişlerde kullanılamaz.
+                    </v-alert>
+                </v-card-text>
+                <v-card-actions class="pa-4 bg-grey-lighten-4">
+                    <v-btn variant="text" @click="activeOrdersDialog = false">Vazgeç</v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn text @click="deleteDialog = false">Vazgeç</v-btn>
-                    <v-btn color="error" @click="deleteRecete">Sil</v-btn>
+                    <v-btn color="warning" variant="flat" @click="forceDeactivateRecipe" :loading="deleteLoading">
+                        <v-icon start>mdi-archive-outline</v-icon>
+                        Deaktif Et
+                    </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -316,6 +383,9 @@ const materials = ref([]);
 const kodToId = ref({});
 const dialog = ref(false);
 const deleteDialog = ref(false);
+const activeOrdersDialog = ref(false);
+const activeOrdersData = ref(null);
+const deleteLoading = ref(false);
 const maliyetDialog = ref(false);
 const editMode = ref(false);
 const form = ref({ id: null, name: '', urunId: null, ingredients: [] });
@@ -475,16 +545,62 @@ async function saveRecete() {
 }
 function confirmDelete(recete) {
     deleteId.value = recete.id;
+    activeOrdersData.value = null;
     deleteDialog.value = true;
 }
+
 async function deleteRecete() {
+    deleteLoading.value = true;
     try {
         await apiCall('/receteler', { id: deleteId.value }, 'DELETE');
-        snackbar.value = { show: true, text: 'Reçete silindi.', color: 'success' };
+        snackbar.value = { show: true, text: 'Reçete başarıyla silindi.', color: 'success' };
         deleteDialog.value = false;
         fetchReceteler();
     } catch (err) {
-        snackbar.value = { show: true, text: 'Silme sırasında hata oluştu.', color: 'error' };
+        const errorData = err?.response?.data;
+        
+        // Aktif siparişler varsa özel dialog göster
+        if (errorData?.errorCode === 'ACTIVE_ORDERS_EXIST') {
+            deleteDialog.value = false;
+            activeOrdersData.value = {
+                activeOrders: errorData.activeOrders,
+                totalActiveOrders: errorData.totalActiveOrders,
+                recipeInfo: errorData.recipeInfo
+            };
+            activeOrdersDialog.value = true;
+        } else {
+            const errorMsg = errorData?.error || err?.message || 'Silme sırasında hata oluştu.';
+            snackbar.value = { show: true, text: errorMsg, color: 'error' };
+        }
+        console.error('Reçete silme hatası:', errorData || err);
+    } finally {
+        deleteLoading.value = false;
+    }
+}
+
+async function forceDeactivateRecipe() {
+    deleteLoading.value = true;
+    try {
+        await apiCall('/receteler', { id: deleteId.value, forceDeactivate: true }, 'DELETE');
+        snackbar.value = { show: true, text: 'Reçete başarıyla deaktif edildi.', color: 'success' };
+        activeOrdersDialog.value = false;
+        activeOrdersData.value = null;
+        fetchReceteler();
+    } catch (err) {
+        const errorMsg = err?.response?.data?.error || err?.message || 'Deaktif etme sırasında hata oluştu.';
+        snackbar.value = { show: true, text: errorMsg, color: 'error' };
+        console.error('Reçete deaktif hatası:', err?.response?.data || err);
+    } finally {
+        deleteLoading.value = false;
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+        return new Date(dateStr).toLocaleDateString('tr-TR');
+    } catch {
+        return dateStr;
     }
 }
 function copyRecete(recete) {

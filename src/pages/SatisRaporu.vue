@@ -1,53 +1,76 @@
 <template>
     <v-container class="py-6 px-4" fluid>
-        <!-- Header -->
-        <v-card class="pa-6 mb-6 rounded-lg" elevation="2"
-            style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #dee2e6;">
-            <v-row align="center">
-                <v-col cols="12" md="8">
-                    <div class="d-flex align-center mb-3">
-                        <v-icon size="40" class="mr-3" color="#495057">mdi-chart-line</v-icon>
-                        <div>
-                            <h1 class="text-h4 font-weight-bold mb-1" style="color: #343a40;">Satış Raporları</h1>
-                            <p class="text-body-1 mb-0" style="color: #6c757d;">Günlük ve aylık satış performansı</p>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-0 border"
+                style="background: #F5F7FA; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+                    <v-icon size="120" color="info">mdi-chart-line</v-icon>
+                </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="info">mdi-chart-line</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Satış Raporları</h1>
+                                <p class="text-h6 mb-0 text-secondary">Günlük ve aylık satış performansı</p>
+                            </div>
                         </div>
-                    </div>
-                </v-col>
-                <v-col cols="12" md="4" class="text-center">
-                    <v-card class="pa-4" color="#f8f9fa" elevation="0" style="border: 1px solid #dee2e6;">
-                        <div class="text-h5 font-weight-bold" style="color: #28a745;">
-                            ₺{{ toplamCiro.toLocaleString('tr-TR') }}
+                        <div class="d-flex align-center">
+                            <v-chip color="info" variant="tonal" size="small" class="mr-2">
+                                <v-icon start size="16">mdi-chart-bar</v-icon>
+                                Performans
+                            </v-chip>
+                            <v-chip color="success" variant="tonal" size="small">
+                                <v-icon start size="16">mdi-currency-try</v-icon>
+                                Ciro Takibi
+                            </v-chip>
                         </div>
-                        <div class="text-body-2" style="color: #6c757d;">Toplam Ciro</div>
-                    </v-card>
-                </v-col>
-            </v-row>
-        </v-card>
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center">
+                        <v-card class="pa-4 rounded-xl" color="success" elevation="0">
+                            <div class="text-h5 font-weight-bold text-white">
+                                ₺{{ toplamCiro.toLocaleString('tr-TR') }}
+                            </div>
+                            <div class="text-body-2 text-white opacity-80">Toplam Ciro</div>
+                        </v-card>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
 
         <!-- Filters -->
-        <v-card class="pa-4 mb-6 rounded-lg" elevation="1" style="border: 1px solid #dee2e6;">
+        <v-card class="mb-6 rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-grey-lighten-4">
+                <div class="d-flex align-center">
+                    <v-icon class="mr-2" color="primary">mdi-filter-outline</v-icon>
+                    <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+                </div>
+            </v-card-title>
+            <v-card-text class="pa-4">
             <v-row align="center">
                 <v-col cols="12" md="3">
                     <v-text-field v-model="startDate" label="Başlangıç Tarihi" type="date" variant="outlined"
-                        density="compact" color="#6c757d" hide-details />
+                        density="compact" color="primary" hide-details />
                 </v-col>
                 <v-col cols="12" md="3">
                     <v-text-field v-model="endDate" label="Bitiş Tarihi" type="date" variant="outlined"
-                        density="compact" color="#6c757d" hide-details />
+                        density="compact" color="primary" hide-details />
                 </v-col>
                 <v-col cols="12" md="3">
-                    <v-btn color="#495057" variant="elevated" @click="fetchReport" :loading="loading"
-                        prepend-icon="mdi-refresh" class="w-100" elevation="2">
+                    <v-btn color="primary" variant="flat" @click="fetchReport" :loading="loading"
+                        prepend-icon="mdi-refresh" class="w-100 rounded-lg">
                         Raporu Getir
                     </v-btn>
                 </v-col>
                 <v-col cols="12" md="3">
-                    <v-btn color="#28a745" variant="outlined" @click="exportCSV" prepend-icon="mdi-file-excel"
-                        class="w-100">
+                    <v-btn color="success" variant="tonal" @click="exportCSV" prepend-icon="mdi-file-excel-outline"
+                        class="w-100 rounded-lg">
                         Excel İndir
                     </v-btn>
                 </v-col>
             </v-row>
+            </v-card-text>
         </v-card>
 
         <!-- Main Charts -->
@@ -532,13 +555,27 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.v-card {
-    transition: all 0.2s ease-in-out;
+.hero-section {
+  position: relative;
 }
 
-.v-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(33,150,243,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-btn {
+  text-transform: none;
 }
 
 .clean-table :deep(.v-data-table__th) {
@@ -554,9 +591,5 @@ onMounted(() => {
 
 .clean-table :deep(tbody tr:hover) {
     background: rgba(0, 0, 0, 0.02) !important;
-}
-
-.space-y-3>*+* {
-    margin-top: 12px;
 }
 </style>

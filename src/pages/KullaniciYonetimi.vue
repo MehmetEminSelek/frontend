@@ -2,36 +2,35 @@
   <v-container class="py-6 px-2 px-md-8" fluid>
     <!-- Hero Section -->
     <div class="hero-section mb-6">
-      <v-card class="pa-6 rounded-xl elevation-4"
-        style="background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 50%, #CE93D8 100%); color: #4A148C; position: relative; overflow: hidden;">
-        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
-          <v-icon size="120">mdi-account-tie</v-icon>
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="secondary">mdi-account-tie-outline</v-icon>
         </div>
         <v-row align="center">
           <v-col cols="12" md="8">
             <div class="d-flex align-center mb-3">
-              <v-icon size="48" class="mr-3" color="#6A1B9A">mdi-account-tie</v-icon>
+              <v-icon size="48" class="mr-3" color="secondary">mdi-account-tie-outline</v-icon>
               <div>
-                <h1 class="text-h3 font-weight-bold mb-1" style="color: #4A148C;">Personel Yönetimi</h1>
-                <p class="text-h6 mb-0" style="color: #6A1B9A; opacity: 0.8;">Şirket personeli ve pozisyon yönetimi</p>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Personel Yönetimi</h1>
+                <p class="text-h6 mb-0 text-secondary">Şirket personeli ve pozisyon yönetimi</p>
               </div>
             </div>
             <div class="d-flex align-center">
-              <v-chip color="rgba(74, 20, 140, 0.15)" size="small" class="mr-2" style="color: #4A148C;">
-                <v-icon start size="16" color="#6A1B9A">mdi-office-building</v-icon>
+              <v-chip color="secondary" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-office-building-outline</v-icon>
                 Şube Bazlı
               </v-chip>
-              <v-chip color="rgba(74, 20, 140, 0.15)" size="small" style="color: #4A148C;">
-                <v-icon start size="16" color="#6A1B9A">mdi-account-plus</v-icon>
+              <v-chip color="success" variant="tonal" size="small">
+                <v-icon start size="16">mdi-account-plus-outline</v-icon>
                 Personel Ekleme
               </v-chip>
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center">
-            <v-btn size="x-large" color="white" variant="elevated" @click="openNewPersonelDialog"
-              class="font-weight-bold"
-              style="color: #6A1B9A !important; box-shadow: 0 4px 12px rgba(106, 27, 154, 0.2);">
-              <v-icon left size="20">mdi-account-plus</v-icon>
+            <v-btn size="large" color="primary" variant="flat" @click="openNewPersonelDialog"
+              class="font-weight-bold rounded-lg">
+              <v-icon left size="20">mdi-account-plus-outline</v-icon>
               Yeni Personel
             </v-btn>
           </v-col>
@@ -42,115 +41,115 @@
     <!-- Stats Cards -->
     <v-row class="mb-6">
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2"
-          style="background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%); color: white;">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center">
-              <v-icon size="40" class="mr-3">mdi-account-check</v-icon>
-              <div>
-                <div class="text-h6 font-weight-bold">{{ aktifPersonelSayisi }}</div>
-                <div class="text-body-2">Aktif Personel</div>
-              </div>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="success" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="success">mdi-account-check-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h5 font-weight-bold text-success">{{ aktifPersonelSayisi }}</div>
+              <div class="text-subtitle-2 text-grey">Aktif Personel</div>
             </div>
-          </v-card-text>
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2"
-          style="background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%); color: white;">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center">
-              <v-icon size="40" class="mr-3">mdi-account-off</v-icon>
-              <div>
-                <div class="text-h6 font-weight-bold">{{ pasifPersonelSayisi }}</div>
-                <div class="text-body-2">Pasif Personel</div>
-              </div>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="warning" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="warning">mdi-account-off-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h5 font-weight-bold text-warning">{{ pasifPersonelSayisi }}</div>
+              <div class="text-subtitle-2 text-grey">Pasif Personel</div>
             </div>
-          </v-card-text>
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2"
-          style="background: linear-gradient(135deg, #2196F3 0%, #64B5F6 100%); color: white;">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center">
-              <v-icon size="40" class="mr-3">mdi-office-building</v-icon>
-              <div>
-                <div class="text-h6 font-weight-bold">{{ toplamSubeSayisi }}</div>
-                <div class="text-body-2">Toplam Şube</div>
-              </div>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="info" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="info">mdi-office-building-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h5 font-weight-bold text-info">{{ toplamSubeSayisi }}</div>
+              <div class="text-subtitle-2 text-grey">Toplam Şube</div>
             </div>
-          </v-card-text>
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12" md="3">
-        <v-card class="rounded-xl elevation-2"
-          style="background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%); color: white;">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center">
-              <v-icon size="40" class="mr-3">mdi-account-group</v-icon>
-              <div>
-                <div class="text-h6 font-weight-bold">{{ toplamPersonelSayisi }}</div>
-                <div class="text-body-2">Toplam Personel</div>
-              </div>
+        <v-card class="pa-4 rounded-xl border" elevation="0">
+          <div class="d-flex align-center">
+            <v-avatar color="secondary" variant="tonal" size="48" class="mr-3">
+              <v-icon size="28" color="secondary">mdi-account-group-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h5 font-weight-bold text-secondary">{{ toplamPersonelSayisi }}</div>
+              <div class="text-subtitle-2 text-grey">Toplam Personel</div>
             </div>
-          </v-card-text>
+          </div>
         </v-card>
       </v-col>
     </v-row>
 
     <!-- Filter Section -->
-    <v-card class="rounded-xl mb-4" elevation="1" style="border: 1px solid #F3E5F5;">
+    <v-card class="rounded-xl mb-4 border" elevation="0">
+      <v-card-title class="pa-4 bg-grey-lighten-4">
+        <div class="d-flex align-center">
+          <v-icon class="mr-2" color="primary">mdi-filter-outline</v-icon>
+          <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+        </div>
+      </v-card-title>
       <v-card-text class="pa-4">
         <v-row align="center">
           <v-col cols="12" md="3">
             <v-select v-model="selectedSube" :items="subeOptions" label="Şube Filtresi" variant="outlined"
-              density="compact" clearable @update:model-value="filterPersonel">
+              density="compact" clearable color="primary" @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
-                <v-icon color="#AB47BC">mdi-office-building</v-icon>
+                <v-icon color="primary">mdi-office-building-outline</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
             <v-select v-model="selectedDurum" :items="durumOptions" label="Durum Filtresi" variant="outlined"
-              density="compact" clearable @update:model-value="filterPersonel">
+              density="compact" clearable color="primary" @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
-                <v-icon color="#AB47BC">mdi-account-check</v-icon>
+                <v-icon color="primary">mdi-account-check-outline</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
             <v-select v-model="selectedSgk" :items="sgkOptions" label="SGK Durumu" variant="outlined" density="compact"
-              clearable @update:model-value="filterPersonel">
+              clearable color="primary" @update:model-value="filterPersonel">
               <template v-slot:prepend-inner>
-                <v-icon color="#AB47BC">mdi-shield-account</v-icon>
+                <v-icon color="primary">mdi-shield-account-outline</v-icon>
               </template>
             </v-select>
           </v-col>
           <v-col cols="12" md="3">
             <v-text-field v-model="search" label="Personel Ara" prepend-inner-icon="mdi-magnify" variant="outlined"
-              density="compact" clearable />
+              density="compact" clearable color="primary" />
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
     <!-- Main Content Card -->
-    <v-card class="rounded-xl" elevation="2" style="border: 1px solid #F3E5F5;">
-      <v-card-title class="pa-4 d-flex justify-space-between align-center"
-        style="background: linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%); color: white;">
-        <div class="d-flex align-center">
-          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
-            <v-icon color="white">mdi-table</v-icon>
-          </v-avatar>
-          <div>
-            <h3 class="text-h6 font-weight-bold">Personel Listesi</h3>
-            <p class="text-body-2 opacity-80 ma-0">{{ filteredPersonel.length }} personel görüntüleniyor</p>
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-secondary text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-table</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Personel Listesi</h3>
+              <p class="text-body-2 opacity-80 ma-0">{{ filteredPersonel.length }} personel görüntüleniyor</p>
+            </div>
           </div>
-        </div>
-        <div class="d-flex align-center">
-          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchPersonel" title="Yenile"
-            class="ml-2"></v-btn>
+          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchPersonel" title="Yenile"></v-btn>
         </div>
       </v-card-title>
 
@@ -210,11 +209,11 @@
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-eye" size="small" color="#2196F3" variant="text" @click="viewPersonel(item)"
+            <v-btn icon="mdi-eye-outline" size="small" color="info" variant="text" @click="viewPersonel(item)"
               title="Görüntüle"></v-btn>
-            <v-btn icon="mdi-pencil" size="small" color="#7B1FA2" variant="text" @click="editPersonel(item)"
+            <v-btn icon="mdi-pencil-outline" size="small" color="primary" variant="text" @click="editPersonel(item)"
               title="Düzenle"></v-btn>
-            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deletePersonel(item)"
+            <v-btn icon="mdi-delete-outline" size="small" color="error" variant="text" @click="deletePersonel(item)"
               title="Sil"></v-btn>
           </template>
         </v-data-table>
@@ -709,24 +708,30 @@ onMounted(async () => {
 
 <style scoped>
 .hero-section {
-  margin-bottom: 24px;
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,135,255,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-btn {
+  text-transform: none;
 }
 
 .personel-table {
   background: white;
   border-radius: 12px;
-}
-
-.personel-table :deep(.v-data-table__td) {
-  border-bottom: 1px solid #F3E5F5 !important;
-}
-
-.personel-table :deep(.v-data-table-header__content) {
-  font-weight: 600;
-  color: #4A148C;
-}
-
-.personel-table :deep(.v-data-table__tr:hover) {
-  background-color: #F9F5FF !important;
 }
 </style>

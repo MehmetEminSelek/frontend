@@ -1,70 +1,96 @@
 <template>
-    <v-container fluid>
-        <!-- Başlık ve Hızlı Eylemler -->
-        <v-row class="mb-4">
-            <v-col cols="12" md="6">
-                <h1 class="text-h4 font-weight-bold">
-                    <v-icon class="mr-2" color="primary">mdi-account-group</v-icon>
-                    Cari Yönetimi
-                </h1>
-                <p class="text-subtitle-1 text-grey-600 mt-2">
-                    Müşterilerinizi yönetin, borç-alacak takibini yapın
-                </p>
-            </v-col>
-            <v-col cols="12" md="6" class="text-right">
-                <v-btn color="primary" size="large" @click="openDialogYeni" class="mr-2">
-                    <v-icon left>mdi-account-plus</v-icon>
-                    Yeni Müşteri
-                </v-btn>
-                <v-btn color="warning" size="large" @click="openVadeTakipDialog">
-                    <v-icon left>mdi-calendar-clock</v-icon>
-                    Vade Takibi
-                </v-btn>
-            </v-col>
-        </v-row>
+    <v-container class="py-6 px-2 px-md-8" fluid>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-0 border"
+                style="background: #F5F7FA; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+                    <v-icon size="120" color="primary">mdi-account-group-outline</v-icon>
+                </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="primary">mdi-account-group-outline</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Cari Yönetimi</h1>
+                                <p class="text-h6 mb-0 text-secondary">Müşterilerinizi yönetin, borç-alacak takibini yapın</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-center">
+                            <v-chip color="primary" variant="tonal" size="small" class="mr-2">
+                                <v-icon start size="16">mdi-account-cash-outline</v-icon>
+                                Borç-Alacak
+                            </v-chip>
+                            <v-chip color="warning" variant="tonal" size="small">
+                                <v-icon start size="16">mdi-calendar-clock</v-icon>
+                                Vade Takibi
+                            </v-chip>
+                        </div>
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center d-flex flex-column align-center gap-3">
+                        <v-btn size="large" color="primary" variant="flat" @click="openDialogYeni" class="font-weight-bold rounded-lg">
+                            <v-icon left size="20">mdi-account-plus-outline</v-icon>
+                            Yeni Müşteri
+                        </v-btn>
+                        <v-btn size="large" color="warning" variant="tonal" @click="openVadeTakipDialog" class="font-weight-bold rounded-lg">
+                            <v-icon left size="20">mdi-calendar-clock</v-icon>
+                            Vade Takibi
+                        </v-btn>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
 
-        <!-- İstatistik Kartları (Sade/Outlined) -->
+        <!-- İstatistik Kartları -->
         <v-row class="mb-6">
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="primary">mdi-account-group</v-icon>
+                        <v-avatar color="primary" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="primary">mdi-account-group-outline</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h5 font-weight-bold">{{ pagination.total || cariler.length }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Toplam Müşteri</div>
+                            <div class="text-h5 font-weight-bold text-primary">{{ pagination.total || cariler.length }}</div>
+                            <div class="text-subtitle-2 text-grey">Toplam Müşteri</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="success">mdi-currency-try</v-icon>
+                        <v-avatar color="success" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="success">mdi-currency-try</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h6 font-weight-bold">{{ formatTutar((summaryFinancial?.totalBalance ?? null) || toplamAlacaklar) }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Toplam Alacak</div>
+                            <div class="text-h6 font-weight-bold text-success">{{ formatTutar((summaryFinancial?.totalBalance ?? null) || toplamAlacaklar) }}</div>
+                            <div class="text-subtitle-2 text-grey">Toplam Alacak</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="error">mdi-alert-circle</v-icon>
+                        <v-avatar color="error" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="error">mdi-alert-circle-outline</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h6 font-weight-bold">{{ summary.overdueCount ?? vadesiGecenSayisi }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Vadesi Geçen</div>
+                            <div class="text-h6 font-weight-bold text-error">{{ summary.overdueCount ?? vadesiGecenSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey">Vadesi Geçen</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="info">mdi-chart-line</v-icon>
+                        <v-avatar color="info" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="info">mdi-chart-line</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h6 font-weight-bold">{{ summary.totalActive ?? aktifMusteriSayisi }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Aktif Müşteri</div>
+                            <div class="text-h6 font-weight-bold text-info">{{ summary.totalActive ?? aktifMusteriSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey">Aktif Müşteri</div>
                         </div>
                     </div>
                 </v-card>
@@ -72,12 +98,14 @@
         </v-row>
 
         <!-- Filtreler ve Arama -->
-        <v-card class="mb-4">
-            <v-card-title>
-                <v-icon class="mr-2">mdi-filter</v-icon>
-                Filtreler ve Arama
+        <v-card class="mb-4 rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-grey-lighten-4">
+                <div class="d-flex align-center">
+                    <v-icon class="mr-2" color="primary">mdi-filter-outline</v-icon>
+                    <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+                </div>
             </v-card-title>
-            <v-card-text>
+            <v-card-text class="pa-4">
                 <v-row>
                     <v-col cols="12" md="4">
                         <v-text-field v-model="search" label="Müşteri Ara..." prepend-inner-icon="mdi-magnify" clearable
@@ -106,12 +134,20 @@
         </v-card>
 
         <!-- Müşteri Listesi -->
-        <v-card>
-            <v-card-title class="d-flex justify-space-between align-center">
-                <span>
-                    <v-icon class="mr-2">mdi-view-list</v-icon>
-                    Müşteri Listesi ({{ pagination.total || cariler.length }} müşteri)
-                </span>
+        <v-card class="rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-primary text-white">
+                <div class="d-flex align-center justify-space-between w-100">
+                    <div class="d-flex align-center">
+                        <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                            <v-icon color="white">mdi-view-list</v-icon>
+                        </v-avatar>
+                        <div>
+                            <h3 class="text-h6 font-weight-bold">Müşteri Listesi</h3>
+                            <p class="text-body-2 opacity-80 ma-0">{{ pagination.total || cariler.length }} müşteri</p>
+                        </div>
+                    </div>
+                    <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchCariler(true)" title="Yenile"></v-btn>
+                </div>
             </v-card-title>
             <div v-if="excelResults.length > 0" class="my-2">
                 <v-alert type="info" border="left" prominent>
@@ -195,13 +231,13 @@
                     <div class="d-flex gap-1">
                         <v-tooltip text="Detayları Görüntüle">
                             <template v-slot:activator="{ props }">
-                                <v-btn icon="mdi-eye" size="small" color="info" variant="text"
+                                <v-btn icon="mdi-eye-outline" size="small" color="info" variant="text"
                                     @click="openDialogDetay(item)" v-bind="props"></v-btn>
                             </template>
                         </v-tooltip>
                         <v-tooltip text="Düzenle">
                             <template v-slot:activator="{ props }">
-                                <v-btn icon="mdi-pencil" size="small" color="primary" variant="text"
+                                <v-btn icon="mdi-pencil-outline" size="small" color="primary" variant="text"
                                     @click="openDialogFullEdit(item)" v-bind="props"></v-btn>
                             </template>
                         </v-tooltip>
@@ -213,7 +249,7 @@
                         </v-tooltip>
                         <v-tooltip text="Sil">
                             <template v-slot:activator="{ props }">
-                                <v-btn icon="mdi-delete" size="small" color="error" variant="text"
+                                <v-btn icon="mdi-delete-outline" size="small" color="error" variant="text"
                                     @click="deleteCari(item)" v-bind="props"></v-btn>
                             </template>
                         </v-tooltip>
@@ -1053,6 +1089,25 @@ const sayfaBoyutuDegistir = (yeniLimit) => {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,135,255,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-btn {
+  text-transform: none;
+}
+
 .modern-table {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(60, 60, 60, 0.06);

@@ -1,67 +1,92 @@
 <template>
-    <v-container fluid>
-        <!-- Başlık ve Hızlı Eylemler -->
-        <v-row class="mb-4">
-            <v-col cols="12" md="6">
-                <h1 class="text-h4 font-weight-bold">
-                    <v-icon class="mr-2" color="primary">mdi-package-variant</v-icon>
-                    Ürün Yönetimi
-                </h1>
-                <p class="text-subtitle-1 text-grey-600 mt-2">
-                    Ürünlerinizi ekleyin, düzenleyin ve yönetin
-                </p>
-            </v-col>
-            <v-col cols="12" md="6" class="text-right">
-                <v-btn color="primary" size="large" @click="yeniUrunDialog = true" class="mr-2">
-                    <v-icon left>mdi-plus</v-icon>
-                    Yeni Ürün
-                </v-btn>
-                <!-- Kategori yönetimi kaldırıldı -->
-            </v-col>
-        </v-row>
+    <v-container class="py-6 px-2 px-md-8" fluid>
+        <!-- Hero Section -->
+        <div class="hero-section mb-6">
+            <v-card class="pa-6 rounded-xl elevation-0 border"
+                style="background: #F5F7FA; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+                    <v-icon size="120" color="primary">mdi-package-variant-closed</v-icon>
+                </div>
+                <v-row align="center">
+                    <v-col cols="12" md="8">
+                        <div class="d-flex align-center mb-3">
+                            <v-icon size="48" class="mr-3" color="primary">mdi-package-variant-closed</v-icon>
+                            <div>
+                                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Ürün Yönetimi</h1>
+                                <p class="text-h6 mb-0 text-secondary">Ürünlerinizi ekleyin, düzenleyin ve yönetin</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-center">
+                            <v-chip color="primary" variant="tonal" size="small" class="mr-2">
+                                <v-icon start size="16">mdi-food-variant</v-icon>
+                                Ürün Kataloğu
+                            </v-chip>
+                            <v-chip color="success" variant="tonal" size="small">
+                                <v-icon start size="16">mdi-clipboard-list-outline</v-icon>
+                                Reçete Takibi
+                            </v-chip>
+                        </div>
+                    </v-col>
+                    <v-col cols="12" md="4" class="text-center">
+                        <v-btn size="large" color="primary" variant="flat" @click="yeniUrunDialog = true" class="font-weight-bold rounded-lg">
+                            <v-icon left size="20">mdi-plus</v-icon>
+                            Yeni Ürün
+                        </v-btn>
+                    </v-col>
+                </v-row>
+            </v-card>
+        </div>
 
-        <!-- İstatistik Kartları (nötr tema) -->
+        <!-- İstatistik Kartları -->
         <v-row class="mb-6">
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="primary">mdi-package-variant</v-icon>
+                        <v-avatar color="primary" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="primary">mdi-package-variant-closed</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h5 font-weight-bold">{{ pagination.total }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Toplam Ürün</div>
+                            <div class="text-h5 font-weight-bold text-primary">{{ pagination.total }}</div>
+                            <div class="text-subtitle-2 text-grey">Toplam Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="success">mdi-check-circle</v-icon>
+                        <v-avatar color="success" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="success">mdi-check-circle-outline</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h5 font-weight-bold">{{ aktifUrunSayisi }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Aktif Ürün</div>
+                            <div class="text-h5 font-weight-bold text-success">{{ aktifUrunSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey">Aktif Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="warning">mdi-star</v-icon>
+                        <v-avatar color="warning" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="warning">mdi-star-outline</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h5 font-weight-bold">{{ ozelUrunSayisi }}</div>
-                            <div class="text-subtitle-2 text-grey-600">Özel Ürün</div>
+                            <div class="text-h5 font-weight-bold text-warning">{{ ozelUrunSayisi }}</div>
+                            <div class="text-subtitle-2 text-grey">Özel Ürün</div>
                         </div>
                     </div>
                 </v-card>
             </v-col>
             <v-col cols="12" sm="6" md="3">
-                <v-card class="pa-4 soft-card" variant="outlined">
+                <v-card class="pa-4 rounded-xl border" elevation="0">
                     <div class="d-flex align-center">
-                        <v-icon size="32" class="mr-3" color="info">mdi-folder</v-icon>
+                        <v-avatar color="info" variant="tonal" size="48" class="mr-3">
+                            <v-icon size="28" color="info">mdi-clipboard-list-outline</v-icon>
+                        </v-avatar>
                         <div>
-                            <div class="text-h6 font-weight-bold">Kategori</div>
-                            <div class="text-subtitle-2 text-grey-600">(kaldırıldı)</div>
+                            <div class="text-h6 font-weight-bold text-info">Reçete</div>
+                            <div class="text-subtitle-2 text-grey">Yönetimi</div>
                         </div>
                     </div>
                 </v-card>
@@ -69,16 +94,18 @@
         </v-row>
 
         <!-- Filtreler ve Arama -->
-        <v-card class="mb-4">
-            <v-card-title>
-                <v-icon class="mr-2">mdi-filter</v-icon>
-                Filtreler ve Arama
+        <v-card class="mb-4 rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-grey-lighten-4">
+                <div class="d-flex align-center">
+                    <v-icon class="mr-2" color="primary">mdi-filter-outline</v-icon>
+                    <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+                </div>
             </v-card-title>
-            <v-card-text>
+            <v-card-text class="pa-4">
                 <v-row>
                     <v-col cols="12" md="4">
                         <v-text-field v-model="filtreler.arama" label="Ürün Ara..." prepend-inner-icon="mdi-magnify"
-                            clearable @input="aramaYap" variant="outlined" density="compact" />
+                            clearable @input="aramaYap" variant="outlined" density="compact" color="primary" hide-details />
                     </v-col>
                     
                     <v-col cols="12" md="2">
@@ -87,7 +114,7 @@
                             { title: 'Aktif', value: 'true' },
                             { title: 'Pasif', value: 'false' }
                         ]" label="Durum" prepend-inner-icon="mdi-toggle-switch" @update:model-value="urunleriYukle"
-                            variant="outlined" density="compact" />
+                            variant="outlined" density="compact" color="primary" hide-details />
                     </v-col>
                     <v-col cols="12" md="3">
                         <v-select v-model="filtreler.siralama" :items="[
@@ -97,31 +124,38 @@
                             { title: 'Tarih (Yeni)', value: 'createdAt:desc' },
                             { title: 'Tarih (Eski)', value: 'createdAt:asc' }
                         ]" label="Sıralama" prepend-inner-icon="mdi-sort" @update:model-value="urunleriYukle"
-                            variant="outlined" density="compact" />
+                            variant="outlined" density="compact" color="primary" hide-details />
                     </v-col>
                 </v-row>
             </v-card-text>
         </v-card>
 
         <!-- Ürün Listesi -->
-        <v-card>
-            <v-card-title class="d-flex justify-space-between align-center">
-                <span>
-                    <v-icon class="mr-2">mdi-view-list</v-icon>
-                    Ürün Listesi ({{ pagination.total }} ürün)
-                </span>
-                <v-btn-toggle v-model="gorunumModu" mandatory density="compact">
-                    <v-btn value="liste" size="small" variant="tonal">
-                        <v-icon size="18">mdi-view-list</v-icon>
-                    </v-btn>
-                    <v-btn value="kart" size="small" variant="tonal">
-                        <v-icon size="18">mdi-view-grid</v-icon>
-                    </v-btn>
-                </v-btn-toggle>
+        <v-card class="rounded-xl border" elevation="0">
+            <v-card-title class="pa-4 bg-primary text-white">
+                <div class="d-flex align-center justify-space-between w-100">
+                    <div class="d-flex align-center">
+                        <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+                            <v-icon color="white">mdi-view-list</v-icon>
+                        </v-avatar>
+                        <div>
+                            <h3 class="text-h6 font-weight-bold">Ürün Listesi</h3>
+                            <p class="text-body-2 opacity-80 ma-0">{{ pagination.total }} ürün</p>
+                        </div>
+                    </div>
+                    <v-btn-toggle v-model="gorunumModu" mandatory density="compact" variant="flat" color="rgba(255,255,255,0.2)">
+                        <v-btn value="liste" size="small">
+                            <v-icon size="18" color="white">mdi-view-list</v-icon>
+                        </v-btn>
+                        <v-btn value="kart" size="small">
+                            <v-icon size="18" color="white">mdi-view-grid</v-icon>
+                        </v-btn>
+                    </v-btn-toggle>
+                </div>
             </v-card-title>
 
             <!-- Liste Görünümü -->
-            <v-data-table v-if="gorunumModu === 'liste'" class="neutral-table elevation-0" :headers="headers" :items="urunler" :loading="yukleniyor"
+            <v-data-table v-if="gorunumModu === 'liste'" class="elevation-0" :headers="headers" :items="urunler" :loading="yukleniyor"
                 :items-per-page="pagination.limit" :page="pagination.page" :server-items-length="pagination.total"
                 :items-per-page-options="[20,50,100,200]" density="compact"
                  @update:page="sayfaDegistir" @update:items-per-page="(n)=>{ pagination.limit=n; pagination.page=1; urunleriYukle(); }">
@@ -193,9 +227,9 @@
                 <!-- İşlemler -->
                 <template v-slot:item.islemler="{ item }">
                     <v-btn-group variant="text" density="compact">
-                        <v-btn icon="mdi-eye" size="small" @click="urunDetayGoster(item)" color="info" />
-                        <v-btn icon="mdi-pencil" size="small" @click="urunDuzenle(item)" color="warning" />
-                        <v-btn icon="mdi-delete" size="small" @click="urunSil(item)" color="error" />
+                        <v-btn icon="mdi-eye-outline" size="small" @click="urunDetayGoster(item)" color="info" />
+                        <v-btn icon="mdi-pencil-outline" size="small" @click="urunDuzenle(item)" color="primary" />
+                        <v-btn icon="mdi-delete-outline" size="small" @click="urunSil(item)" color="error" />
                     </v-btn-group>
                 </template>
             </v-data-table>
@@ -697,6 +731,29 @@ export default {
 </script>
 
 <style scoped>
+.hero-section {
+  position: relative;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(93,135,255,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.v-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-btn {
+  text-transform: none;
+}
+
 .position-absolute {
     position: absolute;
 }
@@ -711,13 +768,5 @@ export default {
 
 .h-100 {
     height: 100%;
-}
-
-/* Neutral card look reused across app */
-.soft-card {
-    border: 1px solid rgba(0,0,0,0.06) !important;
-    background: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 -1px 0 0 rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04) !important;
-    border-radius: 10px;
 }
 </style>

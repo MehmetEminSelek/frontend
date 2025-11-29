@@ -2,34 +2,33 @@
   <v-container class="py-6 px-2 px-md-8" fluid>
     <!-- Hero Section -->
     <div class="hero-section mb-6">
-      <v-card class="pa-6 rounded-xl elevation-4"
-        style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 50%, #FFCC80 100%); color: #E65100; position: relative; overflow: hidden;">
-        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.08;">
-          <v-icon size="120">mdi-currency-usd</v-icon>
+      <v-card class="pa-6 rounded-xl elevation-0 border"
+        style="background: #F5F7FA; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05;">
+          <v-icon size="120" color="warning">mdi-currency-try</v-icon>
         </div>
         <v-row align="center">
           <v-col cols="12" md="8">
             <div class="d-flex align-center mb-3">
-              <v-icon size="48" class="mr-3" color="#F57C00">mdi-chart-line</v-icon>
+              <v-icon size="48" class="mr-3" color="warning">mdi-currency-try</v-icon>
               <div>
-                <h1 class="text-h3 font-weight-bold mb-1" style="color: #E65100;">Fiyat Yönetimi</h1>
-                <p class="text-h6 mb-0" style="color: #F57C00; opacity: 0.8;">Ürün fiyatlandırma ve maliyet yönetimi</p>
+                <h1 class="text-h3 font-weight-bold mb-1 text-primary">Fiyat Yönetimi</h1>
+                <p class="text-h6 mb-0 text-secondary">Ürün fiyatlandırma ve maliyet yönetimi</p>
               </div>
             </div>
             <div class="d-flex align-center">
-              <v-chip color="rgba(230, 81, 0, 0.15)" size="small" class="mr-2" style="color: #E65100;">
-                <v-icon start size="16" color="#F57C00">mdi-tag-multiple</v-icon>
+              <v-chip color="warning" variant="tonal" size="small" class="mr-2">
+                <v-icon start size="16">mdi-tag-multiple-outline</v-icon>
                 Çoklu Fiyat
               </v-chip>
-              <v-chip color="rgba(230, 81, 0, 0.15)" size="small" style="color: #E65100;">
-                <v-icon start size="16" color="#F57C00">mdi-calendar-range</v-icon>
+              <v-chip color="info" variant="tonal" size="small">
+                <v-icon start size="16">mdi-calendar-range</v-icon>
                 Tarih Bazlı
               </v-chip>
             </div>
           </v-col>
           <v-col cols="12" md="4" class="text-center">
-            <v-btn size="x-large" color="white" variant="elevated" @click="openNewFiyatDialog" class="font-weight-bold"
-              style="color: #F57C00 !important; box-shadow: 0 4px 12px rgba(245, 124, 0, 0.2);">
+            <v-btn size="large" color="primary" variant="flat" @click="openNewFiyatDialog" class="font-weight-bold rounded-lg">
               <v-icon left size="20">mdi-plus</v-icon>
               Yeni Fiyat
             </v-btn>
@@ -39,40 +38,47 @@
     </div>
 
     <!-- Filter Section -->
-    <v-card class="mb-6 rounded-xl" elevation="2" style="border: 1px solid #FFF3E0;">
+    <v-card class="mb-6 rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-grey-lighten-4">
+        <div class="d-flex align-center">
+          <v-icon class="mr-2" color="primary">mdi-filter-outline</v-icon>
+          <span class="text-subtitle-1 font-weight-bold text-primary">Filtreler ve Arama</span>
+        </div>
+      </v-card-title>
       <v-card-text class="pa-4">
         <v-row>
           <v-col cols="12" md="4">
             <v-text-field v-model="search" label="Ürün Ara" prepend-inner-icon="mdi-magnify" variant="outlined"
-              density="compact" clearable color="#F57C00" />
+              density="compact" clearable color="primary" />
           </v-col>
           <v-col cols="12" md="4">
             <v-select v-model="selectedCategory" :items="categories" label="Kategori" variant="outlined"
-              density="compact" clearable color="#F57C00" />
+              density="compact" clearable color="primary" />
           </v-col>
           <v-col cols="12" md="4">
             <v-select v-model="selectedType" :items="priceTypes" label="Fiyat Türü" variant="outlined" density="compact"
-              clearable color="#F57C00" />
+              clearable color="primary" />
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
     <!-- Main Content Card -->
-    <v-card class="rounded-xl" elevation="2" style="border: 1px solid #FFF3E0;">
-      <v-card-title class="pa-4 d-flex justify-space-between align-center"
-        style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%); color: white;">
-        <div class="d-flex align-center">
-          <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
-            <v-icon color="white">mdi-table</v-icon>
-          </v-avatar>
-          <div>
-            <h3 class="text-h6 font-weight-bold">Fiyat Listesi</h3>
-            <p class="text-body-2 opacity-80 ma-0">Ürün fiyatları ve güncellemeleri</p>
+    <v-card class="rounded-xl border" elevation="0">
+      <v-card-title class="pa-4 bg-warning text-white">
+        <div class="d-flex align-center justify-space-between w-100">
+          <div class="d-flex align-center">
+            <v-avatar color="rgba(255,255,255,0.2)" size="40" class="mr-3">
+              <v-icon color="white">mdi-table</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-h6 font-weight-bold">Fiyat Listesi</h3>
+              <p class="text-body-2 opacity-80 ma-0">Ürün fiyatları ve güncellemeleri</p>
+            </div>
           </div>
+          <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchFiyatlar"
+            title="Yenile"></v-btn>
         </div>
-        <v-btn icon="mdi-refresh" variant="flat" color="rgba(255,255,255,0.2)" @click="fetchFiyatlar"
-          title="Yenile"></v-btn>
       </v-card-title>
 
       <v-card-text class="pa-4">
@@ -132,9 +138,9 @@
           </template>
 
           <template v-slot:item.actions="{ item }">
-            <v-btn icon="mdi-pencil" size="small" color="#F57C00" variant="text" @click="editFiyat(item)"
+            <v-btn icon="mdi-pencil-outline" size="small" color="primary" variant="text" @click="editFiyat(item)"
               title="Düzenle"></v-btn>
-            <v-btn icon="mdi-delete" size="small" color="#E91E63" variant="text" @click="deleteFiyat(item)"
+            <v-btn icon="mdi-delete-outline" size="small" color="error" variant="text" @click="deleteFiyat(item)"
               title="Sil"></v-btn>
           </template>
         </v-data-table>
@@ -672,26 +678,15 @@ const filteredPriceHistory = computed(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(230,81,0,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+  background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,174,31,0.08)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
   pointer-events: none;
-}
-
-.price-table th {
-  background: #FFF3E0 !important;
-  color: #F57C00 !important;
-  font-weight: 600 !important;
-}
-
-.price-table tbody tr:hover {
-  background: rgba(245, 124, 0, 0.03) !important;
 }
 
 .v-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.v-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08) !important;
+.v-btn {
+  text-transform: none;
 }
 </style>

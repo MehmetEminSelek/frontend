@@ -33,8 +33,8 @@
                         <div class="mb-3">
                             <div class="d-flex align-center justify-space-between mb-2">
                                 <v-select v-model="selectedKargoDurumu" :items="kargoDurumlari" item-title="ad"
-                                    item-value="kodu" label="Durum Filtresi" density="compact" variant="solo"
-                                    style="background: rgba(255,255,255,0.9); border-radius: 8px; max-width: 140px;" />
+                                    item-value="kodu" label="Durum Filtresi" density="compact"
+                                    style="background: rgba(255,255,255,0.9); border-radius: 8px;" />
                                 <v-checkbox v-model="showOnlyHazirlandi" label="Sadece Hazırlandı" density="compact"
                                     style="color: white;" />
                             </div>
